@@ -1,0 +1,30 @@
+name: self-improvement
+on:
+  push:
+    paths:
+      - '.agents/skills/**'
+      - 'eval/**'
+      - 'scripts/self-improve.mjs'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * *'
+
+jobs:
+  measure-and-generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Measure capability and generate candidates
+        run: node scripts/self-improve.mjs
+      - name: Upload self-improvement report
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-improvement-report
+          path: |
+            eval/self-improvement-report.json
+            .agents/generated/
