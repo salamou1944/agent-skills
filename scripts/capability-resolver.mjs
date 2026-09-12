@@ -28,10 +28,20 @@ function overlapScore(requestTokens, candidate) {
   return hits.length / requestTokens.length;
 }
 
+function hasValidSourceUrl(candidate) {
+  if (typeof candidate.url !== 'string' || !candidate.url.trim()) return false;
+  try {
+    const url = new URL(candidate.url);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 function classify(candidate) {
   const blockers = [];
   if (candidate.duplicate) blockers.push('DUPLICATE');
-  if (!candidate.url) blockers.push('NO_SOURCE_URL');
+  if (!hasValidSourceUrl(candidate)) blockers.push('NO_SOURCE_URL');
   blockers.push('DISCOVERY_ONLY');
   return { executable: false, blockers };
 }
@@ -68,9 +78,12 @@ const candidates = catalog.candidates.map((candidate) => {
   .sort((a, b) => b.finalScore - a.finalScore || a.id.localeCompare(b.id));
 
 const top = candidates.slice(0, Math.min(10, candidates.length));
+const selected = top.find((candidate) => !candidate.promotion.blockers.includes('NO_SOURCE_URL')) || null;
 const gaps = requestTokens.length === 0 || top.length === 0
   ? [{ type: 'CAPABILITY_GAP', message: 'No capability candidate matched the request strongly enough.' }]
-  : [];
+  : selected === null
+    ? [{ type: 'CAPABILITY_GAP', message: 'Matching candidates were found, but none has a valid HTTP(S) source URL for provenance verification.' }]
+    : [];
 
 const result = {
   version: 1,
@@ -80,12 +93,13 @@ const result = {
     catalogIsDiscoveryOnly: true,
     executionRequiresPromotion: true,
     sandboxRequired: true,
-    noCandidateIsAutomaticallyTrusted: true
+    noCandidateIsAutomaticallyTrusted: true,
+    provenanceRequiredForSelection: true
   },
   resolution: {
     status: gaps.length ? 'GAP' : 'CANDIDATES_FOUND',
-    selected: top[0] || null,
-    alternatives: top.slice(1),
+    selected,
+    alternatives: selected ? top.filter((candidate) => candidate.id !== selected.id) : top.slice(1),
     candidateCount: candidates.length,
     gaps
   }
