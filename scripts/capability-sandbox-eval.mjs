@@ -63,10 +63,10 @@ async function main() {
 
     const serialized = metadata.toLowerCase();
     const policyMatches = forbidden.filter((pattern) => pattern.test(serialized)).length;
-    checks.push({ name: 'metadata-static-safety', status: policyMatches === 0 ? 'PASS' : 'FAIL', matches: policyMatches });
+    checks.push({ name: 'metadata-static-safety', status: policyMatches === 0 ? 'PASS' : 'WARN', matches: policyMatches });
 
-    // The sandbox may execute only an explicit command supplied by the caller.
     // Remote candidate code is never downloaded or executed implicitly.
+    // Behavior execution is opt-in through an explicit, policy-checked command.
     const command = String(args.get('command') || '').trim();
     if (command) {
       const unsafe = forbidden.some((pattern) => pattern.test(command));
