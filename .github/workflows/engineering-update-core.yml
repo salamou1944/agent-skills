@@ -9,6 +9,8 @@ on:
       - 'scripts/capability-discovery-self-test.mjs'
       - 'scripts/capability-resolver.mjs'
       - 'scripts/capability-resolver-self-test.mjs'
+      - 'scripts/capability-sandbox-eval.mjs'
+      - 'scripts/capability-sandbox-eval-self-test.mjs'
       - 'config/capability-sources.json'
       - '.github/workflows/engineering-update-core.yml'
   pull_request:
@@ -19,6 +21,8 @@ on:
       - 'scripts/capability-discovery-self-test.mjs'
       - 'scripts/capability-resolver.mjs'
       - 'scripts/capability-resolver-self-test.mjs'
+      - 'scripts/capability-sandbox-eval.mjs'
+      - 'scripts/capability-sandbox-eval-self-test.mjs'
       - 'config/capability-sources.json'
       - '.github/workflows/engineering-update-core.yml'
 
@@ -33,6 +37,7 @@ jobs:
       - run: node scripts/engineering-update-self-test.mjs
       - run: node scripts/capability-discovery-self-test.mjs
       - run: node scripts/capability-resolver-self-test.mjs
+      - run: node scripts/capability-sandbox-eval-self-test.mjs
 
   live-capability-discovery:
     runs-on: ubuntu-latest
@@ -44,10 +49,12 @@ jobs:
           node-version: 22
       - run: node scripts/capability-discovery.mjs --limit=10
       - run: node scripts/capability-resolver.mjs --request="software architecture codebase implementation testing security API integration GitHub code review"
-      - name: Upload capability catalog and resolution
+      - run: node scripts/capability-sandbox-eval.mjs
+      - name: Upload capability catalog, resolution, and sandbox evidence
         uses: actions/upload-artifact@v4
         with:
           name: capability-resolution
           path: |
             .engineering-update/capability-catalog.json
             .engineering-update/capability-resolution.json
+            .engineering-update/capability-sandbox-evaluation.json
