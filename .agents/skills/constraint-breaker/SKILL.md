@@ -13,5 +13,3 @@ For each constraint ask:
 5. Can a new interface make it irrelevant?
 
 Never bypass security, authorization, law, or safety controls. Instead design a compliant alternative. Record which constraints were genuinely broken, which were relaxed, and which remain.
-
-Do not weaken or disable security controls as a solution technique.
