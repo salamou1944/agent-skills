@@ -5,11 +5,17 @@ on:
     paths:
       - 'scripts/engineering-update.mjs'
       - 'scripts/engineering-update-self-test.mjs'
+      - 'scripts/capability-discovery.mjs'
+      - 'scripts/capability-discovery-self-test.mjs'
+      - 'config/capability-sources.json'
       - '.github/workflows/engineering-update-core.yml'
   pull_request:
     paths:
       - 'scripts/engineering-update.mjs'
       - 'scripts/engineering-update-self-test.mjs'
+      - 'scripts/capability-discovery.mjs'
+      - 'scripts/capability-discovery-self-test.mjs'
+      - 'config/capability-sources.json'
       - '.github/workflows/engineering-update-core.yml'
 
 jobs:
@@ -21,3 +27,19 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/engineering-update-self-test.mjs
+      - run: node scripts/capability-discovery-self-test.mjs
+
+  live-capability-discovery:
+    runs-on: ubuntu-latest
+    needs: self-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/capability-discovery.mjs --limit=10
+      - name: Upload capability catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: capability-catalog
+          path: .engineering-update/capability-catalog.json
