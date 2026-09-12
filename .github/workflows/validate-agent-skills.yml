@@ -1,0 +1,21 @@
+name: validate-agent-skills
+on:
+  push:
+    paths:
+      - '.agents/skills/**'
+      - 'registry/**'
+      - 'scripts/validate-skills.mjs'
+  pull_request:
+    paths:
+      - '.agents/skills/**'
+      - 'registry/**'
+      - 'scripts/validate-skills.mjs'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/validate-skills.mjs
