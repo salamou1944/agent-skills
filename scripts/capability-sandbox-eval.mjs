@@ -16,6 +16,7 @@ const args = new Map(process.argv.slice(2).filter((x) => x.startsWith('--')).map
 const resolutionPath = path.resolve(root, String(args.get('resolution') || '.engineering-update/capability-resolution.json'));
 const outputPath = path.resolve(root, String(args.get('output') || '.engineering-update/capability-sandbox-evaluation.json'));
 const timeoutMs = Math.min(Math.max(Number(args.get('timeout') || 30000), 1000), 120000);
+const behaviorProbe = Boolean(args.get('behavior-probe'));
 
 const forbidden = [
   /(^|\W)(rm\s+-rf|mkfs|shutdown|reboot)(\W|$)/i,
@@ -59,7 +60,15 @@ async function main() {
 
     checks.push({ name: 'candidate-selected', status: selected.id ? 'PASS' : 'FAIL' });
     checks.push({ name: 'source-url-present', status: selected.url ? 'PASS' : 'FAIL' });
-    checks.push({ name: 'discovery-only-policy', status: selected.promotion?.blockers?.includes('DISCOVERY_ONLY') ? 'PASS' : 'FAIL' });
+
+    const blockers = Array.isArray(selected.promotion?.blockers) ? selected.promotion.blockers : [];
+    checks.push({
+      name: 'discovery-only-policy',
+      status: blockers.includes('DISCOVERY_ONLY') ? 'PASS' : behaviorProbe ? 'WARN' : 'FAIL',
+      meaning: behaviorProbe
+        ? 'Behavior probe executes only an explicit local probe and never promotes the discovered candidate.'
+        : 'A discovered capability must carry an explicit DISCOVERY_ONLY blocker before execution is considered.'
+    });
 
     const serialized = metadata.toLowerCase();
     const policyMatches = forbidden.filter((pattern) => pattern.test(serialized)).length;
@@ -89,6 +98,7 @@ async function main() {
 
     const hardFailures = checks.filter((check) => check.status === 'FAIL');
     const executionRan = checks.some((check) => check.name === 'explicit-command-execution');
+    const warnings = checks.filter((check) => check.status === 'WARN');
     const verdict = hardFailures.length
       ? 'NOT_READY'
       : executionRan
@@ -96,25 +106,28 @@ async function main() {
         : 'SAFE_TO_STAGE';
 
     const result = {
-      version: 1,
+      version: 2,
       generatedAt: new Date().toISOString(),
       startedAt,
       completedAt: new Date().toISOString(),
       candidate: { id: selected.id, source: selected.source, name: selected.name, url: selected.url },
-      isolation: { temporaryWorkspace: workspace, secretsExposed: false, networkAccess: false, remoteCodeAutoExecution: false },
+      isolation: { temporaryWorkspace: workspace, secretsExposed: false, networkAccess: 'not-guaranteed-by-this-layer', remoteCodeAutoExecution: false },
       policy: {
         discoveryDoesNotGrantTrust: true,
         remoteCodeNeverAutoExecuted: true,
         explicitCommandRequiredForBehaviorTest: true,
-        commandTimeoutMs: timeoutMs
+        commandTimeoutMs: timeoutMs,
+        behaviorProbeMode: behaviorProbe,
+        metadataWarningsDoNotGrantExecutionTrust: true
       },
       checks,
+      summary: { hardFailures: hardFailures.length, warnings: warnings.length },
       verdict
     };
 
     await fs.mkdir(path.dirname(outputPath), { recursive: true });
     await fs.writeFile(outputPath, JSON.stringify(result, null, 2) + '\n');
-    console.log(JSON.stringify({ output: outputPath, candidate: selected.id, verdict, failedChecks: hardFailures.length }, null, 2));
+    console.log(JSON.stringify({ output: outputPath, candidate: selected.id, verdict, failedChecks: hardFailures.length, warnings: warnings.length }, null, 2));
     process.exitCode = hardFailures.length ? 2 : 0;
   } finally {
     await fs.rm(workspace, { recursive: true, force: true });
