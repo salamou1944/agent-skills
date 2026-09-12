@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "mcp-registry",
+      "type": "mcp",
+      "role": "primary",
+      "baseUrl": "https://registry.modelcontextprotocol.io/v0.1/servers",
+      "trust": 0.95,
+      "notes": "Official MCP registry; cursor-paginated server metadata."
+    },
+    {
+      "id": "skills-sh",
+      "type": "skill",
+      "role": "primary",
+      "baseUrl": "https://skills.sh/api/v1/skills",
+      "trust": 0.90,
+      "notes": "Open Agent Skills catalog with search, curated skills, install counts and security audit endpoint."
+    },
+    {
+      "id": "skillsmp",
+      "type": "skill",
+      "role": "primary",
+      "baseUrl": "https://skillsmp.com/api/v1/skills/search",
+      "trust": 0.82,
+      "notes": "Large Agent Skills index with keyword/category filtering and API access."
+    },
+    {
+      "id": "glama",
+      "type": "mcp",
+      "role": "primary",
+      "baseUrl": "https://glama.ai",
+      "trust": 0.88,
+      "notes": "Large MCP registry/aggregator with quality and safety signals; use as a discovery and enrichment source."
+    },
+    {
+      "id": "smithery",
+      "type": "mcp",
+      "role": "secondary",
+      "baseUrl": "https://smithery.ai",
+      "trust": 0.82,
+      "notes": "MCP discovery and runtime/deployment ecosystem."
+    },
+    {
+      "id": "lobehub",
+      "type": "mixed",
+      "role": "secondary",
+      "baseUrl": "https://lobehub.com",
+      "trust": 0.78,
+      "notes": "Skills, agents and MCP ecosystem."
+    },
+    {
+      "id": "pulsemcp",
+      "type": "mcp",
+      "role": "secondary",
+      "baseUrl": "https://www.pulsemcp.com",
+      "trust": 0.78,
+      "notes": "MCP discovery and curation."
+    },
+    {
+      "id": "agensi",
+      "type": "mixed",
+      "role": "secondary",
+      "baseUrl": "https://www.agensi.io",
+      "trust": 0.84,
+      "notes": "Skills/MCP ecosystem with security-oriented review signals."
+    },
+    {
+      "id": "anthropic-skills",
+      "type": "skill",
+      "role": "reference",
+      "baseUrl": "https://github.com/anthropics/skills",
+      "trust": 0.96,
+      "notes": "High-trust first-party/reference skill collection."
+    },
+    {
+      "id": "github",
+      "type": "mixed",
+      "role": "execution",
+      "baseUrl": "https://github.com",
+      "trust": 0.92,
+      "notes": "Source-code, skills, APIs, Actions, issues and PR delivery layer."
+    }
+  ]
+}
