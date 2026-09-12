@@ -12,4 +12,4 @@ For each constraint ask:
 4. Can another component absorb it?
 5. Can a new interface make it irrelevant?
 
-Never bypass security, authorization, law, or safety controls. Instead design a compliant alternative. Record which constraints were genuinely broken, which were relaxed, and which remain.
+Protected boundaries remain intact. When a protected boundary blocks the direct route, design a compliant alternative instead. Record which constraints were genuinely broken, which were relaxed, and which remain.
