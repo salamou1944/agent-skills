@@ -42,8 +42,11 @@ try {
   if (safe.code !== 0) throw new Error(`safe evaluation failed: ${safe.stdout}\n${safe.stderr}`);
   const safeResult = JSON.parse(await fs.readFile(output, 'utf8'));
   if (safeResult.verdict !== 'READY_FOR_EVALUATION') throw new Error(`unexpected safe verdict: ${safeResult.verdict}`);
-  if (!safeResult.isolation || safeResult.isolation.secretsExposed !== false || safeResult.isolation.networkAccess !== false) {
-    throw new Error('sandbox isolation policy missing');
+  if (!safeResult.isolation || safeResult.isolation.secretsExposed !== false || safeResult.isolation.networkAccess !== 'not-guaranteed-by-this-layer') {
+    throw new Error('sandbox isolation contract missing');
+  }
+  if (safeResult.isolation.remoteCodeAutoExecution !== false) {
+    throw new Error('remote code auto-execution policy missing');
   }
 
   const blocked = await run([`--resolution=${resolution}`, `--output=${output}`, '--command=rm -rf /']);
