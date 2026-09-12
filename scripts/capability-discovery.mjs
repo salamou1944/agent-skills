@@ -9,27 +9,15 @@ const root = path.resolve(here, '..');
 const sourceConfig = JSON.parse(await fs.readFile(path.join(root, 'config/capability-sources.json'), 'utf8'));
 
 const DEFAULT_QUERIES = [
-  'software architecture',
-  'codebase analysis',
-  'implementation',
-  'testing',
-  'debugging',
-  'security',
-  'browser automation',
-  'API integration',
-  'database',
-  'DevOps CI/CD',
-  'documentation',
-  'GitHub',
-  'code review',
-  'research'
+  'software architecture', 'codebase analysis', 'implementation', 'testing',
+  'debugging', 'security', 'browser automation', 'API integration', 'database',
+  'DevOps CI/CD', 'documentation', 'GitHub', 'code review', 'research'
 ];
 
 const args = new Map(process.argv.slice(2).filter(x => x.startsWith('--')).map(x => {
   const [k, ...v] = x.slice(2).split('=');
   return [k, v.join('=') || true];
 }));
-
 const queries = args.has('queries') ? String(args.get('queries')).split(',').map(x => x.trim()).filter(Boolean) : DEFAULT_QUERIES;
 const limit = Math.min(Number(args.get('limit') || 50), 200);
 const output = path.resolve(root, String(args.get('output') || '.engineering-update/capability-catalog.json'));
@@ -47,19 +35,14 @@ async function getJson(url, options = {}) {
 
 function normalizeSkill(item, source, query) {
   const id = item.id || `${item.source || source.id}/${item.slug || item.name || 'unknown'}`;
-  const text = `${item.name || ''} ${item.slug || ''} ${item.description || ''} ${query}`.toLowerCase();
+  const text = `${item.name || ''} ${item.slug || ''} ${item.description || ''}`.toLowerCase();
   return {
-    id,
-    kind: 'skill',
-    source: source.id,
+    id, kind: 'skill', source: source.id,
     name: item.name || item.slug || id,
-    description: item.description || '',
-    installs: Number(item.installs || 0),
+    description: item.description || '', installs: Number(item.installs || 0),
     official: Boolean(item.official || source.id === 'anthropic-skills'),
-    duplicate: Boolean(item.isDuplicate),
-    url: item.url || item.installUrl || null,
-    text,
-    sourceTrust: source.trust
+    duplicate: Boolean(item.isDuplicate), url: item.url || item.installUrl || null,
+    text, matchedQuery: query, sourceTrust: source.trust
   };
 }
 
@@ -67,28 +50,22 @@ function normalizeMcp(item, source) {
   const server = item.server || item;
   const name = server.name || server.title || 'unknown';
   return {
-    id: server.name || `${source.id}/${name}`,
-    kind: 'mcp',
-    source: source.id,
-    name,
-    description: server.description || '',
-    installs: 0,
-    official: source.id === 'mcp-registry',
-    duplicate: false,
+    id: server.name || `${source.id}/${name}`, kind: 'mcp', source: source.id,
+    name, description: server.description || '', installs: 0,
+    official: source.id === 'mcp-registry', duplicate: false,
     url: server.repository?.url || server.websiteUrl || null,
     text: `${name} ${server.description || ''}`.toLowerCase(),
-    sourceTrust: source.trust
+    matchedQuery: 'mcp server tools', sourceTrust: source.trust
   };
 }
 
-function score(item, query) {
-  const q = query.toLowerCase().split(/\s+/).filter(Boolean);
+function score(item) {
+  const q = item.matchedQuery.toLowerCase().split(/\s+/).filter(Boolean);
   const exact = q.filter(token => item.text.includes(token)).length / Math.max(q.length, 1);
   const popularity = Math.min(Math.log10(item.installs + 1) / 7, 1);
-  const trust = item.sourceTrust;
   const official = item.official ? 0.10 : 0;
   const duplicatePenalty = item.duplicate ? 0.35 : 0;
-  return Math.max(0, Math.round((0.45 * exact + 0.25 * popularity + 0.20 * trust + official - duplicatePenalty) * 1000) / 1000);
+  return Math.max(0, Math.round((0.45 * exact + 0.25 * popularity + 0.20 * item.sourceTrust + official - duplicatePenalty) * 1000) / 1000);
 }
 
 const catalog = new Map();
@@ -101,7 +78,7 @@ for (const source of sourceConfig.sources) {
         const data = await getJson(`https://skills.sh/api/v1/skills/search?q=${encodeURIComponent(query)}&limit=${limit}`);
         for (const item of data.data || []) {
           const normalized = normalizeSkill(item, source, query);
-          normalized.score = score(normalized, query);
+          normalized.score = score(normalized);
           catalog.set(`${normalized.kind}:${normalized.id}`, normalized);
         }
         sourceStatus.push({ source: source.id, query, status: 'ok', count: (data.data || []).length });
@@ -115,12 +92,13 @@ for (const source of sourceConfig.sources) {
     for (const query of queries) {
       try {
         const data = await getJson(`https://skillsmp.com/api/v1/skills/search?q=${encodeURIComponent(query)}&limit=${limit}&sortBy=stars`);
-        for (const item of data.data?.skills || data.skills || []) {
+        const items = data.data?.skills || data.skills || [];
+        for (const item of items) {
           const normalized = normalizeSkill(item, source, query);
-          normalized.score = score(normalized, query);
+          normalized.score = score(normalized);
           catalog.set(`${normalized.kind}:${normalized.id}`, normalized);
         }
-        sourceStatus.push({ source: source.id, query, status: 'ok', count: (data.data?.skills || data.skills || []).length });
+        sourceStatus.push({ source: source.id, query, status: 'ok', count: items.length });
       } catch (error) {
         sourceStatus.push({ source: source.id, query, status: 'error', error: error.message });
       }
@@ -131,18 +109,20 @@ for (const source of sourceConfig.sources) {
     try {
       let cursor = '';
       let pages = 0;
+      let fetched = 0;
       do {
         const url = `https://registry.modelcontextprotocol.io/v0.1/servers?limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
         const data = await getJson(url);
         for (const item of data.servers || []) {
           const normalized = normalizeMcp(item, source);
-          normalized.score = score(normalized, 'mcp server tools');
+          normalized.score = score(normalized);
           catalog.set(`${normalized.kind}:${normalized.id}`, normalized);
+          fetched += 1;
         }
         cursor = data.metadata?.nextCursor || '';
         pages += 1;
       } while (cursor && pages < 3);
-      sourceStatus.push({ source: source.id, status: 'ok', pages, count: catalog.size });
+      sourceStatus.push({ source: source.id, status: 'ok', pages, count: fetched });
     } catch (error) {
       sourceStatus.push({ source: source.id, status: 'error', error: error.message });
     }
@@ -156,6 +136,10 @@ const result = {
   version: 1,
   generatedAt: new Date().toISOString(),
   queries,
+  ranking: {
+    formula: '0.45 relevance + 0.25 popularity + 0.20 source-trust + 0.10 official - duplicate penalty',
+    promotionRule: 'ranking is discovery only; security, license, compatibility, behavior and sandbox checks are mandatory before execution'
+  },
   policy: {
     discoveryIsNotTrust: true,
     duplicateSkillsExcludedFromPromotion: true,
