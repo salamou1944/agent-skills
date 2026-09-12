@@ -5,6 +5,7 @@ on:
       - '.agents/skills/**'
       - 'eval/**'
       - 'scripts/self-improve.mjs'
+      - '.github/workflows/self-improvement.yml'
   workflow_dispatch:
   schedule:
     - cron: '17 2 * * *'
