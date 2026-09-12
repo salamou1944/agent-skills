@@ -21,7 +21,7 @@ const forbidden = [
   /(^|\W)(rm\s+-rf|mkfs|shutdown|reboot)(\W|$)/i,
   /curl\s+[^\n]*\|\s*(sh|bash)/i,
   /wget\s+[^\n]*\|\s*(sh|bash)/i,
-  /(?:process\.env|/etc/passwd|id_rsa|\.ssh)(\W|$)/i,
+  /(?:process\.env|\/etc\/passwd|id_rsa|\.ssh)(\W|$)/i,
   /(?:child_process|execSync|spawnSync|eval\s*\(|new\s+Function)/i
 ];
 
