@@ -49,8 +49,9 @@ jobs:
           node-version: 22
       - run: node scripts/capability-discovery.mjs --limit=10
       - run: node scripts/capability-resolver.mjs --request="software architecture codebase implementation testing security API integration GitHub code review"
-      - run: node scripts/capability-sandbox-eval.mjs --command="node -e \"process.stdout.write('sandbox-ok')\""
+      - run: node scripts/capability-sandbox-eval.mjs --behavior-probe --command="node -e \"process.stdout.write('sandbox-ok')\""
       - name: Upload capability catalog, resolution, and sandbox evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: capability-resolution
