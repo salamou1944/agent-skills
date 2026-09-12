@@ -33,7 +33,6 @@
     {"id":"io.github.YawLabs/postgres-mcp","why":"database introspection and health checks","priority":"P1"},
     {"id":"io.github.phuongddx/jarvis","why":"SCIP code navigation and repository search","priority":"P1"},
     {"id":"com.vetosql/veto","why":"SQL safety/correctness/cost gate","priority":"P1"},
-    {"id":"com.vetosql/veto","why":"database query safety","priority":"P1"},
     {"id":"sh.releases/mcp","why":"product changelog discovery and API/MCP access","priority":"P2"},
     {"id":"site.chatgpt.tuned-drake-1114.execution-evidence-lab/preflight","why":"API/MCP preflight and executable alternatives","priority":"P0"}
   ],
