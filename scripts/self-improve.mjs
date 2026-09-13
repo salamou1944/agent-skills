@@ -20,9 +20,7 @@ function parseSkill(file) {
   if (!m) return { file, valid: false, reason: 'missing frontmatter' };
   const name = m[1].match(/^name:\s*(.+)$/m)?.[1]?.trim();
   const description = m[1].match(/^description:\s*(.+)$/m)?.[1]?.trim();
-  if (!name || !description) {
-    return { file, valid: false, reason: !name ? 'missing name' : 'missing description' };
-  }
+  if (!name || !description) return { file, valid: false, reason: !name ? 'missing name' : 'missing description' };
   return { file, valid: true, name, description, text };
 }
 
@@ -31,8 +29,10 @@ const valid = skills.filter((s) => s.valid);
 const invalid = skills.filter((s) => !s.valid);
 const cases = JSON.parse(fs.readFileSync(casesPath, 'utf8')).cases;
 
-const corpus = valid.map((s) => `${s.name} ${s.description}`.toLowerCase()).join('\n');
-const gaps = cases.filter((c) => !c.expect.some((term) => corpus.includes(term.toLowerCase())));
+// Inspect the complete skill contract, not only metadata, so acceptance criteria
+// already present in procedures/safety sections are not reported as false gaps.
+const corpus = valid.map((s) => `${s.name}\n${s.description}\n${s.text}`.toLowerCase()).join('\n');
+const gaps = cases.filter((c) => !c.expect.every((term) => corpus.includes(term.toLowerCase())));
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -40,8 +40,8 @@ const report = {
   invalidSkillCount: invalid.length,
   invalidSkills: invalid.map((s) => ({ file: path.relative('.', s.file), reason: s.reason })),
   evaluationCaseCount: cases.length,
-  detectedGaps: gaps.map((g) => ({ id: g.id, capability: g.capability, reason: 'No explicit inventory signal matched the case expectations' })),
-  status: invalid.length === 0 ? 'pass' : 'fail'
+  detectedGaps: gaps.map((g) => ({ id: g.id, capability: g.capability, reason: 'No complete explicit inventory signal matched the case expectations' })),
+  status: invalid.length === 0 && gaps.length === 0 ? 'pass' : 'fail'
 };
 
 fs.mkdirSync(outDir, { recursive: true });
