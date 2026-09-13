@@ -39,10 +39,14 @@ jobs:
           node --check apps/easy-developer-platform/server-v2-production.mjs
           node --check apps/easy-developer-platform/server.mjs
           node --check apps/easy-developer-platform/gateway.mjs
+          node --check apps/easy-developer-platform/ai-operator.mjs
           node --check scripts/platform-runtime-check.mjs
 
       - name: Platform integration proof
         run: node apps/easy-developer-platform/test.mjs
+
+      - name: AI Operator kernel proof
+        run: node apps/easy-developer-platform/test-ai-operator.mjs
 
       - name: Platform v2.1 proof
         run: node apps/easy-developer-platform/test-v2.mjs
