@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -48,7 +47,36 @@ function run(command, cwd) {
 async function main() {
   const resolution = JSON.parse(await fs.readFile(resolutionPath, 'utf8'));
   const selected = resolution?.resolution?.selected;
-  if (!selected) throw new Error('No selected capability in resolution artifact.');
+  const resolutionGaps = Array.isArray(resolution?.resolution?.gaps) ? resolution.resolution.gaps : [];
+
+  // A provenance-gated capability gap is a valid resolution outcome, not a sandbox failure.
+  // Do not execute any behavior probe when there is no selected capability.
+  if (!selected) {
+    const result = {
+      version: 2,
+      generatedAt: new Date().toISOString(),
+      candidate: null,
+      isolation: { temporaryWorkspace: null, secretsExposed: false, networkAccess: 'not-guaranteed-by-this-layer', remoteCodeAutoExecution: false },
+      policy: {
+        discoveryDoesNotGrantTrust: true,
+        remoteCodeNeverAutoExecuted: true,
+        explicitCommandRequiredForBehaviorTest: true,
+        commandTimeoutMs: timeoutMs,
+        behaviorProbeMode: behaviorProbe,
+        metadataWarningsDoNotGrantExecutionTrust: true
+      },
+      checks: [
+        { name: 'candidate-selected', status: 'NOT_RUN', reason: 'NO_SELECTED_CAPABILITY' },
+        { name: 'provenance-gated-resolution', status: resolutionGaps.length ? 'PASS' : 'WARN', gaps: resolutionGaps }
+      ],
+      summary: { hardFailures: 0, warnings: resolutionGaps.length ? 0 : 1 },
+      verdict: 'NO_CANDIDATE'
+    };
+    await fs.mkdir(path.dirname(outputPath), { recursive: true });
+    await fs.writeFile(outputPath, JSON.stringify(result, null, 2) + '\n');
+    console.log(JSON.stringify({ output: outputPath, candidate: null, verdict: result.verdict, failedChecks: 0, warnings: result.summary.warnings }, null, 2));
+    return;
+  }
 
   const workspace = await fs.mkdtemp(path.join(os.tmpdir(), 'capability-sandbox-'));
   const startedAt = new Date().toISOString();
@@ -74,8 +102,6 @@ async function main() {
     const policyMatches = forbidden.filter((pattern) => pattern.test(serialized)).length;
     checks.push({ name: 'metadata-static-safety', status: policyMatches === 0 ? 'PASS' : 'WARN', matches: policyMatches });
 
-    // Remote candidate code is never downloaded or executed implicitly.
-    // Behavior execution is opt-in through an explicit, policy-checked command.
     const command = String(args.get('command') || '').trim();
     if (command) {
       const unsafe = forbidden.some((pattern) => pattern.test(command));
