@@ -1,0 +1,44 @@
+name: EASY Platform Website
+
+on:
+  push:
+    branches: ['feat/code-guardian-v1']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: easy-platform-pages
+  cancel-in-progress: true
+
+jobs:
+  validate-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate website document
+        run: |
+          test -s index.html
+          grep -q 'EASY Platform' index.html
+          grep -q 'Code Guardian' index.html
+          grep -q 'Provider-neutral' index.html
+          node --version
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    needs: validate-site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy EASY Platform website
+        id: deployment
+        uses: actions/deploy-pages@v4
