@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "deficits": [
+    {
+      "id": "DEF-001",
+      "capability": "tool-discovery-and-selection",
+      "severity": "high",
+      "status": "open",
+      "trigger": "Need to choose among a growing tool surface without loading everything",
+      "evidence": "OpenAI documents deferred tool search as a pattern for large tool surfaces",
+      "nextAction": "Build a provider-neutral tool registry/search/ranking layer"
+    },
+    {
+      "id": "DEF-002",
+      "capability": "tool-security-admission",
+      "severity": "high",
+      "status": "open",
+      "trigger": "A candidate tool can be useful but unsafe or over-privileged",
+      "evidence": "MCP reference repository warns reference servers are not production-ready guarantees",
+      "nextAction": "Build permission manifest + static checks + runtime smoke/security gate"
+    },
+    {
+      "id": "DEF-003",
+      "capability": "tool-factory",
+      "severity": "high",
+      "status": "open",
+      "trigger": "We need a capability not present in the accepted registry",
+      "evidence": "No provider-neutral generator/adapter currently records the complete lifecycle",
+      "nextAction": "Build tool-factory contract that creates schema, adapter, tests and evidence together"
+    }
+  ]
+}
