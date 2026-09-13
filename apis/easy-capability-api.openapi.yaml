@@ -1,0 +1,64 @@
+openapi: 3.0.3
+info:
+  title: EASY Capability API
+  version: 0.1.0
+  description: Provider-neutral contract for auditing and advancing EASY engineering capabilities.
+paths:
+  /v1/easy/capabilities/audit:
+    post:
+      operationId: auditEasyCapabilities
+      summary: Audit EASY capability state and return the first blocking gap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CapabilityState'
+      responses:
+        '200':
+          description: Deterministic capability audit
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityAudit'
+        '400':
+          description: Invalid capability state
+        '500':
+          description: Internal audit failure
+components:
+  schemas:
+    CapabilityState:
+      type: object
+      required: [declared, implemented, validated]
+      properties:
+        declared:
+          type: array
+          items: {type: string}
+        implemented:
+          type: array
+          items: {type: string}
+        validated:
+          type: array
+          items: {type: string}
+    CapabilityAudit:
+      type: object
+      required: [schemaVersion, complete, firstGap, rows]
+      properties:
+        schemaVersion: {type: integer, enum: [1]}
+        complete: {type: boolean}
+        firstGap:
+          type: string
+          nullable: true
+        rows:
+          type: array
+          items:
+            type: object
+            required: [capability, declared, implemented, validated, status]
+            properties:
+              capability: {type: string}
+              declared: {type: boolean}
+              implemented: {type: boolean}
+              validated: {type: boolean}
+              status:
+                type: string
+                enum: [validated, implemented-unvalidated, declared-only, missing]

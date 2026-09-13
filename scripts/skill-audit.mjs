@@ -6,10 +6,10 @@ const deficits = [];
 let total = 0;
 let passed = 0;
 
-function walk(dir, root) {
+function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, root);
+    if (entry.isDirectory()) walk(full);
     else if (entry.name === 'SKILL.md') {
       total++;
       const text = fs.readFileSync(full, 'utf8').trim();
@@ -24,8 +24,8 @@ function walk(dir, root) {
   }
 }
 
-for (const root of roots) walk(root, root);
-const report = { total, passed, failed: deficits.length, deficits };
-console.log(`skill audit: ${passed}/${total} operationally structured`);
+for (const root of roots) walk(root);
+const report = { scope: 'all-skills', total, passed, failed: deficits.length, deficits };
+console.log(`skill audit: ${passed}/${total} operationally structured (${report.scope})`);
 console.log(JSON.stringify(report, null, 2));
 if (deficits.length) process.exitCode = 1;

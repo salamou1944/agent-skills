@@ -64,7 +64,7 @@ Reference these guidelines when:
 
 ### 4. React 19 APIs (MEDIUM)
 
-> **⚠️ React 19+ only.** Skip this section if using React 18 or earlier.
+> **React 19+ only.** Skip this section if using React 18 or earlier.
 
 - `react19-no-forwardref` - Don't use `forwardRef`; use `use()` instead of `useContext()`
 
@@ -83,6 +83,13 @@ Each rule file contains:
 - Incorrect code example with explanation
 - Correct code example with explanation
 - Additional context and references
+
+## Operational contract
+
+- **Must:** choose composition over accumulating boolean mode props when the component API is becoming combinatorial.
+- **Steps:** identify the component boundary; list state and variants; select compound components, explicit variants, children, or context as appropriate; keep implementation details behind the provider/interface boundary.
+- **Validation:** review the resulting API for independent composition, stable state ownership, and absence of unnecessary boolean flags; run the relevant component tests or type checks.
+- **Failure:** if a proposed composition increases coupling or obscures state ownership, reject it and preserve the simpler explicit API until the tradeoff is justified.
 
 ## Full Compiled Document
 

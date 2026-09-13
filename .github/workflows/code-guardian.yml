@@ -1,0 +1,43 @@
+name: code-guardian
+on:
+  push:
+    paths:
+      - '**.js'
+      - '**.mjs'
+      - '**.cjs'
+      - 'tools/code-guardian.mjs'
+      - 'api/code-guardian.mjs'
+      - 'skills/code-guardian/**'
+      - 'scripts/code-guardian-self-test.mjs'
+      - '.github/workflows/code-guardian.yml'
+  pull_request:
+    paths:
+      - '**.js'
+      - '**.mjs'
+      - '**.cjs'
+      - 'skills/code-guardian/**'
+      - '.github/workflows/code-guardian.yml'
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Self-test
+        run: node scripts/code-guardian-self-test.mjs
+      - name: Guard changed JavaScript
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            files=$(git diff --name-only HEAD^1 HEAD -- '*.js' '*.mjs' '*.cjs' | tr '\n' ' ')
+          else
+            files=$(git diff --name-only HEAD^ HEAD -- '*.js' '*.mjs' '*.cjs' | tr '\n' ' ')
+          fi
+          if [ -z "$files" ]; then echo 'No JavaScript changes to scan.'; exit 0; fi
+          for f in $files; do node --check "$f"; done
