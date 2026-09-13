@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { randomUUID } from 'node:crypto';
+
 /**
  * Provider-neutral source/fallback reliability primitive.
  *
@@ -7,8 +9,8 @@
  * - sources are ordered by priority;
  * - every accepted value passes the same validation gate;
  * - retries happen before fallback;
- * - timeouts are bounded with AbortController when the source supports signal;
- * - unhealthy sources are cooled down, but a controlled probe is possible;
+ * - timeouts are hard-bounded even when a provider ignores AbortSignal;
+ * - unhealthy sources are cooled down, but a controlled recovery probe is possible;
  * - failures never expose source payloads in the report.
  */
 
@@ -33,8 +35,7 @@ export class SourceHealthRegistry {
   }
 
   available(id) {
-    const state = this.state(id);
-    return state.openUntil <= this.clock();
+    return this.state(id).openUntil <= this.clock();
   }
 
   recordSuccess(id) {
@@ -58,15 +59,27 @@ export class SourceHealthRegistry {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function normalizeError(error) {
-  if (error?.name === 'AbortError') return 'source timeout';
+  if (error?.kind === 'timeout' || error?.name === 'AbortError') return 'source timeout';
   return error instanceof Error ? error.message : String(error);
 }
 
 async function runWithTimeout(source, context, timeoutMs) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      const error = new Error('source timeout');
+      error.kind = 'timeout';
+      reject(error);
+    }, timeoutMs);
+  });
+
   try {
-    return await source.fetch({ ...context, signal: controller.signal });
+    return await Promise.race([
+      source.fetch({ ...context, signal: controller.signal }),
+      timeout,
+    ]);
   } finally {
     clearTimeout(timer);
   }
@@ -102,7 +115,7 @@ export class ReliableSourceRouter {
     this.random = random;
   }
 
-  async execute({ operation, requestId = crypto.randomUUID(), metadata = {} }) {
+  async execute({ operation, requestId = randomUUID(), metadata = {} }) {
     const report = {
       version: 1,
       requestId,
