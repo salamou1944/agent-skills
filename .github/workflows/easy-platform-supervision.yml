@@ -44,6 +44,8 @@ jobs:
           node --check apps/easy-developer-platform/operator-tools.mjs
           node --check apps/easy-developer-platform/operator-worker.mjs
           node --check apps/easy-developer-platform/operator-intelligence.mjs
+          node --check apps/easy-developer-platform/operator-api.mjs
+          node --check apps/easy-developer-platform/test-operator-api.mjs
           node --check scripts/platform-runtime-check.mjs
 
       - name: Platform integration proof
@@ -51,6 +53,9 @@ jobs:
 
       - name: AI Operator kernel proof
         run: node apps/easy-developer-platform/test-ai-operator.mjs
+
+      - name: AI Operator control API proof
+        run: node apps/easy-developer-platform/test-operator-api.mjs
 
       - name: Platform v2.1 proof
         run: node apps/easy-developer-platform/test-v2.mjs
@@ -95,5 +100,3 @@ jobs:
           if [ -f /tmp/easy-platform.pid ]; then kill "$(cat /tmp/easy-platform.pid)" || true; fi
           cat /tmp/easy-gateway.log || true
           cat /tmp/easy-platform.log || true
-
-# CI trigger verification: force a fresh run after a repaired commit.
