@@ -9,8 +9,7 @@ import { TOOL_REGISTRY, inspectWorkspace, guardianScan, verifySyntax } from './o
 
 const workspace=await mkdtemp(join(tmpdir(),'easy-operator-'));
 const stateFile=join(workspace,'state.json');
-process.env.EASY_OPERATOR_STATE=stateFile;
-process.env.EASY_OPERATOR_WORKSPACE=workspace;
+const options={workspace,stateFile};
 try{
   const p=plan('inspect this project');
   assert.equal(p.mode,'fail-closed');
@@ -42,10 +41,10 @@ try{
   const task=createTask('inspect queued project');
   const state=await saveState(stateFile,{version:1,tasks:[task]});
   assert.equal(state.tasks.length,1);
-  const workerResult=await runOnce.call({});
-  assert.ok(workerResult===null || ['VERIFIED','BLOCKED','FAILED'].includes(workerResult.status));
+  const workerResult=await runOnce(options);
+  assert.ok(workerResult && workerResult.status==='VERIFIED');
   const final=await loadState(stateFile);
-  assert.ok(['VERIFIED','BLOCKED','FAILED'].includes(final.tasks[0].status));
+  assert.equal(final.tasks[0].status,'VERIFIED');
   assert.equal(report(final).totals.queued,0);
 
   console.log('AI Operator kernel + queue/tools self-test: PASS');
