@@ -1,0 +1,80 @@
+name: EASY CI Governor
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+  workflow_dispatch:
+
+concurrency:
+  group: easy-ci-governor-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  governor:
+    name: Governor invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependency set
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run CI Governor
+        run: node scripts/ci-governor.mjs
+      - name: Publish governor evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-governor-${{ github.sha }}
+          path: .ci/governor-report.json
+          if-no-files-found: error
+
+  platform-proof:
+    name: Platform proof
+    needs: governor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Run EASY platform integration proof
+        run: node apps/easy-developer-platform/test-v2.mjs
+      - name: Run EASY core proof when present
+        shell: bash
+        run: |
+          if [[ -f apps/easy/test.mjs ]]; then
+            node apps/easy/test.mjs
+          else
+            echo 'EASY core test not present; platform proof remains authoritative.'
+          fi
+
+  final-gate:
+    name: Final gate
+    needs: [governor, platform-proof]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Fail closed unless every required gate passed
+        run: |
+          test '${{ needs.governor.result }}' = 'success'
+          test '${{ needs.platform-proof.result }}' = 'success'
+          echo "EASY CI Governor: PASS — $GITHUB_SHA"
