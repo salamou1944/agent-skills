@@ -45,7 +45,9 @@ jobs:
           node --check apps/easy-developer-platform/operator-worker.mjs
           node --check apps/easy-developer-platform/operator-intelligence.mjs
           node --check apps/easy-developer-platform/operator-api.mjs
+          node --check apps/easy-developer-platform/github-provider.mjs
           node --check apps/easy-developer-platform/test-operator-api.mjs
+          node --check apps/easy-developer-platform/test-github-provider.mjs
           node --check scripts/platform-runtime-check.mjs
 
       - name: Platform integration proof
@@ -56,6 +58,9 @@ jobs:
 
       - name: AI Operator control API proof
         run: node apps/easy-developer-platform/test-operator-api.mjs
+
+      - name: GitHub provider boundary proof
+        run: node apps/easy-developer-platform/test-github-provider.mjs
 
       - name: Platform v2.1 proof
         run: node apps/easy-developer-platform/test-v2.mjs
