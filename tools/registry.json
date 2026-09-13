@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "selection": {
+    "minimumTrust": "A",
+    "requiredEvidence": ["upstream", "maintenance", "security", "license", "testability"]
+  },
+  "candidates": [
+    {"id":"mcp-fetch","source":"modelcontextprotocol/servers","capability":"web-fetch","tier":"reference","status":"candidate"},
+    {"id":"mcp-filesystem","source":"modelcontextprotocol/servers","capability":"filesystem","tier":"reference","status":"candidate"},
+    {"id":"mcp-git","source":"modelcontextprotocol/servers","capability":"git","tier":"reference","status":"candidate"},
+    {"id":"mcp-memory","source":"modelcontextprotocol/servers","capability":"persistent-memory","tier":"reference","status":"candidate"},
+    {"id":"mcp-time","source":"modelcontextprotocol/servers","capability":"time-timezone","tier":"reference","status":"candidate"},
+    {"id":"openai-tool-search","source":"openai-agents-sdk","capability":"dynamic-tool-discovery","tier":"first-party","status":"candidate"},
+    {"id":"openai-sandbox-execution","source":"openai-agents-sdk","capability":"sandboxed-execution","tier":"first-party","status":"candidate"},
+    {"id":"langchain-integrations","source":"langchain-ai","capability":"external-integrations","tier":"first-party-ecosystem","status":"candidate"}
+  ]
+}
