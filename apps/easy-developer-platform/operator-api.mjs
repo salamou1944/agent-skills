@@ -38,7 +38,7 @@ export async function handle(req,res){
     }
     if(req.method==='POST'&&url.pathname==='/api/operator/github/execute'){
       const x=await body(req);
-      const result=await executeGithubChange({owner:x.owner,repo:x.repo,base:x.base,title:x.title,body:x.body,changes:x.changes,approved:x.approved===true,token:x.token||process.env.GITHUB_TOKEN||process.env.EASY_GITHUB_TOKEN});
+      const result=await executeGithubChange({owner:x.owner,repo:x.repo,base:x.base,title:x.title,body:x.body,changes:x.changes,approved:x.approved===true,token:process.env.GITHUB_TOKEN||process.env.EASY_GITHUB_TOKEN});
       return send(res,result.status==='VERIFIED'?200:result.status==='WAITING_APPROVAL'?428:403,result);
     }
     return send(res,404,{error:'not_found'});
