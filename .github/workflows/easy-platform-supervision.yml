@@ -88,7 +88,7 @@ jobs:
       - name: Verify gateway website and platform handoff
         run: |
           curl -fsS http://127.0.0.1:8789/ | grep -F "Enter EASY Platform"
-          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '\"platformOnline\":true'
+          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '"platformOnline":true'
 
       - name: Verify dashboard response
         run: curl -fsS http://127.0.0.1:8790/ | grep -F "EASY Developer Platform"
