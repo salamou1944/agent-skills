@@ -6,6 +6,7 @@ import { execute, plan } from './ai-operator.mjs';
 import { createTask, loadState, saveState } from './operator-state.mjs';
 import { runOnce, report } from './operator-worker.mjs';
 import { TOOL_REGISTRY, inspectWorkspace, guardianScan, verifySyntax } from './operator-tools.mjs';
+import { intelligenceStatus, planWithIntelligence } from './operator-intelligence.mjs';
 
 const workspace=await mkdtemp(join(tmpdir(),'easy-operator-'));
 const stateFile=join(workspace,'state.json');
@@ -22,6 +23,11 @@ try{
   assert.ok(TOOL_REGISTRY.includes('syntax_verification'));
   assert.equal((await guardianScan(workspace)).ok,true);
   assert.equal((await verifySyntax(workspace)).ok,true);
+
+  const intelligence=intelligenceStatus({});
+  assert.equal(intelligence.providerConfigured,false);
+  const modelPlan=await planWithIntelligence('inspect this project',{env:{}});
+  assert.equal(modelPlan.intelligence.status,'UNAVAILABLE');
 
   await writeFile(join(workspace,'broken.mjs'),'const = 1;');
   r=await execute('inspect this project',{workspace});
@@ -47,5 +53,5 @@ try{
   assert.equal(final.tasks[0].status,'VERIFIED');
   assert.equal(report(final).totals.queued,0);
 
-  console.log('AI Operator kernel + queue/tools self-test: PASS');
+  console.log('AI Operator kernel + queue/tools/intelligence self-test: PASS');
 }finally{await rm(workspace,{recursive:true,force:true});}
