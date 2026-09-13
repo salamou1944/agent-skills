@@ -59,15 +59,17 @@ export async function verifySyntax(workspace='.') {
 }
 
 export async function runNamedTool(name, args={}) {
-  if (name==='inspect_workspace') return inspectWorkspace(args.workspace);
-  if (name==='guardian_scan') return guardianScan(args.workspace);
-  if (name==='syntax_verification') return verifySyntax(args.workspace);
+  const root=resolve(args.workspace||'.');
+  if (name==='inspect_workspace') return inspectWorkspace(root);
+  if (name==='guardian_scan') return guardianScan(root);
+  if (name==='syntax_verification') return verifySyntax(root);
   if (name==='run_test') {
     const test=args.test;
-    if (!test || test.includes('..') || !EXT.test(test)) throw new Error('invalid_test_path');
-    const root=resolve(args.workspace||'.');
-    const result=await run(COMMANDS.tests.args(join(root,test)), root, args.timeout||30000);
-    return {tool:'run_test',ok:result.ok,test,error:result.error,stdout:result.stdout.slice(0,4000),stderr:result.stderr.slice(0,4000)};
+    if (!test || !EXT.test(test)) throw new Error('invalid_test_path');
+    const target=resolve(root,test);
+    if (!(target===root||target.startsWith(root+'/' ))) throw new Error('invalid_test_path');
+    const result=await run(COMMANDS.tests.args(target), root, args.timeout||30000);
+    return {tool:'run_test',ok:result.ok,test:relative(root,target),error:result.error,stdout:result.stdout.slice(0,4000),stderr:result.stderr.slice(0,4000)};
   }
   throw new Error('tool_not_allowed');
 }
