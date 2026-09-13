@@ -12,7 +12,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   supervise:
@@ -48,6 +49,7 @@ jobs:
           node --check apps/easy-developer-platform/github-provider.mjs
           node --check apps/easy-developer-platform/github-operator-executor.mjs
           node --check apps/easy-developer-platform/external-connection-check.mjs
+          node --check apps/easy-developer-platform/external-write-proof.mjs
           node --check apps/easy-developer-platform/test-operator-api.mjs
           node --check apps/easy-developer-platform/test-github-provider.mjs
           node --check apps/easy-developer-platform/test-github-operator-executor.mjs
@@ -72,6 +74,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node apps/easy-developer-platform/external-connection-check.mjs
+
+      - name: Verify real GitHub write and pull request connection
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: node apps/easy-developer-platform/external-write-proof.mjs
 
       - name: Platform v2.1 proof
         run: node apps/easy-developer-platform/test-v2.mjs
