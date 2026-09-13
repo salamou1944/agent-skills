@@ -1,32 +1,55 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "deficits": [
     {
       "id": "DEF-001",
       "capability": "tool-discovery-and-selection",
       "severity": "high",
-      "status": "open",
+      "status": "closed",
       "trigger": "Need to choose among a growing tool surface without loading everything",
-      "evidence": "OpenAI documents deferred tool search as a pattern for large tool surfaces",
-      "nextAction": "Build a provider-neutral tool registry/search/ranking layer"
+      "resolution": "Provider-neutral registry discovery and deterministic ranking implemented in tools/tool-registry.mjs"
     },
     {
       "id": "DEF-002",
       "capability": "tool-security-admission",
       "severity": "high",
-      "status": "open",
+      "status": "closed",
       "trigger": "A candidate tool can be useful but unsafe or over-privileged",
-      "evidence": "MCP reference repository warns reference servers are not production-ready guarantees",
-      "nextAction": "Build permission manifest + static checks + runtime smoke/security gate"
+      "resolution": "Fail-closed manifest admission implemented in tools/tool-admission.mjs; sensitive permissions require approval"
     },
     {
       "id": "DEF-003",
       "capability": "tool-factory",
       "severity": "high",
-      "status": "open",
+      "status": "closed",
       "trigger": "We need a capability not present in the accepted registry",
-      "evidence": "No provider-neutral generator/adapter currently records the complete lifecycle",
-      "nextAction": "Build tool-factory contract that creates schema, adapter, tests and evidence together"
+      "resolution": "Provider-neutral scaffold factory implemented in tools/tool-factory.mjs; generated adapters remain explicitly unimplemented until tested"
+    },
+    {
+      "id": "DEF-004",
+      "capability": "failure-to-capability-loop",
+      "severity": "high",
+      "status": "closed",
+      "trigger": "A test or tool failure must create a reproducible capability deficit and next action",
+      "resolution": "Failure classification and deficit-to-factory specification implemented in tools/capability-loop.mjs"
+    },
+    {
+      "id": "DEF-005",
+      "capability": "independent-external-tool-execution",
+      "severity": "high",
+      "status": "open",
+      "trigger": "Trusted-source candidates must be executed against real upstream implementations before promotion",
+      "evidence": "Current GitHub connector can inspect repository source and CI but this turn does not provide a general arbitrary-process runner against every external MCP server",
+      "nextAction": "Run candidate-specific integration tests in a network-enabled sandbox and promote only passing tools"
+    },
+    {
+      "id": "DEF-006",
+      "capability": "full-skill-behavioral-harness",
+      "severity": "medium",
+      "status": "open",
+      "trigger": "SKILL.md files can be structurally audited, but natural-language skills need task fixtures to prove behavioral outcomes",
+      "evidence": "skill-audit.mjs now checks operational contract structure but does not execute prose instructions as an agent runtime",
+      "nextAction": "Add fixture-driven skill harness that maps each skill to deterministic inputs, expected evidence and failure cases"
     }
   ]
 }
