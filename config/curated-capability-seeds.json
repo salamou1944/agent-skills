@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "purpose": "High-value starting set for engineering capability evaluation. These are candidates, not trusted executables.",
+  "skills": [
+    {"id":"vercel-labs/skills/find-skills","why":"capability discovery itself","priority":"P0"},
+    {"id":"mattpocock/skills/improve-codebase-architecture","why":"architecture improvement","priority":"P0"},
+    {"id":"mattpocock/skills/codebase-design","why":"codebase design and structure","priority":"P0"},
+    {"id":"mattpocock/skills/domain-modeling","why":"domain modeling before implementation","priority":"P0"},
+    {"id":"mattpocock/skills/tdd","why":"test-first implementation","priority":"P0"},
+    {"id":"mattpocock/skills/diagnosing-bugs","why":"systematic debugging","priority":"P0"},
+    {"id":"mattpocock/skills/code-review","why":"independent review capability","priority":"P0"},
+    {"id":"mattpocock/skills/implement","why":"implementation workflow","priority":"P0"},
+    {"id":"mattpocock/skills/research","why":"technical research","priority":"P1"},
+    {"id":"vercel-labs/agent-skills/agent-browser","why":"browser execution and verification","priority":"P0"},
+    {"id":"vercel-labs/agent-skills/vercel-react-best-practices","why":"frontend implementation quality","priority":"P1"},
+    {"id":"vercel-labs/agent-skills/web-design-guidelines","why":"UI quality review","priority":"P1"},
+    {"id":"anthropics/skills/frontend-design","why":"first-party frontend design reference","priority":"P1"},
+    {"id":"microsoft/azure-skills/microsoft-foundry","why":"cloud/AI platform integration reference","priority":"P2"},
+    {"id":"microsoft/azure-skills/azure-diagnostics","why":"diagnostics and operational troubleshooting","priority":"P1"},
+    {"id":"microsoft/azure-skills/azure-rbac","why":"authorization/security modeling","priority":"P1"},
+    {"id":"microsoft/azure-skills/azure-compute","why":"compute infrastructure operations","priority":"P2"},
+    {"id":"microsoft/azure-skills/azure-cloud-migrate","why":"migration planning","priority":"P2"},
+    {"id":"remotion-dev/skills/remotion-best-practices","why":"programmatic media generation reference","priority":"P2"},
+    {"id":"heygen-com/hyperframes/hyperframes-cli","why":"media workflow automation candidate","priority":"P2"}
+  ],
+  "mcp": [
+    {"id":"io.github.github/github-mcp-server","why":"repository, issue, PR and workflow control","priority":"P0"},
+    {"id":"io.github.microsoft/playwright-mcp","why":"real browser automation and E2E verification","priority":"P0"},
+    {"id":"dev.codepathfinder/pathfinder","why":"code intelligence and symbol/call-graph analysis","priority":"P0"},
+    {"id":"io.github.j0hanz/filesystem-mcp","why":"secure file read/write/search/diff/patch","priority":"P0"},
+    {"id":"io.github.yubinbin32-ops/mdflow","why":"task-scoped context, verified mutation and rollback","priority":"P0"},
+    {"id":"io.github.hashgraph-online/hol-guard","why":"security evidence and approval workflows","priority":"P0"},
+    {"id":"io.github.YawLabs/postgres-mcp","why":"database introspection and health checks","priority":"P1"},
+    {"id":"io.github.phuongddx/jarvis","why":"SCIP code navigation and repository search","priority":"P1"},
+    {"id":"com.vetosql/veto","why":"SQL safety/correctness/cost gate","priority":"P1"},
+    {"id":"sh.releases/mcp","why":"product changelog discovery and API/MCP access","priority":"P2"},
+    {"id":"site.chatgpt.tuned-drake-1114.execution-evidence-lab/preflight","why":"API/MCP preflight and executable alternatives","priority":"P0"}
+  ],
+  "rule": "Every seed must pass provenance, security, compatibility, sandbox and behavioral verification before promotion. Popularity alone is never sufficient."
+}

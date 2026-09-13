@@ -1,0 +1,61 @@
+name: engineering-update-core
+
+on:
+  push:
+    paths:
+      - 'scripts/engineering-update.mjs'
+      - 'scripts/engineering-update-self-test.mjs'
+      - 'scripts/capability-discovery.mjs'
+      - 'scripts/capability-discovery-self-test.mjs'
+      - 'scripts/capability-resolver.mjs'
+      - 'scripts/capability-resolver-self-test.mjs'
+      - 'scripts/capability-sandbox-eval.mjs'
+      - 'scripts/capability-sandbox-eval-self-test.mjs'
+      - 'config/capability-sources.json'
+      - '.github/workflows/engineering-update-core.yml'
+  pull_request:
+    paths:
+      - 'scripts/engineering-update.mjs'
+      - 'scripts/engineering-update-self-test.mjs'
+      - 'scripts/capability-discovery.mjs'
+      - 'scripts/capability-discovery-self-test.mjs'
+      - 'scripts/capability-resolver.mjs'
+      - 'scripts/capability-resolver-self-test.mjs'
+      - 'scripts/capability-sandbox-eval.mjs'
+      - 'scripts/capability-sandbox-eval-self-test.mjs'
+      - 'config/capability-sources.json'
+      - '.github/workflows/engineering-update-core.yml'
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/engineering-update-self-test.mjs
+      - run: node scripts/capability-discovery-self-test.mjs
+      - run: node scripts/capability-resolver-self-test.mjs
+      - run: node scripts/capability-sandbox-eval-self-test.mjs
+
+  live-capability-discovery:
+    runs-on: ubuntu-latest
+    needs: self-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/capability-discovery.mjs --limit=10
+      - run: node scripts/capability-resolver.mjs --request="software architecture codebase implementation testing security API integration GitHub code review"
+      - run: node scripts/capability-sandbox-eval.mjs --behavior-probe --command="node -e \"process.stdout.write('sandbox-ok')\""
+      - name: Upload capability catalog, resolution, and sandbox evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capability-resolution
+          path: |
+            .engineering-update/capability-catalog.json
+            .engineering-update/capability-resolution.json
+            .engineering-update/capability-sandbox-evaluation.json
