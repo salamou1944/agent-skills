@@ -1,6 +1,6 @@
 # EASY Developer Platform
 
-EASY Developer Platform is the control plane for EASY Group: a provider-neutral developer environment intended to be the foundation on which EASY itself can be built.
+EASY Developer Platform is the control plane for EASY Group and the controlled foundation on which EASY can be built.
 
 ## Current capabilities
 
@@ -14,6 +14,7 @@ EASY Developer Platform is the control plane for EASY Group: a provider-neutral 
 - Deterministic platform verification endpoint and CI self-test
 - Runtime readiness endpoint for Agent, GitHub and deployment providers
 - Build orchestration pipeline: `queued -> guarded -> tested -> preview_ready -> provider_unavailable/ready_for_provider`
+- Real Node syntax validation for `.js`, `.mjs`, and `.cjs` files, executed without a shell and with a hard timeout
 - Local preview boundary
 - Explicit deployment gate that fails closed until a real deployment provider and adapter are configured
 - Existing EASY Core remains a separate project and is not replaced
@@ -21,9 +22,11 @@ EASY Developer Platform is the control plane for EASY Group: a provider-neutral 
 
 ## Build contract
 
-A project can be placed into the platform build pipeline through `/api/builds`. Each build must pass the workspace Guardian gate before it can advance to testing and preview readiness. If no validated execution provider exists, the pipeline stops explicitly at `provider_unavailable`; it never pretends that external execution occurred.
+A project enters the controlled build pipeline through `/api/builds`. Every build must pass the workspace Guardian gate and the safe Node syntax gate before it reaches preview readiness. If no validated execution provider exists, the pipeline stops explicitly at `provider_unavailable`; it never claims that an external Agent executed the build.
 
-This makes the platform suitable as the controlled foundation for building EASY while preserving a strict distinction between implemented local capabilities and external integrations that still require adapters.
+## What remains an external integration
+
+The platform deliberately does not fake capabilities that require infrastructure or credentials. A production Agent runtime, GitHub write/synchronization adapter, production sandbox, hosted preview service, and deployment adapter require their respective validated implementations and configuration. Their readiness is exposed by the runtime boundary.
 
 ## Architecture
 
@@ -31,23 +34,22 @@ This makes the platform suitable as the controlled foundation for building EASY 
 
 ## Provider boundaries
 
-The platform exposes explicit readiness state rather than silently assuming integrations exist:
+- `EASY_AGENT_PROVIDER` — Agent execution boundary.
+- `EASY_GITHUB_PROVIDER` — GitHub integration boundary.
+- `EASY_DEPLOY_PROVIDER` — deployment provider boundary.
 
-- `EASY_AGENT_PROVIDER` enables the Agent execution boundary.
-- `EASY_GITHUB_PROVIDER` identifies a GitHub integration boundary.
-- `EASY_DEPLOY_PROVIDER` identifies a deployment provider boundary.
-
-Setting a provider name does not magically implement the integration. Every provider must still have a validated adapter before production execution or deployment is allowed.
+A provider name alone never authorizes execution or deployment. A validated adapter is required.
 
 ## Safety model
 
 - Workspace paths are confined to the project workspace root.
 - Guardian blocks known credential/private-key/token patterns.
 - Agent tasks never execute merely because they were queued.
-- Builds cannot pass the Guardian gate when sensitive patterns are detected.
+- Build progression is fail-closed on Guardian or syntax failures.
+- Node syntax checks use `shell:false` and a timeout.
 - Deployment fails closed when no validated adapter exists.
 - External AI generation is not enabled by this platform.
 
 ## Version
 
-0.5.0
+0.5.1
