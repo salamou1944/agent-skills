@@ -1,11 +1,12 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 export const STATES = Object.freeze(['QUEUED','RUNNING','WAITING_APPROVAL','VERIFIED','FAILED','BLOCKED']);
 
 export function createTask(goal, metadata={}) {
   const now = new Date().toISOString();
-  return { id: crypto.randomUUID(), goal: String(goal || '').trim(), status: 'QUEUED', attempts: 0, createdAt: now, updatedAt: now, metadata, evidence: [], result: null };
+  return { id: randomUUID(), goal: String(goal || '').trim(), status: 'QUEUED', attempts: 0, createdAt: now, updatedAt: now, metadata, evidence: [], result: null };
 }
 
 export async function loadState(file) {
