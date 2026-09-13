@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { loadRegistry, discoverTools, selectTool } from '../tools/tool-registry.mjs';
 import { admitTool } from '../tools/tool-admission.mjs';
 import { buildToolPackage } from '../tools/tool-factory.mjs';
+import { classifyFailure, deficitFromFailure, factorySpecFromDeficit } from '../tools/capability-loop.mjs';
 
 const registry = loadRegistry();
 assert.equal(registry.schemaVersion, 2);
@@ -32,5 +33,11 @@ assert.equal(packageResult.manifest.id, 'demo-tool');
 assert.ok(packageResult.files['tools/generated/demo-tool/adapter.mjs']);
 assert.ok(packageResult.files['tools/generated/demo-tool/self-test.mjs']);
 assert.ok(packageResult.files['tools/generated/demo-tool/EVIDENCE.md']);
+
+assert.equal(classifyFailure(new Error('schema mismatch')), 'implementation');
+const deficit = deficitFromFailure({ capability: 'demo-gap', error: new Error('schema mismatch'), evidence: ['self-test'] });
+assert.equal(deficit.status, 'open');
+assert.equal(deficit.failureClass, 'implementation');
+assert.equal(factorySpecFromDeficit(deficit).capability, 'demo-gap');
 
 console.log('tool system self-test: PASS');
