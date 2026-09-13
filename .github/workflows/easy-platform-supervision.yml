@@ -87,3 +87,5 @@ jobs:
           if [ -f /tmp/easy-platform.pid ]; then kill "$(cat /tmp/easy-platform.pid)" || true; fi
           cat /tmp/easy-gateway.log || true
           cat /tmp/easy-platform.log || true
+
+# CI trigger verification: force a fresh run after a repaired commit.
