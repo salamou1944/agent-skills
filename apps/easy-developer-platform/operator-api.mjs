@@ -1,10 +1,11 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import { resolve } from 'node:path';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { submit, runOnce } from './operator-worker.mjs';
 import { loadState } from './operator-state.mjs';
 import { intelligenceStatus } from './operator-intelligence.mjs';
+import { executeGithubChange } from './github-operator-executor.mjs';
 
 const port=Number(process.env.EASY_OPERATOR_PORT||8792);
 const bind=process.env.EASY_OPERATOR_BIND||'127.0.0.1';
@@ -34,6 +35,11 @@ export async function handle(req,res){
     }
     if(req.method==='POST'&&url.pathname==='/api/operator/run-once'){
       const x=await body(req);const workspace=projectWorkspace(x.project);if(!workspace)return send(res,400,{error:'invalid_project'});await mkdir(workspace,{recursive:true});const result=await runOnce({stateFile,workspace,maxAttempts:1});return send(res,200,{result});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/operator/github/execute'){
+      const x=await body(req);
+      const result=await executeGithubChange({owner:x.owner,repo:x.repo,base:x.base,title:x.title,body:x.body,changes:x.changes,approved:x.approved===true,token:x.token||process.env.GITHUB_TOKEN||process.env.EASY_GITHUB_TOKEN});
+      return send(res,result.status==='VERIFIED'?200:result.status==='WAITING_APPROVAL'?428:403,result);
     }
     return send(res,404,{error:'not_found'});
   }catch(error){return send(res,error.status||500,{error:error.message||'operator_error'});}
