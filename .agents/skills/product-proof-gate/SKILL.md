@@ -1,42 +1,25 @@
+---
+name: product-proof-gate
+description: Prove a skill is implemented, integrated, tested, security-reviewed, and supported by exact-SHA CI evidence before treating it as a product.
+---
+
 # Product Proof Gate
 
 ## Purpose
 Treat every skill as a product candidate only after deterministic evidence proves that its promised behavior is implemented, integrated, tested, and safely bounded.
 
-## Rule
-A skill result is not a product claim. A product claim requires proof.
-
 ## Required evidence
-1. Skill contract is complete and executable.
-2. Implementation path exists and is actually wired into the relevant runtime.
-3. At least one positive integration test exercises the real path.
-4. Negative/failure tests cover unsafe, invalid, missing-provider, or unavailable cases relevant to the skill.
-5. CI evidence exists for the exact commit or PR head. If no run exists, status is `ci_unverified`, never success.
-6. Security review passes before promotion.
-7. No simulated provider success, fabricated output, or environment-variable-only readiness is accepted.
-8. User-facing documentation states limitations and provider dependencies.
-
-## Procedure
-- Resolve skill -> implementation -> tests -> CI -> security evidence.
-- Run or inspect the narrowest deterministic tests first.
-- Trace the actual runtime entrypoint; do not rely on dead files or syntax-only checks.
-- Inspect failure paths and authorization boundaries.
-- Record missing evidence explicitly.
-- If a gap is actionable, create the smallest corrective change and repeat the gate.
-- Promote only when all mandatory gates are green.
+1. Complete executable contract.
+2. Real implementation path wired into the runtime.
+3. Positive integration test.
+4. Relevant negative/failure tests.
+5. Exact commit or PR-head CI evidence.
+6. Security review before promotion.
+7. No simulated provider success or environment-variable-only readiness.
+8. User-facing limitations and provider dependencies documented.
 
 ## Security review minimum
-Check:
-- secret/credential leakage
-- path traversal and unsafe file access
-- injection and shell execution boundaries
-- authentication/authorization
-- untrusted input validation
-- provider fail-closed behavior
-- sensitive data persistence/logging
-- dependency and supply-chain risk
-- destructive operations and approval gates
-- auditability and reproducibility
+Check secret leakage, path traversal, injection/shell boundaries, authorization, input validation, provider fail-closed behavior, sensitive persistence/logging, dependency risk, destructive operations, approval gates, and auditability.
 
 ## Required output
 ```text
@@ -50,8 +33,4 @@ product_status: proven_product | blocked
 blockers: <none or exact gaps>
 ```
 
-## Prohibited
-- Never call a skill a product solely because its documentation exists.
-- Never call a product production-ready solely because local tests pass.
-- Never infer CI success from a configured workflow.
-- Never infer security approval from absence of an obvious vulnerability.
+Never call a skill a product solely because its documentation exists. Never infer CI or security approval.
