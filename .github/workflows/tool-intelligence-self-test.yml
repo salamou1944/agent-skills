@@ -5,11 +5,15 @@ on:
     paths:
       - 'tools/**'
       - 'scripts/tool-intelligence-self-test.mjs'
+      - 'scripts/skill-audit.mjs'
+      - '.agents/skills/**'
       - '.github/workflows/tool-intelligence-self-test.yml'
   pull_request:
     paths:
       - 'tools/**'
       - 'scripts/tool-intelligence-self-test.mjs'
+      - 'scripts/skill-audit.mjs'
+      - '.agents/skills/**'
       - '.github/workflows/tool-intelligence-self-test.yml'
 
 jobs:
@@ -21,3 +25,4 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/tool-intelligence-self-test.mjs
+      - run: node scripts/skill-audit.mjs
