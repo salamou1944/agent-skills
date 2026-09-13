@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+  title: EASY Developer Platform Control API
+  version: 0.4.0
+  description: Provider-neutral control plane for EASY Group. External execution, GitHub writes, and deployment remain disabled until a provider is configured.
+paths:
+  /api/health:
+    get:
+      responses:
+        '200': {description: OK}
+  /api/platform:
+    get:
+      responses:
+        '200': {description: Platform state}
+  /api/projects:
+    get:
+      responses:
+        '200': {description: Project registry}
+    post:
+      responses:
+        '201': {description: Project created}
+        '409': {description: Project exists}
+  /api/workspace:
+    get:
+      parameters:
+        - {name: project, in: query, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Workspace file index}
+  /api/workspace/file:
+    get:
+      parameters:
+        - {name: project, in: query, required: true, schema: {type: string}}
+        - {name: path, in: query, required: true, schema: {type: string}}
+      responses:
+        '200': {description: File content}
+    post:
+      responses:
+        '201': {description: File written}
+  /api/agent/tasks:
+    get:
+      responses:
+        '200': {description: Agent task queue}
+    post:
+      responses:
+        '202': {description: Task queued}
+  /api/agent/tasks/{id}/advance:
+    post:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Task state advanced}
+        '409': {description: Invalid state}
+  /api/guardian/check:
+    post:
+      responses:
+        '200': {description: Guardian decision}
+  /api/guardian/workspace:
+    post:
+      responses:
+        '200': {description: Workspace Guardian scan}
+  /api/runtime:
+    get:
+      responses:
+        '200': {description: Runtime/provider readiness}
+  /api/tests/run:
+    post:
+      responses:
+        '200': {description: Deterministic platform checks}
+  /api/preview:
+    get:
+      responses:
+        '200': {description: Preview readiness}
+  /api/deploy:
+    post:
+      responses:
+        '200': {description: Deployment accepted by configured provider}
+        '409': {description: Deployment provider unavailable or gate blocked}
