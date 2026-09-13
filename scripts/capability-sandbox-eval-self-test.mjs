@@ -57,6 +57,20 @@ try {
     throw new Error('blocked-command evidence missing');
   }
 
+  const gapResolution = path.join(temp, 'gap-resolution.json');
+  await fs.writeFile(gapResolution, JSON.stringify({
+    resolution: {
+      selected: null,
+      gaps: [{ type: 'CAPABILITY_GAP', message: 'No URL-bearing candidate.' }]
+    }
+  }));
+  const gap = await run([`--resolution=${gapResolution}`, `--output=${output}`, '--behavior-probe', '--command=printf should-not-run']);
+  if (gap.code !== 0) throw new Error(`provenance gap was incorrectly treated as sandbox failure: ${gap.stdout}\n${gap.stderr}`);
+  const gapResult = JSON.parse(await fs.readFile(output, 'utf8'));
+  if (gapResult.verdict !== 'NO_CANDIDATE') throw new Error(`unexpected gap verdict: ${gapResult.verdict}`);
+  if (gapResult.candidate !== null) throw new Error('gap evaluation unexpectedly selected a candidate');
+  if (gapResult.checks.some((check) => check.name === 'explicit-command-execution')) throw new Error('behavior probe executed during a provenance gap');
+
   console.log('capability-sandbox-eval self-test: PASS');
 } finally {
   await fs.rm(temp, { recursive: true, force: true });
