@@ -47,7 +47,8 @@ components:
         schemaVersion: {type: integer, enum: [1]}
         complete: {type: boolean}
         firstGap:
-          type: [string, 'null']
+          type: string
+          nullable: true
         rows:
           type: array
           items:
