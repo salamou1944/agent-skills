@@ -13,3 +13,10 @@ For each constraint ask:
 5. Can a new interface make it irrelevant?
 
 Protected boundaries remain intact. When a protected boundary blocks the direct route, design a compliant alternative instead. Record which constraints were genuinely broken, which were relaxed, and which remain.
+
+## Execution and validation
+- Inspect the concrete constraint and record evidence before proposing a change.
+- Produce at least one reversible implementation path and state the remaining blockers.
+- Validate the proposed path with a deterministic check, test, or explicit evidence.
+- Fail closed when evidence is missing; never claim a constraint was removed when it was only assumed away.
+- Report: constraint, intervention, validation, residual risk, and next action.
