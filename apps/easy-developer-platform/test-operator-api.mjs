@@ -19,9 +19,12 @@ try{
  r=await json('/api/operator/tasks');assert.equal(r.body.tasks.length,1);
  r=await post('/api/operator/run-once',{});assert.equal(r.status,200);assert.equal(r.body.result.status,'VERIFIED');
  r=await json('/api/operator/status');assert.equal(r.body.queue.verified,1);
+ r=await post('/api/operator/github/execute',{owner:'salamou1944',repo:'agent-skills',title:'test',changes:[{path:'README.md',content:'x'}],approved:false});assert.equal(r.status,428);assert.equal(r.body.status,'WAITING_APPROVAL');
+ r=await post('/api/operator/github/execute',{owner:'salamou1944',repo:'agent-skills',title:'test',changes:[{path:'.env',content:'x'}],approved:true,token:'test'});assert.equal(r.status,403);assert.equal(r.body.status,'BLOCKED');assert.equal(r.body.reason,'path_not_allowlisted');
+ r=await post('/api/operator/github/execute',{owner:'salamou1944',repo:'agent-skills',title:'test',changes:[{path:'README.md',content:'x'}],approved:true});assert.equal(r.status,403);assert.equal(r.body.reason,'github_token_required');
  const secret=join(workspace,'secret.mjs');await writeFile(secret,'const api_key = "blocked";','utf8');
  r=await post('/api/operator/tasks',{goal:'inspect workspace'});assert.equal(r.status,202);
  r=await post('/api/operator/run-once',{});assert.equal(r.body.result.status,'BLOCKED');
- const outside=join(workspace,'..','outside');r=await post('/api/operator/tasks',{goal:'inspect workspace',project:'../outside'});assert.equal(r.status,400);assert.equal(r.body.error,'invalid_project');
+ r=await post('/api/operator/tasks',{goal:'inspect workspace',project:'../outside'});assert.equal(r.status,400);assert.equal(r.body.error,'invalid_project');
  console.log('AI Operator control API self-test: PASS');
 }finally{child.kill();await rm(workspace,{recursive:true,force:true});}
