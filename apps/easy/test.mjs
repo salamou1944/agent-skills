@@ -3,7 +3,12 @@ import { spawn } from 'node:child_process';
 
 const server=spawn(process.execPath,['server.mjs'],{stdio:'ignore'});
 try {
-  await new Promise(r=>setTimeout(r,200));
+  let ready=false;
+  for(let i=0;i<20;i++){
+    try{const r=await fetch('http://localhost:8787/api/health'); if(r.ok){ready=true;break;}}catch{}
+    await new Promise(r=>setTimeout(r,100));
+  }
+  assert.equal(ready,true);
   const base={productName:'Demo',color:'black',logo:'ACME',printedText:'123',brandName:'ACME',shape:'round',components:'cap',designDetails:'matte'};
   const r=await fetch('http://localhost:8787/api/product-dna',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(base)});
   const x=await r.json();
