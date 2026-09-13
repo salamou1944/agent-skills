@@ -66,18 +66,27 @@ jobs:
       - name: Start platform runtime
         run: node apps/easy-developer-platform/server-v2-production.mjs > /tmp/easy-platform.log 2>&1 & echo $! > /tmp/easy-platform.pid
 
+      - name: Start AI Operator control API
+        env:
+          EASY_OPERATOR_PORT: 8792
+          EASY_OPERATOR_STATE: /tmp/easy-operator-state.json
+          EASY_OPERATOR_WORKSPACE: /tmp/easy-operator-workspace
+        run: mkdir -p /tmp/easy-operator-workspace && node apps/easy-developer-platform/operator-api.mjs > /tmp/easy-operator.log 2>&1 & echo $! > /tmp/easy-operator.pid
+
       - name: Start gateway website
         env:
           EASY_PLATFORM_URL: http://127.0.0.1:8790
+          EASY_OPERATOR_URL: http://127.0.0.1:8792
         run: node apps/easy-developer-platform/gateway.mjs > /tmp/easy-gateway.log 2>&1 & echo $! > /tmp/easy-gateway.pid
 
-      - name: Wait for platform health
+      - name: Wait for platform and operator health
         run: |
           for i in {1..20}; do
-            if curl -fsS http://127.0.0.1:8790/api/health; then exit 0; fi
+            if curl -fsS http://127.0.0.1:8790/api/health && curl -fsS http://127.0.0.1:8792/api/operator/health; then exit 0; fi
             sleep 1
           done
           cat /tmp/easy-platform.log
+          cat /tmp/easy-operator.log
           exit 1
 
       - name: Verify runtime contract
@@ -88,7 +97,13 @@ jobs:
       - name: Verify gateway website and platform handoff
         run: |
           curl -fsS http://127.0.0.1:8789/ | grep -F "Enter EASY Platform"
-          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '"platformOnline":true'
+          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '"platformOnline":true' | grep -F '"operatorOnline":true'
+
+      - name: Verify operator through gateway
+        run: |
+          curl -fsS http://127.0.0.1:8789/api/operator/status | grep -F 'easy-ai-operator'
+          curl -fsS -X POST http://127.0.0.1:8789/api/operator/tasks -H 'content-type: application/json' --data '{"goal":"inspect workspace and verify syntax"}' | grep -F '"status":"QUEUED"'
+          curl -fsS -X POST http://127.0.0.1:8789/api/operator/run-once -H 'content-type: application/json' --data '{}' | grep -F '"status":"VERIFIED"'
 
       - name: Verify dashboard response
         run: curl -fsS http://127.0.0.1:8790/ | grep -F "EASY Developer Platform"
@@ -97,6 +112,8 @@ jobs:
         if: always()
         run: |
           if [ -f /tmp/easy-gateway.pid ]; then kill "$(cat /tmp/easy-gateway.pid)" || true; fi
+          if [ -f /tmp/easy-operator.pid ]; then kill "$(cat /tmp/easy-operator.pid)" || true; fi
           if [ -f /tmp/easy-platform.pid ]; then kill "$(cat /tmp/easy-platform.pid)" || true; fi
           cat /tmp/easy-gateway.log || true
+          cat /tmp/easy-operator.log || true
           cat /tmp/easy-platform.log || true
