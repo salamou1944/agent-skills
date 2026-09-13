@@ -116,6 +116,13 @@ Each rule file contains:
 - Correct code example with explanation
 - Additional context and references
 
+## Operational contract
+
+- **Must:** apply the relevant performance, rendering, navigation, and native-platform rules before approving a React Native or Expo change.
+- **Steps:** identify the affected platform and workload; select applicable rules by category; implement the smallest compliant change; check dependencies and platform assumptions; run relevant type, lint, unit, or platform tests.
+- **Validation:** verify list virtualization and memoization where required, animation constraints, safe-area/UI behavior, native dependency consistency, and expected behavior on the target platform.
+- **Failure:** if a rule cannot be validated or a platform assumption is unknown, fail closed and document the missing evidence rather than asserting the change is safe.
+
 ## Full Compiled Document
 
 For the complete guide with all rules expanded: `AGENTS.md`
