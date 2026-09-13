@@ -1,5 +1,6 @@
 name: easy-developer-platform
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'apps/easy-developer-platform/**'
