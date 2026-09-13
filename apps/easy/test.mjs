@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 
-const server=spawn(process.execPath,['server.mjs'],{stdio:'ignore'});
+const server=spawn(process.execPath,['apps/easy/server.mjs'],{stdio:'ignore'});
 try {
   let ready=false;
-  for(let i=0;i<20;i++){
+  for(let i=0;i<30;i++){
     try{const r=await fetch('http://localhost:8787/api/health'); if(r.ok){ready=true;break;}}catch{}
     await new Promise(r=>setTimeout(r,100));
   }
