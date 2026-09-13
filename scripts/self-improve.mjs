@@ -17,10 +17,13 @@ function walk(dir) {
 function parseSkill(file) {
   const text = fs.readFileSync(file, 'utf8');
   const m = text.match(/^---\n([\s\S]*?)\n---/);
-  if (!m) return { file, valid: false };
+  if (!m) return { file, valid: false, reason: 'missing frontmatter' };
   const name = m[1].match(/^name:\s*(.+)$/m)?.[1]?.trim();
   const description = m[1].match(/^description:\s*(.+)$/m)?.[1]?.trim();
-  return { file, valid: Boolean(name && description), name, description, text };
+  if (!name || !description) {
+    return { file, valid: false, reason: !name ? 'missing name' : 'missing description' };
+  }
+  return { file, valid: true, name, description, text };
 }
 
 const skills = walk(root).filter((f) => path.basename(f) === 'SKILL.md').map(parseSkill);
@@ -35,6 +38,7 @@ const report = {
   generatedAt: new Date().toISOString(),
   skillCount: valid.length,
   invalidSkillCount: invalid.length,
+  invalidSkills: invalid.map((s) => ({ file: path.relative('.', s.file), reason: s.reason })),
   evaluationCaseCount: cases.length,
   detectedGaps: gaps.map((g) => ({ id: g.id, capability: g.capability, reason: 'No explicit inventory signal matched the case expectations' })),
   status: invalid.length === 0 ? 'pass' : 'fail'
