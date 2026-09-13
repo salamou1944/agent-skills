@@ -33,6 +33,6 @@ try{
  r=await post('/api/guardian/check',{content:'const x = 1;'});assert.equal(r.body.decision,'pass');
  r=await post('/api/guardian/check',{content:'api_key = "do-not-commit"'});assert.equal(r.body.decision,'block');
  r=await post('/api/tests/run');assert.equal(r.body.status,'passed');assert.equal(r.body.checks.length,14);
- r=await post('/api/deploy');assert.equal(r.status,409);assert.equal(r.body.reason,'deployment_provider_not_configured');
+ r=await post('/api/deploy');assert.equal(r.status,409);assert.equal(r.body.reason,'deploy_provider_not_verified');
  console.log('EASY Developer Platform v2 self-test: PASS');
 }finally{child.kill();}
