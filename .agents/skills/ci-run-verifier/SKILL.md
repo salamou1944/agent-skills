@@ -1,3 +1,8 @@
+---
+name: ci-run-verifier
+description: Verify exact GitHub Actions runs, jobs, steps, logs, and conclusions without inferring success.
+---
+
 # CI Run Verifier
 
 ## Purpose
