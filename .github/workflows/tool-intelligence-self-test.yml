@@ -1,0 +1,28 @@
+name: tool-intelligence-self-test
+
+on:
+  push:
+    paths:
+      - 'tools/**'
+      - 'scripts/tool-intelligence-self-test.mjs'
+      - 'scripts/skill-audit.mjs'
+      - '.agents/skills/**'
+      - '.github/workflows/tool-intelligence-self-test.yml'
+  pull_request:
+    paths:
+      - 'tools/**'
+      - 'scripts/tool-intelligence-self-test.mjs'
+      - 'scripts/skill-audit.mjs'
+      - '.agents/skills/**'
+      - '.github/workflows/tool-intelligence-self-test.yml'
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/tool-intelligence-self-test.mjs
+      - run: node scripts/skill-audit.mjs
