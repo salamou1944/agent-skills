@@ -72,12 +72,12 @@ jobs:
 
       - name: Verify real GitHub external connection
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.EASY_GITHUB_TOKEN || github.token }}
         run: node apps/easy-developer-platform/external-connection-check.mjs
 
       - name: Verify real GitHub write and pull request connection
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.EASY_GITHUB_TOKEN || github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
         run: node apps/easy-developer-platform/external-write-proof.mjs
