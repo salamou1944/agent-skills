@@ -1,3 +1,8 @@
+---
+name: ci-dispatch-runner
+description: Dispatch real GitHub Actions workflows with explicit refs and hand exact run evidence to verification.
+---
+
 # CI Dispatch Runner
 
 ## Purpose
