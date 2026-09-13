@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -49,8 +50,6 @@ async function main() {
   const selected = resolution?.resolution?.selected;
   const resolutionGaps = Array.isArray(resolution?.resolution?.gaps) ? resolution.resolution.gaps : [];
 
-  // A provenance-gated capability gap is a valid resolution outcome, not a sandbox failure.
-  // Do not execute any behavior probe when there is no selected capability.
   if (!selected) {
     const result = {
       version: 2,
