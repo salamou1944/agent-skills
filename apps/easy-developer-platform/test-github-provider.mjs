@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { GITHUB_PROVIDER_CONTRACT, githubProviderStatus } from './github-provider.mjs';
 
-assert.deepEqual(GITHUB_PROVIDER_CONTRACT,['getBranch','getFile','writeFile','openPullRequest']);
+assert.deepEqual(GITHUB_PROVIDER_CONTRACT,['getBranch','getFile','createBranch','writeFile','openPullRequest']);
 const missing=githubProviderStatus({});
 assert.equal(missing.configured,false);
 assert.equal(missing.verified,false);
