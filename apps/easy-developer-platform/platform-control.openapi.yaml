@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: EASY Developer Platform Control API
+  version: 0.5.0
+  description: Provider-neutral control plane for building EASY.
+servers:
+  - url: http://localhost:8790
+paths:
+  /api/health:
+    get:
+      responses:
+        '200': {description: Healthy}
+  /api/platform:
+    get:
+      responses:
+        '200': {description: Platform metadata}
+  /api/runtime:
+    get:
+      responses:
+        '200': {description: Provider readiness}
+  /api/projects:
+    get:
+      responses:
+        '200': {description: Projects}
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProjectInput'}
+      responses:
+        '201': {description: Created}
+        '400': {description: Invalid request}
+        '409': {description: Project exists}
+  /api/workspace:
+    get:
+      parameters:
+        - {name: project, in: query, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Workspace listing}
+  /api/workspace/file:
+    get:
+      parameters:
+        - {name: project, in: query, required: true, schema: {type: string}}
+        - {name: path, in: query, required: true, schema: {type: string}}
+      responses:
+        '200': {description: File contents}
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/WorkspaceFile'}
+      responses:
+        '201': {description: Written}
+  /api/agent/tasks:
+    get:
+      responses:
+        '200': {description: Tasks}
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AgentTaskInput'}
+      responses:
+        '202': {description: Queued}
+  /api/agent/tasks/{id}/advance:
+    post:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Advanced}
+        '409': {description: Invalid state}
+  /api/builds:
+    get:
+      responses:
+        '200': {description: Builds}
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/BuildInput'}
+      responses:
+        '201': {description: Build queued}
+        '404': {description: Project not found}
+  /api/builds/{id}/advance:
+    post:
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: Build advanced}
+        '404': {description: Build not found}
+        '409': {description: Build cannot advance}
+  /api/guardian/check:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [content], properties: {content: {type: string}}}
+      responses:
+        '200': {description: Guardian decision}
+  /api/guardian/workspace:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, required: [project], properties: {project: {type: string}}}
+      responses:
+        '200': {description: Workspace Guardian result}
+  /api/tests/run:
+    post:
+      responses:
+        '200': {description: Deterministic verification}
+  /api/checks/run:
+    post:
+      responses:
+        '200': {description: Deterministic verification alias}
+  /api/preview:
+    get:
+      parameters:
+        - {name: project, in: query, schema: {type: string}}
+      responses:
+        '200': {description: Preview boundary status}
+  /api/deploy:
+    post:
+      responses:
+        '409': {description: Deployment is blocked until a validated provider adapter exists}
+components:
+  schemas:
+    ProjectInput:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string}
+        branch: {type: string, default: main}
+    WorkspaceFile:
+      type: object
+      required: [project, path, content]
+      properties:
+        project: {type: string}
+        path: {type: string}
+        content: {type: string}
+    AgentTaskInput:
+      type: object
+      required: [prompt]
+      properties:
+        project: {type: string}
+        prompt: {type: string}
+    BuildInput:
+      type: object
+      properties:
+        project: {type: string, default: easy-core}
+        purpose: {type: string, default: build}
