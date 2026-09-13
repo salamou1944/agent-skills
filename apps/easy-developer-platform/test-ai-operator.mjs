@@ -3,14 +3,26 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execute, plan } from './ai-operator.mjs';
+import { createTask, loadState, saveState } from './operator-state.mjs';
+import { runOnce, report } from './operator-worker.mjs';
+import { TOOL_REGISTRY, inspectWorkspace, guardianScan, verifySyntax } from './operator-tools.mjs';
 
 const workspace=await mkdtemp(join(tmpdir(),'easy-operator-'));
+const stateFile=join(workspace,'state.json');
+process.env.EASY_OPERATOR_STATE=stateFile;
+process.env.EASY_OPERATOR_WORKSPACE=workspace;
 try{
   const p=plan('inspect this project');
   assert.equal(p.mode,'fail-closed');
   assert.ok(p.steps.includes('guardian_scan'));
   let r=await execute('inspect this project',{workspace});
   assert.equal(r.status,'VERIFIED');
+
+  const inspected=await inspectWorkspace(workspace);
+  assert.equal(inspected.ok,true);
+  assert.ok(TOOL_REGISTRY.includes('syntax_verification'));
+  assert.equal((await guardianScan(workspace)).ok,true);
+  assert.equal((await verifySyntax(workspace)).ok,true);
 
   await writeFile(join(workspace,'broken.mjs'),'const = 1;');
   r=await execute('inspect this project',{workspace});
@@ -27,5 +39,14 @@ try{
   r=await execute('deploy this project',{workspace,allowHighRisk:true});
   assert.equal(r.status,'VERIFIED');
 
-  console.log('AI Operator kernel self-test: PASS');
+  const task=createTask('inspect queued project');
+  const state=await saveState(stateFile,{version:1,tasks:[task]});
+  assert.equal(state.tasks.length,1);
+  const workerResult=await runOnce.call({});
+  assert.ok(workerResult===null || ['VERIFIED','BLOCKED','FAILED'].includes(workerResult.status));
+  const final=await loadState(stateFile);
+  assert.ok(['VERIFIED','BLOCKED','FAILED'].includes(final.tasks[0].status));
+  assert.equal(report(final).totals.queued,0);
+
+  console.log('AI Operator kernel + queue/tools self-test: PASS');
 }finally{await rm(workspace,{recursive:true,force:true});}
