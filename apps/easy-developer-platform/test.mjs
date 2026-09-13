@@ -15,7 +15,7 @@ try{
  const project=r.body.id;
  r=await json('/api/workspace/file',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({project,path:'src/index.js',content:'const x = 1;'})});assert.equal(r.status,201);
  r=await json('/api/workspace/file?project='+project+'&path=src/index.js');assert.equal(r.body.content,'const x = 1;');
- r=await json('/api/workspace');assert.ok(r.body.files.some(f=>f.path==='src/index.js'));
+ r=await json('/api/workspace?project='+project);assert.ok(r.body.files.some(f=>f.path==='src/index.js'));
  r=await json('/api/agent/tasks',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({project,prompt:'inspect project and propose safe improvements'})});assert.equal(r.status,202);assert.equal(r.body.status,'queued');
  const taskId=r.body.id;
  r=await json('/api/agent/tasks/'+taskId+'/advance',{method:'POST'});assert.equal(r.body.status,'validated');
