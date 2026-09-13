@@ -64,7 +64,7 @@ attempt: <number>
 ## Safety rules
 
 - No destructive operation without explicit authorization.
-- Do not bypass Code Guardian, security proof, product proof, or approval gates.
-- Do not treat environment variables as proof of provider readiness.
+- Code Guardian, security proof, product proof, and approval gates remain mandatory for applicable changes.
+- Treat environment variables as configuration only, never as provider-readiness proof.
 - Do not silently modify unrelated files.
 - Prefer reversible changes and auditable commits.
