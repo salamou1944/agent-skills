@@ -1,0 +1,28 @@
+name: source-fallback-reliability
+
+on:
+  push:
+    paths:
+      - 'scripts/lib/source-fallback-reliability.mjs'
+      - 'scripts/source-fallback-reliability-self-test.mjs'
+      - 'docs/source-fallback-reliability.md'
+      - '.github/workflows/source-fallback-reliability.yml'
+  pull_request:
+    paths:
+      - 'scripts/lib/source-fallback-reliability.mjs'
+      - 'scripts/source-fallback-reliability-self-test.mjs'
+      - 'docs/source-fallback-reliability.md'
+      - '.github/workflows/source-fallback-reliability.yml'
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: node --check scripts/lib/source-fallback-reliability.mjs
+      - name: Reliability self-test
+        run: node scripts/source-fallback-reliability-self-test.mjs
