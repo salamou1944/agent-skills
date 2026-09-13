@@ -1,0 +1,54 @@
+import { createTask, enqueue, loadState, nextRunnable, saveState, updateTask } from './operator-state.mjs';
+import { execute } from './ai-operator.mjs';
+
+const stateFile = process.env.EASY_OPERATOR_STATE || '.easy/operator-state.json';
+const workspace = process.env.EASY_OPERATOR_WORKSPACE || '.';
+const intervalMs = Math.max(250, Number(process.env.EASY_OPERATOR_INTERVAL_MS || 2000));
+const maxAttempts = Math.max(1, Number(process.env.EASY_OPERATOR_MAX_ATTEMPTS || 3));
+
+export async function submit(goal, metadata={}) {
+  const task=createTask(goal, metadata);
+  if (!task.goal) throw new Error('goal_required');
+  return enqueue(stateFile, task);
+}
+
+export async function runOnce() {
+  const task=await nextRunnable(stateFile);
+  if (!task) return null;
+  await updateTask(stateFile, task.id, { status:'RUNNING', attempts:task.attempts+1 });
+  try {
+    const result=await execute(task.goal, { workspace, allowHighRisk:false });
+    const status=result.status==='VERIFIED'?'VERIFIED':result.status==='BLOCKED'?'BLOCKED':'FAILED';
+    await updateTask(stateFile, task.id, { status, evidence:result.evidence||[], result, finishedAt:new Date().toISOString() });
+    return { taskId:task.id, status, result };
+  } catch (error) {
+    const attempts=task.attempts+1;
+    const status=attempts>=maxAttempts?'FAILED':'QUEUED';
+    await updateTask(stateFile, task.id, { status, result:{status:'FAILED',error:error.message}, finishedAt:status==='FAILED'?new Date().toISOString():undefined });
+    return { taskId:task.id, status, error:error.message };
+  }
+}
+
+export async function worker({once=false, signal=undefined}={}) {
+  let stopped=false;
+  const stop=()=>{stopped=true};
+  if (signal) signal.addEventListener('abort', stop, {once:true});
+  while (!stopped) {
+    await runOnce();
+    if (once) break;
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+}
+
+export function report(state) {
+  const tasks=state.tasks||[];
+  return { version:1, generatedAt:new Date().toISOString(), totals:{queued:tasks.filter(t=>t.status==='QUEUED').length,running:tasks.filter(t=>t.status==='RUNNING').length,verified:tasks.filter(t=>t.status==='VERIFIED').length,failed:tasks.filter(t=>t.status==='FAILED').length,blocked:tasks.filter(t=>t.status==='BLOCKED').length}, tasks:tasks.map(t=>({id:t.id,goal:t.goal,status:t.status,attempts:t.attempts,updatedAt:t.updatedAt,summary:t.result?.summary||t.result?.error||null})) };
+}
+
+if (import.meta.url===`file://${process.argv[1]}`) {
+  const goal=process.argv.slice(2).join(' ');
+  if (goal) await submit(goal);
+  await worker({once:true});
+  console.log(JSON.stringify(report(await loadState(stateFile)), null, 2));
+  await saveState(stateFile, await loadState(stateFile));
+}
