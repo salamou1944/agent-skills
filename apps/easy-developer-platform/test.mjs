@@ -9,7 +9,7 @@ const json=async(path,options)=>{const r=await fetch(base+path,options);let b={}
 const post=(path,body)=>json(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
 try{
  await wait(350);
- let r=await json('/api/health');assert.equal(r.body.ok,true);assert.equal(r.body.version,'2.0.0');
+ let r=await json('/api/health');assert.equal(r.body.ok,true);assert.equal(r.body.version,'2.1.0');
  r=await json('/api/platform');assert.equal(r.body.group,'EASY Group');assert.equal(r.body.persistence,'atomic-json');assert.ok(r.body.modules.includes('auth'));assert.ok(r.body.modules.includes('approvals'));
  r=await json('/api/runtime');assert.equal(r.body.executionReady,false);assert.equal(r.body.deployReady,false);assert.equal(r.body.githubReady,false);
  r=await json('/api/registry');assert.ok(r.body.skills.length>=5);assert.ok(r.body.apis.length>=3);assert.ok(r.body.tools.length>=4);
