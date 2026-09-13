@@ -5,12 +5,14 @@ on:
     paths:
       - 'tools/**'
       - 'scripts/tool-system-self-test.mjs'
+      - 'scripts/easy-capability-self-test.mjs'
       - 'scripts/skill-audit.mjs'
       - '.github/workflows/tool-capability-closure.yml'
   pull_request:
     paths:
       - 'tools/**'
       - 'scripts/tool-system-self-test.mjs'
+      - 'scripts/easy-capability-self-test.mjs'
       - 'scripts/skill-audit.mjs'
       - '.github/workflows/tool-capability-closure.yml'
 
@@ -23,4 +25,5 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/tool-system-self-test.mjs
+      - run: node scripts/easy-capability-self-test.mjs
       - run: node scripts/skill-audit.mjs
