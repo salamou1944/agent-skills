@@ -25,6 +25,10 @@ jobs:
         run: node scripts/platform-repo-audit.mjs .
       - name: Start platform runtime
         run: node apps/easy-developer-platform/server-v2-production.mjs > /tmp/easy-platform.log 2>&1 & echo $! > /tmp/easy-platform.pid
+      - name: Start gateway website
+        env:
+          EASY_PLATFORM_URL: http://127.0.0.1:8790
+        run: node apps/easy-developer-platform/gateway.mjs > /tmp/easy-gateway.log 2>&1 & echo $! > /tmp/easy-gateway.pid
       - name: Wait for platform health
         run: |
           for i in {1..20}; do
@@ -37,11 +41,16 @@ jobs:
         env:
           EASY_PLATFORM_URL: http://127.0.0.1:8790
         run: node scripts/platform-runtime-check.mjs "$EASY_PLATFORM_URL"
-      - name: Verify website response
+      - name: Verify gateway website and platform handoff
         run: |
-          curl -fsS http://127.0.0.1:8790/ | grep -F "EASY Developer Platform"
-      - name: Stop runtime
+          curl -fsS http://127.0.0.1:8789/ | grep -F "Enter EASY Platform"
+          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '"platformOnline":true'
+      - name: Verify dashboard response
+        run: curl -fsS http://127.0.0.1:8790/ | grep -F "EASY Developer Platform"
+      - name: Stop runtimes
         if: always()
         run: |
+          if [ -f /tmp/easy-gateway.pid ]; then kill "$(cat /tmp/easy-gateway.pid)" || true; fi
           if [ -f /tmp/easy-platform.pid ]; then kill "$(cat /tmp/easy-platform.pid)" || true; fi
+          cat /tmp/easy-gateway.log || true
           cat /tmp/easy-platform.log || true
