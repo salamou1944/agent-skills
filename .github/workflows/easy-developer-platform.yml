@@ -1,0 +1,19 @@
+name: easy-developer-platform
+on:
+  push:
+    paths:
+      - 'apps/easy-developer-platform/**'
+      - '.github/workflows/easy-developer-platform.yml'
+  pull_request:
+    paths:
+      - 'apps/easy-developer-platform/**'
+      - '.github/workflows/easy-developer-platform.yml'
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node apps/easy-developer-platform/test.mjs
