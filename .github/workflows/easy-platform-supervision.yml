@@ -40,6 +40,10 @@ jobs:
           node --check apps/easy-developer-platform/server.mjs
           node --check apps/easy-developer-platform/gateway.mjs
           node --check apps/easy-developer-platform/ai-operator.mjs
+          node --check apps/easy-developer-platform/operator-state.mjs
+          node --check apps/easy-developer-platform/operator-tools.mjs
+          node --check apps/easy-developer-platform/operator-worker.mjs
+          node --check apps/easy-developer-platform/operator-intelligence.mjs
           node --check scripts/platform-runtime-check.mjs
 
       - name: Platform integration proof
@@ -79,7 +83,7 @@ jobs:
       - name: Verify gateway website and platform handoff
         run: |
           curl -fsS http://127.0.0.1:8789/ | grep -F "Enter EASY Platform"
-          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '"platformOnline":true'
+          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '\"platformOnline\":true'
 
       - name: Verify dashboard response
         run: curl -fsS http://127.0.0.1:8790/ | grep -F "EASY Developer Platform"
