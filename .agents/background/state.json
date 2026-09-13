@@ -1,0 +1,11 @@
+{
+  "state": "READY",
+  "attempt": 0,
+  "last_failure_fingerprint": null,
+  "objective": "Keep repository engineering work advancing through bounded diagnosis, repair, testing, security review, and CI evidence.",
+  "last_action": null,
+  "last_result": null,
+  "last_evidence": [],
+  "blocker": null,
+  "next_action": "Inspect repository and CI state"
+}
