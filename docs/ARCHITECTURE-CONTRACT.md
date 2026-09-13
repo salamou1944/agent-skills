@@ -58,11 +58,19 @@ Do not add unrelated features while a current blocker remains unresolved.
 
 ## 6. Workflow policy
 
-EASY Platform Supervision is the platform-level verification workflow. Other workflows may remain only when they own a distinct repository responsibility and do not duplicate platform supervision.
+`EASY Platform Supervision` is the single workflow responsible for end-to-end EASY Developer Platform verification. It owns platform syntax, integration, provider-boundary, runtime, gateway handoff, dashboard, and repository-platform audit checks.
+
+`EASY CI Governor` remains only as repository-wide CI governance and final fail-closed promotion logic. It must not create a second platform verification implementation.
+
+`EASY CI Recovery` remains only as the failure-diagnosis/recovery boundary for Governor failures. It must not bypass gates or duplicate platform tests.
+
+Other workflows may remain only when they own a distinct repository responsibility (for example, Code Guardian or an independent Skill self-test). They are not alternative EASY Platform verification systems.
+
+The obsolete duplicate `easy-developer-platform.yml` platform test workflow is removed. Its platform test responsibilities are now executed by `EASY Platform Supervision`.
 
 No new workflow may be introduced merely to repeat an existing check. If a check belongs to platform supervision, add it there or extract deterministic logic into a Tool and call it from there.
 
-Workflows must use least-privilege permissions and explicit triggers. Manual dispatch may be used for controlled verification; GitHub supports `workflow_dispatch` and scoped `permissions` for this purpose.
+Workflows must use least-privilege permissions and explicit triggers. Manual dispatch may be used for controlled verification.
 
 ## 7. Platform readiness gate
 
@@ -76,6 +84,8 @@ The platform is not considered ready or live until all required gates have direc
 - dashboard response is verified;
 - no unresolved blocking CI failure remains;
 - public deployment, if claimed, has an accessible endpoint and successful health check.
+
+Provider-neutral state is intentionally not production execution: executionReady, githubReady, and deployReady must remain false until real provider contracts are verified.
 
 ## 8. Cleanup rule
 
