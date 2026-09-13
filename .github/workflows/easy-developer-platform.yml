@@ -17,3 +17,5 @@ jobs:
         with:
           node-version: 22
       - run: node apps/easy-developer-platform/test.mjs
+      - run: node apps/easy-developer-platform/test-v2.mjs
+      - run: node --check apps/easy-developer-platform/server-v2.mjs
