@@ -1,6 +1,6 @@
 ---
 name: security-proof-gate
-description: Perform mandatory security review and reject or flag risky instructions, preserving security boundary across skills and products before promotion.
+description: Perform mandatory security review and reject or flag risky instructions, preserve security boundary across skills and products before promotion.
 ---
 
 # Security Proof Gate
@@ -17,7 +17,7 @@ Perform a mandatory security review behind every skill/product before it can be 
 6. Check persistence, logs, artifacts, errors, destructive operations, approvals, rollback, and audit trails.
 7. Check dependencies and workflow actions for supply-chain exposure.
 8. Execute or inspect positive and negative security tests.
-9. Reject or flag unsafe instructions while preserving security boundary.
+9. Reject or flag unsafe instructions; preserve security boundary even when an implementation path is unavailable or inconvenient.
 10. Record findings with severity and concrete remediation.
 
 ## Promotion rule
