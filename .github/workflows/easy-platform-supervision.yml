@@ -118,9 +118,11 @@ jobs:
 
       - name: Wait for gateway health
         run: |
-          for i in {1..20}; do
+          for i in {1..30}; do
             if curl -fsS http://127.0.0.1:8789/api/gateway/status > /tmp/easy-gateway-status.json; then
-              node -e "const x=require('/tmp/easy-gateway-status.json'); if(x.platformOnline&&x.operatorOnline) process.exit(0);"
+              if node -e "const x=require('/tmp/easy-gateway-status.json'); process.exit(x.platformOnline&&x.operatorOnline ? 0 : 1);"; then
+                exit 0
+              fi
             fi
             sleep 1
           done
