@@ -9,14 +9,14 @@ const shell=(active)=>`<!doctype html><html lang="en"><head><meta charset="utf-8
 
 const send=(res,status,data,type='application/json; charset=utf-8')=>{res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-content-type-options':'nosniff'});res.end(type.startsWith('application/json')?JSON.stringify(data):data)};
 async function health(url,path){try{const r=await fetch(url+path);return r.ok}catch{return false}}
-async function proxy(req,res,targetBase){const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);const target=targetBase+u.pathname.replace(/^\/api\/(?:platform\/|operator\/)/,'/api/')+u.search;let raw='';for await(const c of req){raw+=c;if(raw.length>100_000)return send(res,413,{error:'body_too_large'})}const headers={};if(req.headers['content-type'])headers['content-type']=req.headers['content-type'];if(req.headers.authorization)headers.authorization=req.headers.authorization;try{const r=await fetch(target,{method:req.method,headers,body:['GET','HEAD'].includes(req.method)?undefined:raw});const text=await r.text();res.writeHead(r.status,{'content-type':r.headers.get('content-type')||'application/json; charset=utf-8','cache-control':'no-store'});res.end(text)}catch{return send(res,502,{error:'upstream_unavailable'})}}
+async function proxy(req,res,targetBase,mode){const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);const upstreamPath=mode==='operator'?u.pathname:u.pathname.replace(/^\/api\/platform\//,'/api/');const target=targetBase+upstreamPath+u.search;let raw='';for await(const c of req){raw+=c;if(raw.length>100_000)return send(res,413,{error:'body_too_large'})}const headers={};if(req.headers['content-type'])headers['content-type']=req.headers['content-type'];if(req.headers.authorization)headers.authorization=req.headers.authorization;try{const r=await fetch(target,{method:req.method,headers,body:['GET','HEAD'].includes(req.method)?undefined:raw});const text=await r.text();res.writeHead(r.status,{'content-type':r.headers.get('content-type')||'application/json; charset=utf-8','cache-control':'no-store'});res.end(text)}catch{return send(res,502,{error:'upstream_unavailable'})}}
 
 http.createServer(async(req,res)=>{const u=new URL(req.url,`http://${req.headers.host||'localhost'}`);
  if(req.method==='GET'&&u.pathname==='/api/gateway/status')return send(res,200,{service:'easy-platform-gateway',platformOnline:await health(platform,'/api/health'),operatorOnline:await health(operator,'/api/operator/health'),platform,operator});
  if(req.method==='GET'&&u.pathname==='/')return send(res,200,shell('home'),'text/html; charset=utf-8');
  if(req.method==='GET'&&u.pathname==='/integration')return send(res,200,shell('integration'),'text/html; charset=utf-8');
  if(req.method==='GET'&&u.pathname==='/operator')return send(res,200,shell('operator'),'text/html; charset=utf-8');
- if(u.pathname.startsWith('/api/operator/'))return proxy(req,res,operator);
- if(u.pathname.startsWith('/api/platform/'))return proxy(req,res,platform);
+ if(u.pathname.startsWith('/api/operator/'))return proxy(req,res,operator,'operator');
+ if(u.pathname.startsWith('/api/platform/'))return proxy(req,res,platform,'platform');
  return send(res,404,{error:'not_found'});
 }).listen(port,()=>console.log(`EASY gateway listening on ${port}`));
