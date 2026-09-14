@@ -68,38 +68,43 @@ async function bootSmoke() {
   await new Promise(resolve => setTimeout(resolve, 3000));
   const publicDomain = process.env.EASY_PUBLIC_BASE_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '');
   const workspace = process.env.EASY_OPERATOR_WORKSPACE || '/app';
-  const probe = join(workspace, '.easy', 'e2e-guardian-probe.mjs');
+  const e2eWorkspace = join(workspace, '.easy', 'e2e-runtime');
+  const safeFile = join(e2eWorkspace, 'safe.mjs');
+  const probe = join(e2eWorkspace, 'guardian-probe.mjs');
   try {
     const platform = await check('http://127.0.0.1:8790/api/health');
     const operator = await check('http://127.0.0.1:8792/api/operator/health');
     const gateway = await check(`http://127.0.0.1:${publicPort}/api/gateway/status`);
     const capabilities = await json('http://127.0.0.1:8792/api/operator/capabilities');
 
+    await mkdir(e2eWorkspace, { recursive: true });
+    await writeFile(safeFile, 'export const e2eSafe = true;\n', 'utf8');
+    const project = '.easy/e2e-runtime';
+
     const taskResponse = await operatorPost('/api/operator/tasks', {
-      goal: 'Inspect the EASY runtime service safely and verify its workspace without making external changes.',
-      project: 'apps/easy-developer-platform',
+      goal: 'Inspect the isolated EASY E2E workspace safely and verify it without making external changes.',
+      project,
     });
-    const runResponse = await operatorPost('/api/operator/run-once', { project: 'apps/easy-developer-platform' });
+    const runResponse = await operatorPost('/api/operator/run-once', { project });
     const safeStatus = runResponse.body?.result?.status || runResponse.body?.status || 'UNKNOWN';
 
-    await mkdir(join(workspace, '.easy'), { recursive: true });
     const secretParts = ['FAKE', 'E2E', 'GUARDIAN', 'SECRET'];
     const fakeSecret = secretParts.join('_');
     const probeContent = 'const apiKey = ' + JSON.stringify(fakeSecret) + ';\n';
     await writeFile(probe, probeContent, 'utf8');
     const guardianTask = await operatorPost('/api/operator/tasks', {
-      goal: 'Inspect the EASY runtime workspace and verify that Guardian blocks embedded secrets.',
-      project: 'apps/easy-developer-platform',
+      goal: 'Inspect the isolated EASY E2E workspace and verify that Guardian blocks embedded secrets.',
+      project,
     });
-    const guardianRun = await operatorPost('/api/operator/run-once', { project: 'apps/easy-developer-platform' });
+    const guardianRun = await operatorPost('/api/operator/run-once', { project });
     const guardianStatus = guardianRun.body?.result?.status || guardianRun.body?.status || 'UNKNOWN';
 
     await rm(probe, { force: true });
     const recoveryTask = await operatorPost('/api/operator/tasks', {
-      goal: 'Inspect the EASY runtime service safely and verify its workspace without making external changes.',
-      project: 'apps/easy-developer-platform',
+      goal: 'Inspect the isolated EASY E2E workspace safely and verify it without making external changes.',
+      project,
     });
-    const recoveryRun = await operatorPost('/api/operator/run-once', { project: 'apps/easy-developer-platform' });
+    const recoveryRun = await operatorPost('/api/operator/run-once', { project });
     const recoveryStatus = recoveryRun.body?.result?.status || recoveryRun.body?.status || 'UNKNOWN';
 
     const external = publicDomain ? await json(`${publicDomain}/api/gateway/status`) : { ok: false, error: 'public_domain_not_available' };
@@ -119,6 +124,8 @@ async function bootSmoke() {
   } catch (error) {
     await rm(probe, { force: true }).catch(() => {});
     console.error(JSON.stringify({ smoke: 'end-to-end', status: 'FAILED', error: error.message }));
+  } finally {
+    await rm(e2eWorkspace, { recursive: true, force: true }).catch(() => {});
   }
 }
 
