@@ -137,7 +137,10 @@ jobs:
 
       - name: Verify gateway website and platform handoff
         run: |
-          curl -fsS http://127.0.0.1:8789/ | grep -F "Enter EASY Platform"
+          curl -fsS http://127.0.0.1:8789/ | grep -F "Integration Center"
+          curl -fsS http://127.0.0.1:8789/ | grep -F "AI Operator"
+          curl -fsS http://127.0.0.1:8789/integration | grep -F "Integration Center"
+          curl -fsS http://127.0.0.1:8789/operator | grep -F "AI Operator"
           node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('/tmp/easy-gateway-status.json','utf8')); if(!x.platformOnline||!x.operatorOnline) throw new Error('gateway_dependencies_not_online');"
 
       - name: Verify operator through gateway
