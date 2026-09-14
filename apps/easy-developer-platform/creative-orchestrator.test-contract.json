@@ -1,0 +1,1 @@
+{"version":"0.1.0","pipeline":["provider","product-dna","compile","generate","integrity","delivery"],"failClosed":true,"productionGenerationEnabled":false,"fixtureProvider":"deterministic-fixture"}
