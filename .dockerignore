@@ -1,0 +1,7 @@
+# Keep development tests out of the production EASY runtime image.
+**/test*.mjs
+**/*.test.mjs
+**/*.spec.mjs
+.git
+.github
+node_modules
