@@ -6,6 +6,7 @@ import { submit, runOnce } from './operator-worker.mjs';
 import { loadState } from './operator-state.mjs';
 import { intelligenceStatus } from './operator-intelligence.mjs';
 import { executeGithubChange } from './github-operator-executor.mjs';
+import { providerReadiness } from './provider-readiness.mjs';
 
 const port=Number(process.env.EASY_OPERATOR_PORT||8792);
 const bind=process.env.EASY_OPERATOR_BIND||'127.0.0.1';
@@ -23,9 +24,10 @@ export async function handle(req,res){
   if(req.method==='GET'&&url.pathname==='/api/operator/health')return send(res,200,{ok:true,service:'easy-ai-operator',mode:'fail-closed',provider:'deterministic-core'});
   if(!authorized(req))return send(res,401,{error:'unauthorized'});
   try{
+    if(req.method==='GET'&&url.pathname==='/api/operator/capabilities')return send(res,200,await providerReadiness());
     if(req.method==='GET'&&url.pathname==='/api/operator/status'){
       const state=await loadState(stateFile);
-      return send(res,200,{service:'easy-ai-operator',queue:{queued:state.tasks.filter(t=>t.status==='QUEUED').length,running:state.tasks.filter(t=>t.status==='RUNNING').length,verified:state.tasks.filter(t=>t.status==='VERIFIED').length,failed:state.tasks.filter(t=>t.status==='FAILED').length,blocked:state.tasks.filter(t=>t.status==='BLOCKED').length},intelligence:intelligenceStatus()});
+      return send(res,200,{service:'easy-ai-operator',queue:{queued:state.tasks.filter(t=>t.status==='QUEUED').length,running:state.tasks.filter(t=>t.status==='RUNNING').length,verified:state.tasks.filter(t=>t.status==='VERIFIED').length,failed:state.tasks.filter(t=>t.status==='FAILED').length,blocked:state.tasks.filter(t=>t.status==='BLOCKED').length},intelligence:intelligenceStatus(),providers:await providerReadiness()});
     }
     if(req.method==='GET'&&url.pathname==='/api/operator/tasks'){
       const state=await loadState(stateFile);return send(res,200,{tasks:(state.tasks||[]).slice(0,100)});
