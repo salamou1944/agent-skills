@@ -2,6 +2,7 @@
   "name": "@vercel-labs/agent-skills",
   "private": true,
   "type": "module",
+  "packageManager": "npm@11.5.2",
   "scripts": {
     "start": "node apps/easy-developer-platform/runtime.mjs"
   },
