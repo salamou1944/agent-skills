@@ -124,13 +124,13 @@ jobs:
       - name: Verify gateway website and platform handoff
         run: |
           curl -fsS http://127.0.0.1:8789/ | grep -F "Enter EASY Platform"
-          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '\"platformOnline\":true' | grep -F '\"operatorOnline\":true'
+          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '"platformOnline":true' | grep -F '"operatorOnline":true'
 
       - name: Verify operator through gateway
         run: |
           curl -fsS http://127.0.0.1:8789/api/operator/status | grep -F 'easy-ai-operator'
-          curl -fsS -X POST http://127.0.0.1:8789/api/operator/tasks -H 'content-type: application/json' --data '{"goal":"inspect workspace and verify syntax"}' | grep -F '\"status\":\"QUEUED\"'
-          curl -fsS -X POST http://127.0.0.1:8789/api/operator/run-once -H 'content-type: application/json' --data '{}' | grep -F '\"status\":\"VERIFIED\"'
+          curl -fsS -X POST http://127.0.0.1:8789/api/operator/tasks -H 'content-type: application/json' --data '{"goal":"inspect workspace and verify syntax"}' | grep -F '"status":"QUEUED"'
+          curl -fsS -X POST http://127.0.0.1:8789/api/operator/run-once -H 'content-type: application/json' --data '{}' | grep -F '"status":"VERIFIED"'
 
       - name: Verify dashboard response
         run: curl -fsS http://127.0.0.1:8790/ | grep -F "EASY Developer Platform"
