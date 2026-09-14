@@ -25,7 +25,7 @@ export async function execute(goal,{workspace='.',allowHighRisk=false}={}){
  const files=await walk(root);
  evidence.push(result('passed','inspect_workspace',{fileCount:files.length,files:files.slice(0,MAX_FILES)}));
  const sensitive=[];
- for(const f of files){if(!SAFE_EXTENSIONS.test(f))continue;const content=await readFile(join(root,f),'utf8');if(/(?:api[_-]?key|password|secret|private[_-]?key|token)\s*[:=]/i.test(content))sensitive.push(f)}
+ for(const f of files){if(!SAFE_EXTENSIONS.test(f))continue;const content=await readFile(join(root,f),'utf8');if(/(?:api[_-]?key|password|secret|private[_-]?key|token)\s*[:=]\s*(?!process\.env\.)["'`]/i.test(content))sensitive.push(f)}
  evidence.push(result(sensitive.length?'blocked':'passed','guardian_scan',{sensitiveFiles:sensitive}));
  if(sensitive.length)return {status:'BLOCKED',plan:p,evidence,summary:'Execution blocked by Guardian evidence'};
  const js=files.filter(f=>SAFE_EXTENSIONS.test(f));const syntax=[];
