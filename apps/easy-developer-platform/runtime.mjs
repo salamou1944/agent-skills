@@ -1,3 +1,4 @@
+import './railway-volume-bootstrap.mjs';
 import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
