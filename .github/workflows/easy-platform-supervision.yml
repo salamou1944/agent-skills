@@ -116,6 +116,18 @@ jobs:
           cat /tmp/easy-operator.log
           exit 1
 
+      - name: Wait for gateway health
+        run: |
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:8789/api/gateway/status > /tmp/easy-gateway-status.json; then
+              node -e "const x=require('/tmp/easy-gateway-status.json'); if(x.platformOnline&&x.operatorOnline) process.exit(0);"
+            fi
+            sleep 1
+          done
+          cat /tmp/easy-gateway-status.json || true
+          cat /tmp/easy-gateway.log || true
+          exit 1
+
       - name: Verify runtime contract
         env:
           EASY_PLATFORM_URL: http://127.0.0.1:8790
@@ -124,7 +136,7 @@ jobs:
       - name: Verify gateway website and platform handoff
         run: |
           curl -fsS http://127.0.0.1:8789/ | grep -F "Enter EASY Platform"
-          curl -fsS http://127.0.0.1:8789/api/gateway/status | grep -F '"platformOnline":true' | grep -F '"operatorOnline":true'
+          node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('/tmp/easy-gateway-status.json','utf8')); if(!x.platformOnline||!x.operatorOnline) throw new Error('gateway_dependencies_not_online');"
 
       - name: Verify operator through gateway
         run: |
