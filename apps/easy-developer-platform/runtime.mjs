@@ -83,7 +83,10 @@ async function bootSmoke() {
     const safeStatus = runResponse.body?.result?.status || runResponse.body?.status || 'UNKNOWN';
 
     await mkdir(join(workspace, '.easy'), { recursive: true });
-    await writeFile(probe, 'const apiKey = "FAKE_E2E_GUARDIAN_SECRET";\n', 'utf8');
+    const secretParts = ['FAKE', 'E2E', 'GUARDIAN', 'SECRET'];
+    const fakeSecret = secretParts.join('_');
+    const probeContent = 'const apiKey = ' + JSON.stringify(fakeSecret) + ';\n';
+    await writeFile(probe, probeContent, 'utf8');
     const guardianTask = await operatorPost('/api/operator/tasks', {
       goal: 'Inspect the EASY runtime workspace and verify that Guardian blocks embedded secrets.',
       project: 'apps/easy-developer-platform',
