@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process';
+import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { join } from 'node:path';
 
 const publicPort = Number(process.env.PORT || 8789);
 const root = new URL('./', import.meta.url);
@@ -53,30 +55,52 @@ async function json(url) {
   }
 }
 
+async function operatorPost(path, body) {
+  const response = await fetch(`http://127.0.0.1:8792${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return { status: response.status, body: await response.json() };
+}
+
 async function bootSmoke() {
   await new Promise(resolve => setTimeout(resolve, 3000));
   const publicDomain = process.env.EASY_PUBLIC_BASE_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '');
+  const workspace = process.env.EASY_OPERATOR_WORKSPACE || '/app';
+  const probe = join(workspace, '.easy', 'e2e-guardian-probe.mjs');
   try {
     const platform = await check('http://127.0.0.1:8790/api/health');
     const operator = await check('http://127.0.0.1:8792/api/operator/health');
     const gateway = await check(`http://127.0.0.1:${publicPort}/api/gateway/status`);
     const capabilities = await json('http://127.0.0.1:8792/api/operator/capabilities');
-    const taskResponse = await fetch('http://127.0.0.1:8792/api/operator/tasks', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        goal: 'Inspect the EASY runtime service safely and verify its workspace without making external changes.',
-        project: 'apps/easy-developer-platform',
-      }),
+
+    const taskResponse = await operatorPost('/api/operator/tasks', {
+      goal: 'Inspect the EASY runtime service safely and verify its workspace without making external changes.',
+      project: 'apps/easy-developer-platform',
     });
-    const task = await taskResponse.json();
-    const runResponse = await fetch('http://127.0.0.1:8792/api/operator/run-once', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ project: 'apps/easy-developer-platform' }),
+    const runResponse = await operatorPost('/api/operator/run-once', { project: 'apps/easy-developer-platform' });
+    const safeStatus = runResponse.body?.result?.status || runResponse.body?.status || 'UNKNOWN';
+
+    await mkdir(join(workspace, '.easy'), { recursive: true });
+    await writeFile(probe, 'const apiKey = "FAKE_E2E_GUARDIAN_SECRET";\n', 'utf8');
+    const guardianTask = await operatorPost('/api/operator/tasks', {
+      goal: 'Inspect the EASY runtime workspace and verify that Guardian blocks embedded secrets.',
+      project: 'apps/easy-developer-platform',
     });
-    const run = await runResponse.json();
+    const guardianRun = await operatorPost('/api/operator/run-once', { project: 'apps/easy-developer-platform' });
+    const guardianStatus = guardianRun.body?.result?.status || guardianRun.body?.status || 'UNKNOWN';
+
+    await rm(probe, { force: true });
+    const recoveryTask = await operatorPost('/api/operator/tasks', {
+      goal: 'Inspect the EASY runtime service safely and verify its workspace without making external changes.',
+      project: 'apps/easy-developer-platform',
+    });
+    const recoveryRun = await operatorPost('/api/operator/run-once', { project: 'apps/easy-developer-platform' });
+    const recoveryStatus = recoveryRun.body?.result?.status || recoveryRun.body?.status || 'UNKNOWN';
+
     const external = publicDomain ? await json(`${publicDomain}/api/gateway/status`) : { ok: false, error: 'public_domain_not_available' };
+    const overall = platform.ok && operator.ok && gateway.ok && taskResponse.status === 202 && safeStatus === 'VERIFIED' && guardianTask.status === 202 && guardianStatus === 'BLOCKED' && recoveryTask.status === 202 && recoveryStatus === 'VERIFIED';
     console.log(JSON.stringify({
       smoke: 'end-to-end',
       platformHealth: platform.ok,
@@ -84,11 +108,13 @@ async function bootSmoke() {
       gatewayHealth: gateway.ok,
       publicGateway: external,
       providerReadiness: capabilities.body || capabilities,
-      taskAccepted: taskResponse.status === 202,
-      taskStatus: task.status,
-      operatorRunStatus: run.result?.status || run.status || 'UNKNOWN',
+      safeExecution: { accepted: taskResponse.status === 202, taskId: taskResponse.body?.id || null, status: safeStatus },
+      guardian: { accepted: guardianTask.status === 202, taskId: guardianTask.body?.id || null, status: guardianStatus, probeRemoved: true },
+      recovery: { accepted: recoveryTask.status === 202, taskId: recoveryTask.body?.id || null, status: recoveryStatus },
+      overall: overall ? 'PASS' : 'FAIL',
     }));
   } catch (error) {
+    await rm(probe, { force: true }).catch(() => {});
     console.error(JSON.stringify({ smoke: 'end-to-end', status: 'FAILED', error: error.message }));
   }
 }
