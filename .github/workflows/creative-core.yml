@@ -1,0 +1,27 @@
+name: creative-core
+
+on:
+  push:
+    paths:
+      - 'apps/easy-developer-platform/creative-core.mjs'
+      - 'apps/easy-developer-platform/test-creative-core.mjs'
+      - 'package.json'
+      - '.github/workflows/creative-core.yml'
+  pull_request:
+    paths:
+      - 'apps/easy-developer-platform/creative-core.mjs'
+      - 'apps/easy-developer-platform/test-creative-core.mjs'
+      - 'package.json'
+      - '.github/workflows/creative-core.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:creative
