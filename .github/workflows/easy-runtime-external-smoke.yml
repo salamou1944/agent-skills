@@ -1,0 +1,39 @@
+name: EASY Runtime External Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  external-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public gateway
+        run: |
+          set -euo pipefail
+          BASE="https://easy-runtime-current-production.up.railway.app"
+          curl --fail --silent --show-error "$BASE/api/gateway/status" | tee gateway.json
+          node -e 'const x=require("./gateway.json"); if(!x.platformOnline || !x.operatorOnline) process.exit(1)'
+      - name: Check public platform health
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "https://easy-runtime-current-production.up.railway.app/api/platform/health" | tee platform.json
+          node -e 'const x=require("./platform.json"); if(x.ok!==true) process.exit(1)'
+      - name: Check public operator health
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error "https://easy-runtime-current-production.up.railway.app/api/operator/health" | tee operator.json
+          node -e 'const x=require("./operator.json"); if(x.ok!==true) process.exit(1)'
+      - name: Create and execute safe operator task
+        run: |
+          set -euo pipefail
+          BASE="https://easy-runtime-current-production.up.railway.app"
+          curl --fail --silent --show-error -X POST "$BASE/api/operator/tasks" \
+            -H 'content-type: application/json' \
+            --data '{"goal":"Inspect the deployed EASY runtime safely and verify its workspace without making external changes.","project":"apps/easy-developer-platform"}' | tee task.json
+          node -e 'const x=require("./task.json"); if(x.status!=="QUEUED") process.exit(1)'
+          curl --fail --silent --show-error -X POST "$BASE/api/operator/run-once" \
+            -H 'content-type: application/json' \
+            --data '{"project":"apps/easy-developer-platform"}' | tee run.json
+          node -e 'const x=require("./run.json"); const s=x.result?.status||x.status; if(!["VERIFIED","BLOCKED","FAILED"].includes(s)) process.exit(1); console.log(JSON.stringify({operatorRunStatus:s}))'
