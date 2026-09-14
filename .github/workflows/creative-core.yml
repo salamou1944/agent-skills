@@ -3,14 +3,20 @@ name: creative-core
 on:
   push:
     paths:
-      - 'apps/easy-developer-platform/creative-core.mjs'
-      - 'apps/easy-developer-platform/test-creative-core.mjs'
+      - 'apps/easy-developer-platform/creative-*.mjs'
+      - 'apps/easy-developer-platform/customer-auth.mjs'
+      - 'apps/easy-developer-platform/runtime.mjs'
+      - 'apps/easy-developer-platform/gateway.mjs'
+      - 'apps/easy-developer-platform/test-creative-*.mjs'
       - 'package.json'
       - '.github/workflows/creative-core.yml'
   pull_request:
     paths:
-      - 'apps/easy-developer-platform/creative-core.mjs'
-      - 'apps/easy-developer-platform/test-creative-core.mjs'
+      - 'apps/easy-developer-platform/creative-*.mjs'
+      - 'apps/easy-developer-platform/customer-auth.mjs'
+      - 'apps/easy-developer-platform/runtime.mjs'
+      - 'apps/easy-developer-platform/gateway.mjs'
+      - 'apps/easy-developer-platform/test-creative-*.mjs'
       - 'package.json'
       - '.github/workflows/creative-core.yml'
 
@@ -25,3 +31,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:creative
+      - run: npm run test:creative-stage
+      - run: node --check apps/easy-developer-platform/runtime.mjs
+      - run: node --check apps/easy-developer-platform/gateway.mjs
+      - run: node --check apps/easy-developer-platform/customer-auth.mjs
