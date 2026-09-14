@@ -35,12 +35,22 @@ start('./gateway.mjs', {
   EASY_OPERATOR_URL: 'http://127.0.0.1:8792',
 });
 
-async function bootSmoke() {
-  await new Promise(resolve => setTimeout(resolve, 2500));
+async function check(url) {
   try {
-    const platform = await fetch('http://127.0.0.1:8790/api/health');
-    const operator = await fetch('http://127.0.0.1:8792/api/operator/health');
-    const gateway = await fetch(`http://127.0.0.1:${publicPort}/api/gateway/status`);
+    const response = await fetch(url);
+    return { ok: response.ok, status: response.status };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+async function bootSmoke() {
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  const publicDomain = process.env.EASY_PUBLIC_BASE_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : '');
+  try {
+    const platform = await check('http://127.0.0.1:8790/api/health');
+    const operator = await check('http://127.0.0.1:8792/api/operator/health');
+    const gateway = await check(`http://127.0.0.1:${publicPort}/api/gateway/status`);
     const taskResponse = await fetch('http://127.0.0.1:8792/api/operator/tasks', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -56,15 +66,20 @@ async function bootSmoke() {
       body: JSON.stringify({ project: 'apps/easy-developer-platform' }),
     });
     const run = await runResponse.json();
+    const external = publicDomain ? await check(`${publicDomain}/api/gateway/status`) : { ok: false, error: 'public_domain_not_available' };
     console.log(JSON.stringify({
       smoke: 'end-to-end',
       platformHealth: platform.ok,
       operatorHealth: operator.ok,
       gatewayHealth: gateway.ok,
+      publicGateway: external,
       taskAccepted: taskResponse.status === 202,
       taskStatus: task.status,
       operatorRunStatus: run.result?.status || run.status || 'UNKNOWN',
-      providerExecution: 'not requested',
+      executionProvider: process.env.EASY_AGENT_PROVIDER || 'deterministic-core',
+      githubProvider: process.env.EASY_GITHUB_PROVIDER || 'not_configured',
+      deployProvider: process.env.EASY_DEPLOY_PROVIDER || 'not_configured',
+      externalExecution: 'fail-closed-until-provider-and-credentials-are-verified',
     }));
   } catch (error) {
     console.error(JSON.stringify({ smoke: 'end-to-end', status: 'FAILED', error: error.message }));
