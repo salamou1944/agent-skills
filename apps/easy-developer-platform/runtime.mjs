@@ -55,6 +55,15 @@ async function json(url) {
   }
 }
 
+async function text(url) {
+  try {
+    const response = await fetch(url);
+    return { ok: response.ok, status: response.status, body: await response.text() };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
 async function operatorPost(path, body) {
   const response = await fetch(`http://127.0.0.1:8792${path}`, {
     method: 'POST',
@@ -75,6 +84,19 @@ async function bootSmoke() {
     const platform = await check('http://127.0.0.1:8790/api/health');
     const operator = await check('http://127.0.0.1:8792/api/operator/health');
     const gateway = await check(`http://127.0.0.1:${publicPort}/api/gateway/status`);
+    const dashboard = await text(`http://127.0.0.1:${publicPort}/integration`);
+    const dashboardMarker = dashboard.ok && dashboard.body.includes('EASY Developer Platform');
+    const dashboardApis = await Promise.all([
+      check(`http://127.0.0.1:${publicPort}/api/platform`),
+      check(`http://127.0.0.1:${publicPort}/api/registry`),
+      check(`http://127.0.0.1:${publicPort}/api/projects`),
+      check(`http://127.0.0.1:${publicPort}/api/agent/tasks`),
+      check(`http://127.0.0.1:${publicPort}/api/builds`),
+      check(`http://127.0.0.1:${publicPort}/api/runtime`),
+      check(`http://127.0.0.1:${publicPort}/api/events`),
+      check(`http://127.0.0.1:${publicPort}/api/checks`),
+    ]);
+    const dashboardApiHealthy = dashboardApis.every(x => x.ok && x.status === 200);
     const capabilities = await json('http://127.0.0.1:8792/api/operator/capabilities');
 
     await mkdir(e2eWorkspace, { recursive: true });
@@ -108,12 +130,13 @@ async function bootSmoke() {
     const recoveryStatus = recoveryRun.body?.result?.status || recoveryRun.body?.status || 'UNKNOWN';
 
     const external = publicDomain ? await json(`${publicDomain}/api/gateway/status`) : { ok: false, error: 'public_domain_not_available' };
-    const overall = platform.ok && operator.ok && gateway.ok && taskResponse.status === 202 && safeStatus === 'VERIFIED' && guardianTask.status === 202 && guardianStatus === 'BLOCKED' && recoveryTask.status === 202 && recoveryStatus === 'VERIFIED';
+    const overall = platform.ok && operator.ok && gateway.ok && dashboardMarker && dashboardApiHealthy && taskResponse.status === 202 && safeStatus === 'VERIFIED' && guardianTask.status === 202 && guardianStatus === 'BLOCKED' && recoveryTask.status === 202 && recoveryStatus === 'VERIFIED';
     console.log(JSON.stringify({
       smoke: 'end-to-end',
       platformHealth: platform.ok,
       operatorHealth: operator.ok,
       gatewayHealth: gateway.ok,
+      dashboard: { ok: dashboard.ok, status: dashboard.status, marker: dashboardMarker, apiHealthy: dashboardApiHealthy, apiStatuses: dashboardApis.map(x => x.status ?? null) },
       publicGateway: external,
       providerReadiness: capabilities.body || capabilities,
       safeExecution: { accepted: taskResponse.status === 202, taskId: taskResponse.body?.id || null, status: safeStatus },
