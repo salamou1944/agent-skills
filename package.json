@@ -2,6 +2,9 @@
   "name": "@vercel-labs/agent-skills",
   "private": true,
   "type": "module",
+  "scripts": {
+    "start": "node apps/easy-developer-platform/runtime.mjs"
+  },
   "dependencies": {
     "yaml": "2.9.0"
   }
