@@ -2,26 +2,33 @@
 
 Target geography: Europe + Americas. Algeria is not the initial acquisition market for this engine.
 
-| Priority | Market | Offer | Acquisition channel | Required activation | Current state | Next action |
+| Priority | Market | Offer | Acquisition channel | Activation | State | Next action |
 |---:|---|---|---|---|---|---|
-| 1 | US | ElevenLabs | YouTube + SEO + short video | approved affiliate account + unique tracking link | **LINK CONFIGURED + ADAPTER WIRED** | Run live provider-status check; then publish first compliant asset |
-| 2 | UK | ElevenLabs | YouTube + SEO + short video | same | QUEUED | Reuse English asset set after US validation |
-| 3 | Canada | ElevenLabs | YouTube + SEO + short video | same | QUEUED | Reuse English asset set after US validation |
-| 4 | US | Hostinger | SEO + YouTube + short video | approved affiliate account + tracking link | QUEUED | Activate second offer after first funnel is instrumented |
-| 5 | UK | Hostinger | SEO + YouTube | same | QUEUED | Expand winning topic |
-| 6 | US | Payoneer | SEO + creator/business content | partner application + tracking | QUEUED | Submit application; publish only after approval |
+| 1 | US | ElevenLabs | YouTube + SEO + short video | approved account + unique link | **LIVE LINK VERIFIED** | Publish first compliant asset |
+| 2 | UK | ElevenLabs | YouTube + SEO + short video | same | READY AFTER US | Reuse winning English asset |
+| 3 | Canada | ElevenLabs | YouTube + SEO + short video | same | READY AFTER US | Reuse winning English asset |
+| 4 | US | Hostinger | SEO + YouTube + short video | approved account + unique link | **ADAPTER READY / LINK PENDING** | User activates affiliate account and adds link |
+| 5 | UK | Hostinger | SEO + YouTube | same | **ADAPTER READY / LINK PENDING** | Reuse US winner after activation |
+| 6 | US | Payoneer | SEO + creator/business content | approved partner + tracking | **ADAPTER READY / LINK PENDING** | Submit partner application and add approved tracking link |
 
-## Time-critical sequence
+## Current verified state
 
-1. **Account activation:** obtain real affiliate links. ElevenLabs link is now configured in Railway production.
-2. **Adapter integration:** ElevenLabs adapter is wired into the Revenue Engine operator and provider registry.
-3. **Live tracking validation:** run `npm run revenue:affiliate:status`; this performs the adapter health check and verifies that the tracking URL is present without printing the URL value.
-4. **First asset:** publish one high-intent problem/solution piece with clear affiliate disclosure.
-5. **Measurement:** record clicks, registrations, paid conversions, and provider-confirmed commission.
-6. **Decision gate:** after real signal, either scale the topic/market or kill it.
-7. **Second offer:** activate Hostinger in parallel once the first measurement path is proven.
+- ElevenLabs affiliate adapter: integrated.
+- ElevenLabs production tracking variable: present and verified by the deployment pre-flight.
+- Hostinger adapter: integrated, fail-closed until a real approved tracking link exists.
+- Payoneer adapter: integrated, fail-closed until a real approved tracking link exists.
+- Revenue rule: provider-confirmed commission only.
+- No secret, token, password, or affiliate URL is stored in Git.
 
-## Non-negotiable revenue rule
+## Fastest path to first cash
+
+1. Publish the first US ElevenLabs asset using the already verified tracking link.
+2. Measure real clicks and provider-side conversions.
+3. Apply to/activate Hostinger and insert its unique link when approved.
+4. Apply to Payoneer affiliate/partner program and insert the approved tracking link.
+5. Only after provider-confirmed commissions appear do we scale the winning market/topic.
+
+## Revenue truth
 
 Credits, impressions, clicks, registrations, simulated events, or projected commissions are **not cash revenue**. Revenue is recorded only from a provider-confirmed commission event.
 
