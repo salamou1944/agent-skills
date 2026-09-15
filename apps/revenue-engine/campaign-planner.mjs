@@ -5,7 +5,10 @@ const DEFAULT_CHANNELS = Object.freeze(['youtube', 'seo', 'short_video', 'commun
 export function buildLaunchCampaign({ offerId = 'elevenlabs-affiliate', marketCodes = ['US', 'GB', 'CA'], channels = DEFAULT_CHANNELS } = {}) {
   const offer = OFFER_CATALOG.find((item) => item.id === offerId);
   if (!offer) throw new Error(`unknown_offer:${offerId}`);
-  const markets = TARGET_MARKETS.filter((market) => marketCodes.includes(market.code) && offer.marketFit.includes(market.code));
+  const marketsByCode = new Map(TARGET_MARKETS.map((market) => [market.code, market]));
+  const markets = marketCodes
+    .map((code) => marketsByCode.get(code))
+    .filter((market) => market && offer.marketFit.includes(market.code));
   if (!markets.length) throw new Error('no_eligible_markets');
   return {
     id: `campaign_${offer.id}`,
