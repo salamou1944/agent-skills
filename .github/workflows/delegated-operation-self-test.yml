@@ -1,0 +1,26 @@
+name: delegated-operation-self-test
+
+on:
+  push:
+    branches: [main, 'feat/**']
+    paths:
+      - '.agents/skills/**'
+      - 'scripts/delegated-operation-self-test.mjs'
+      - '.github/workflows/delegated-operation-self-test.yml'
+  pull_request:
+    paths:
+      - '.agents/skills/**'
+      - 'scripts/delegated-operation-self-test.mjs'
+      - '.github/workflows/delegated-operation-self-test.yml'
+  workflow_dispatch:
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run delegated-operation self-test
+        run: node scripts/delegated-operation-self-test.mjs
