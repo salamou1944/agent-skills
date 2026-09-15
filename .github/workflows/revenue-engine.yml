@@ -30,7 +30,9 @@ jobs:
       - run: node --check apps/revenue-engine/revenue-operator.mjs
       - run: node --check apps/revenue-engine/integration-harness.mjs
       - run: node --check apps/revenue-engine/revenue-tool.mjs
+      - run: node --check apps/revenue-engine/market-strategy.mjs
       - run: node apps/revenue-engine/test-revenue-engine.mjs
       - run: node apps/revenue-engine/test-revenue-components.mjs
       - run: node apps/revenue-engine/test-revenue-api.mjs
       - run: node apps/revenue-engine/test-revenue-operator.mjs
+      - run: node apps/revenue-engine/test-market-strategy.mjs
