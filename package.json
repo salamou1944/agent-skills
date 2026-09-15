@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node apps/easy-developer-platform/runtime.mjs",
     "test:creative": "node apps/easy-developer-platform/test-creative-core.mjs",
-    "test:creative-stage": "node apps/easy-developer-platform/test-creative-stage.mjs"
+    "test:creative-stage": "node apps/easy-developer-platform/test-creative-stage.mjs",
+    "test:creative-provider": "node apps/easy-developer-platform/test-openai-creative-provider.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
