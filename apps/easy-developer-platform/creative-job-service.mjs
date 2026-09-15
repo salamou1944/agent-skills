@@ -22,7 +22,10 @@ http.createServer(async (req,res)=>{
         asset:{assetId:'provider-smoke',mimeType:'image/png',fileName:'provider-smoke.png',dataUrl:testAsset,width:1,height:1},
         request:{direction:'Create a minimal realistic commercial presentation. Preserve every immutable product detail exactly; do not invent claims or product features.'},
       }, openAICreativeProvider());
-      return send(res,200,{jobId:result.jobId,status:result.status,decision:result.decision,reason:result.reason||null,stages:result.events?.map(({stage,decision,reason})=>({stage,decision,reason:reason||null}))||[],integrity:{core:result.validation?.core?.decision||result.validation?.decision||null,provider:result.validation?.provider?.decision||null},generatedImage:Boolean(result.output?.dataUrl||result.output?.base64)});
+      const summary = {jobId:result.jobId,status:result.status,decision:result.decision,reason:result.reason||null,stages:result.events?.map(({stage,decision,reason})=>({stage,decision,reason:reason||null}))||[],integrity:{core:result.validation?.core?.decision||result.validation?.decision||null,provider:result.validation?.provider?.decision||null},generatedImage:Boolean(result.output?.dataUrl||result.output?.base64)};
+      const passed = summary.status === 'SUCCEEDED' && summary.decision === 'PASS' && summary.generatedImage && summary.integrity.core === 'PASS' && summary.integrity.provider === 'PASS';
+      console.log('CREATIVE_REAL_SELF_TEST', JSON.stringify({...summary,passed}));
+      return send(res,passed ? 200 : 503,{...summary,passed});
     }
     if (req.method !== 'POST' || u.pathname !== '/api/creative-job/run') return send(res,404,{error:'not_found'});
     const input = await body(req);
