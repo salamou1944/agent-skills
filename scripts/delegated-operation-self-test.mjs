@@ -20,15 +20,15 @@ const skills = [
   },
   {
     name: 'failure-recovery-operator',
-    markers: ['name: failure-recovery-operator', 'description:', 'classify failures', 'blind retries', 'alternate path'],
+    markers: ['name: failure-recovery-operator', 'description:', 'Classify it as', 'blind retries', 'alternate path'],
   },
   {
     name: 'evidence-backed-operator',
-    markers: ['name: evidence-backed-operator', 'description:', 'observable evidence', 'planned', 'executed', 'verified'],
+    markers: ['name: evidence-backed-operator', 'description:', 'observable evidence', 'PLANNED', 'EXECUTED', 'VERIFIED', 'FAILED', 'BLOCKED'],
   },
   {
     name: 'browser-presence-operator',
-    markers: ['name: browser-presence-operator', 'description:', 'browser', 'CAPTCHA', 'MFA', 'bypass'],
+    markers: ['name: browser-presence-operator', 'description:', 'browser', 'CAPTCHA', 'MFA', 'rather than bypassing'],
   },
   {
     name: 'user-preference-executor',
