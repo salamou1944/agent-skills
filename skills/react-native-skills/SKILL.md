@@ -17,16 +17,22 @@ Comprehensive best practices for React Native and Expo applications. Contains
 rules across multiple categories covering performance, animations, UI patterns,
 and platform-specific optimizations.
 
-## When to Apply
+## Execution contract
+1. Confirm the target is React Native/Expo and inspect the project's React Native, Expo, and React versions.
+2. Identify the actual bottleneck or requested behavior before applying a rule.
+3. Apply the smallest relevant rule set; do not introduce native dependencies solely for style preference.
+4. Preserve platform behavior and accessibility while optimizing performance.
+5. Validate changes with the project's lint/typecheck/tests and a focused device/emulator smoke test when native behavior is affected.
 
-Reference these guidelines when:
-
-- Building React Native or Expo apps
-- Optimizing list and scroll performance
-- Implementing animations with Reanimated
-- Working with images and media
-- Configuring native modules or fonts
-- Structuring monorepo projects with native dependencies
+## Validation checklist
+- [ ] React Native/Expo versions verified.
+- [ ] Relevant performance or UX baseline identified.
+- [ ] List rendering is virtualized where scale requires it.
+- [ ] Callbacks/styles/functions avoid unnecessary per-render allocation where relevant.
+- [ ] Animations use appropriate GPU-friendly properties and worklet/shared-value rules where applicable.
+- [ ] Images, safe areas, navigation, and native modules are handled with platform-appropriate APIs.
+- [ ] Accessibility and interaction behavior remain intact.
+- [ ] Project tests/lint/typecheck and focused runtime verification pass.
 
 ## Rule Categories by Priority
 
@@ -39,12 +45,9 @@ Reference these guidelines when:
 | 5        | State Management | MEDIUM   | `react-state-`       |
 | 6        | Rendering        | MEDIUM   | `rendering-`         |
 | 7        | Monorepo         | MEDIUM   | `monorepo-`          |
-| 8        | Configuration    | LOW      | `fonts-`, `imports-` |
+| 8        | Configuration    | LOW      | `fonts-`, `imports-`  |
 
 ## Quick Reference
-
-### 1. List Performance (CRITICAL)
-
 - `list-performance-virtualize` - Use FlashList for large lists
 - `list-performance-item-memo` - Memoize list item components
 - `list-performance-callbacks` - Stabilize callback references
@@ -53,19 +56,10 @@ Reference these guidelines when:
 - `list-performance-images` - Optimize images in lists
 - `list-performance-item-expensive` - Move expensive work outside items
 - `list-performance-item-types` - Use item types for heterogeneous lists
-
-### 2. Animation (HIGH)
-
 - `animation-gpu-properties` - Animate only transform and opacity
 - `animation-derived-value` - Use useDerivedValue for computed animations
 - `animation-gesture-detector-press` - Use Gesture.Tap instead of Pressable
-
-### 3. Navigation (HIGH)
-
 - `navigation-native-navigators` - Use native stack and native tabs over JS navigators
-
-### 4. UI Patterns (HIGH)
-
 - `ui-expo-image` - Use expo-image for all images
 - `ui-image-gallery` - Use Galeria for image lightboxes
 - `ui-pressable` - Use Pressable over TouchableOpacity
@@ -76,46 +70,8 @@ Reference these guidelines when:
 - `ui-measure-views` - Use onLayout, not measure()
 - `ui-styling` - Use StyleSheet.create or Nativewind
 
-### 5. State Management (MEDIUM)
-
-- `react-state-minimize` - Minimize state subscriptions
-- `react-state-dispatcher` - Use dispatcher pattern for callbacks
-- `react-state-fallback` - Show fallback on first render
-- `react-compiler-destructure-functions` - Destructure for React Compiler
-- `react-compiler-reanimated-shared-values` - Handle shared values with compiler
-
-### 6. Rendering (MEDIUM)
-
-- `rendering-text-in-text-component` - Wrap text in Text components
-- `rendering-no-falsy-and` - Avoid falsy && for conditional rendering
-
-### 7. Monorepo (MEDIUM)
-
-- `monorepo-native-deps-in-app` - Keep native dependencies in app package
-- `monorepo-single-dependency-versions` - Use single versions across packages
-
-### 8. Configuration (LOW)
-
-- `fonts-config-plugin` - Use config plugins for custom fonts
-- `imports-design-system-folder` - Organize design system imports
-- `js-hoist-intl` - Hoist Intl object creation
-
 ## How to Use
-
-Read individual rule files for detailed explanations and code examples:
-
-```
-rules/list-performance-virtualize.md
-rules/animation-gpu-properties.md
-```
-
-Each rule file contains:
-
-- Brief explanation of why it matters
-- Incorrect code example with explanation
-- Correct code example with explanation
-- Additional context and references
+Read individual rule files for detailed explanations and code examples. Each rule should contain rationale, incorrect/correct examples, and verification notes.
 
 ## Full Compiled Document
-
 For the complete guide with all rules expanded: `AGENTS.md`
