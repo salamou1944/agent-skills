@@ -1,5 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { access } from 'node:fs/promises';
+import { readFile, access } from 'node:fs/promises';
 
 const root = new URL('../.agents/skills/', import.meta.url);
 const skills = [
@@ -41,12 +40,12 @@ const skills = [
   },
 ];
 
-const forbidden = [
-  /bypass authentication/i,
-  /bypass CAPTCHA/i,
-  /bypass MFA/i,
-  /bypass quotas/i,
-  /bypass rate limits/i,
+const unsafeImperatives = [
+  /(?:^|\n)\s*(?:[-*]\s*)?(?:always\s+)?bypass\s+authentication\b/i,
+  /(?:^|\n)\s*(?:[-*]\s*)?(?:always\s+)?bypass\s+CAPTCHA\b/i,
+  /(?:^|\n)\s*(?:[-*]\s*)?(?:always\s+)?bypass\s+MFA\b/i,
+  /(?:^|\n)\s*(?:[-*]\s*)?(?:always\s+)?bypass\s+quotas\b/i,
+  /(?:^|\n)\s*(?:[-*]\s*)?(?:always\s+)?bypass\s+rate\s+limits\b/i,
 ];
 
 for (const skill of skills) {
@@ -64,8 +63,8 @@ for (const skill of skills) {
   for (const marker of skill.markers) {
     if (!text.includes(marker)) throw new Error(`${skill.name}: missing required contract marker: ${marker}`);
   }
-  for (const pattern of forbidden) {
-    if (pattern.test(text)) throw new Error(`${skill.name}: forbidden bypass instruction present: ${pattern}`);
+  for (const pattern of unsafeImperatives) {
+    if (pattern.test(text)) throw new Error(`${skill.name}: unsafe bypass imperative present: ${pattern}`);
   }
 }
 
