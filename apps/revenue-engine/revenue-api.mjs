@@ -1,8 +1,6 @@
 import { createServer } from 'node:http';
 import { createEngine } from './revenue-engine.mjs';
 
-const engine = createEngine({ mode: 'dry-run' });
-
 function json(res, status, body) {
   const payload = JSON.stringify(body);
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
@@ -18,22 +16,25 @@ async function body(req) {
   return raw ? JSON.parse(raw) : {};
 }
 
-const server = createServer(async (req, res) => {
-  try {
-    if (req.method === 'GET' && req.url === '/health') return json(res, 200, { ok: true, mode: engine.mode });
-    if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
-    const input = await body(req);
-    if (req.url === '/opportunity') return json(res, 200, engine.discover(input));
-    if (req.url === '/opportunity/verify') return json(res, 200, engine.verify(input.opportunity, input.evidence));
-    if (req.url === '/opportunity/score') return json(res, 200, engine.score(input.opportunity, input.metrics));
-    if (req.url === '/plan') return json(res, 200, engine.plan(input.opportunity));
-    if (req.url === '/fanout') return json(res, 200, engine.fanOut(input.opportunity, input.plan));
-    return json(res, 404, { error: 'not_found' });
-  } catch (error) {
-    return json(res, 400, { error: error.message });
-  }
-});
+export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }) } = {}) {
+  return async (req, res) => {
+    try {
+      if (req.method === 'GET' && req.url === '/health') return json(res, 200, { ok: true, mode: engine.mode });
+      if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
+      const input = await body(req);
+      if (req.url === '/opportunity') return json(res, 200, engine.discover(input));
+      if (req.url === '/opportunity/verify') return json(res, 200, engine.verify(input.opportunity, input.evidence));
+      if (req.url === '/opportunity/score') return json(res, 200, engine.score(input.opportunity, input.metrics));
+      if (req.url === '/plan') return json(res, 200, engine.plan(input.opportunity));
+      if (req.url === '/fanout') return json(res, 200, engine.fanOut(input.opportunity, input.plan));
+      return json(res, 404, { error: 'not_found' });
+    } catch (error) {
+      return json(res, 400, { error: error.message });
+    }
+  };
+}
 
+const server = createServer(createRevenueApi());
 const port = Number(process.env.REVENUE_ENGINE_PORT || 8787);
 if (import.meta.url === `file://${process.argv[1]}`) server.listen(port, '127.0.0.1', () => console.log(`revenue-engine-api listening on 127.0.0.1:${port}`));
 export { server };
