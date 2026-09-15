@@ -22,6 +22,11 @@ jobs:
           node-version: 22
       - run: node --check apps/revenue-engine/revenue-engine.mjs
       - run: node --check apps/revenue-engine/provider-contract.mjs
+      - run: node --check apps/revenue-engine/adapter-contract.mjs
+      - run: node --check apps/revenue-engine/event-ledger.mjs
+      - run: node --check apps/revenue-engine/opportunity-store.mjs
+      - run: node --check apps/revenue-engine/capability-planner.mjs
       - run: node --check apps/revenue-engine/revenue-api.mjs
       - run: node --check apps/revenue-engine/revenue-tool.mjs
       - run: node apps/revenue-engine/test-revenue-engine.mjs
+      - run: node apps/revenue-engine/test-revenue-components.mjs
