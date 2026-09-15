@@ -1,0 +1,23 @@
+name: revenue-engine
+
+on:
+  push:
+    paths:
+      - 'apps/revenue-engine/**'
+      - '.github/workflows/revenue-engine.yml'
+  pull_request:
+    paths:
+      - 'apps/revenue-engine/**'
+      - '.github/workflows/revenue-engine.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --check apps/revenue-engine/revenue-engine.mjs
+      - run: node --check apps/revenue-engine/provider-contract.mjs
+      - run: node apps/revenue-engine/test-revenue-engine.mjs
