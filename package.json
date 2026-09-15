@@ -9,8 +9,10 @@
     "test:creative-stage": "node apps/easy-developer-platform/test-creative-stage.mjs",
     "test:creative-provider": "node apps/easy-developer-platform/test-openai-creative-provider.mjs",
     "test:revenue": "node apps/revenue-engine/test-revenue-engine.mjs",
-    "test:revenue-components": "node apps/revenue-engine/test-revenue-components.mjs",
-    "test:revenue-api": "node apps/revenue-engine/test-revenue-api.mjs"
+    "test:revenue:all": "node apps/revenue-engine/test-revenue-engine.mjs && node apps/revenue-engine/test-revenue-components.mjs && node apps/revenue-engine/test-revenue-api.mjs",
+    "revenue:doctor": "node apps/revenue-engine/revenue-operator.mjs doctor",
+    "revenue:demo": "node apps/revenue-engine/revenue-operator.mjs demo",
+    "revenue:serve": "node apps/revenue-engine/revenue-operator.mjs serve"
   },
   "dependencies": {
     "yaml": "2.9.0"
