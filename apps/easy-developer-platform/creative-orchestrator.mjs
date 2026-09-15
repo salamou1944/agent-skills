@@ -22,6 +22,10 @@ export function createProviderAdapter(provider, options = {}) {
     name,
     async analyzeAsset(input) { return provider.analyzeAsset(input); },
     async generateCreative(instruction, input) { return provider.generateCreative(instruction, input); },
+    async validateOutput(dna, output) {
+      if (typeof provider.validateOutput !== 'function') return null;
+      return provider.validateOutput(dna, output);
+    },
   });
 }
 
@@ -63,17 +67,47 @@ export async function runCreativeJob(input = {}, provider = null) {
       provider: provider.name,
       verified: true,
     });
-    mark('product-dna', 'PASS', { fingerprint: dna.fingerprint });
+    mark('product-dna', 'PASS', { fingerprint: dna.fingerprint, extraction: analyzed.source || 'provider-analysis' });
     const compiled = compileCreativeInstruction(dna, input.request);
     mark('compile', 'PASS', { fingerprint: compiled.fingerprint });
     const output = await provider.generateCreative(compiled.instruction, input);
-    const validation = validateCreativeOutput(dna, output);
-    mark('integrity', validation.decision, { mismatches: validation.mismatches, inventedClaims: validation.inventedClaims });
-    if (validation.decision !== 'PASS') {
-      return { jobId, status: 'BLOCKED', decision: 'BLOCK', reason: validation.reason, dna, instruction: compiled.instruction, validation, events };
+    mark('generation', 'PASS', { provider: output.provider || provider.name, generatedImage: Boolean(output.dataUrl || output.base64) });
+
+    const coreValidation = validateCreativeOutput(dna, output);
+    mark('integrity-core', coreValidation.decision, { mismatches: coreValidation.mismatches, inventedClaims: coreValidation.inventedClaims });
+    if (coreValidation.decision !== 'PASS') {
+      return { jobId, status: 'BLOCKED', decision: 'BLOCK', reason: coreValidation.reason, dna, instruction: compiled.instruction, output, validation: coreValidation, events };
     }
+
+    const providerValidation = await provider.validateOutput(dna, output);
+    if (providerValidation) {
+      mark('integrity-vision', providerValidation.decision, { mismatches: providerValidation.mismatches, reason: providerValidation.reason });
+      if (providerValidation.decision !== 'PASS') {
+        return {
+          jobId,
+          status: 'BLOCKED',
+          decision: 'BLOCK',
+          reason: providerValidation.reason,
+          dna,
+          instruction: compiled.instruction,
+          output,
+          validation: { core: coreValidation, provider: providerValidation },
+          events,
+        };
+      }
+    }
+
     mark('delivery', 'PASS');
-    return { jobId, status: 'SUCCEEDED', decision: 'PASS', dna, instruction: compiled.instruction, output, validation, events };
+    return {
+      jobId,
+      status: 'SUCCEEDED',
+      decision: 'PASS',
+      dna,
+      instruction: compiled.instruction,
+      output,
+      validation: { core: coreValidation, provider: providerValidation },
+      events,
+    };
   } catch (error) {
     mark('execution', 'FAILED', { error: error.message, code: error.code || 'execution_error' });
     return { jobId, status: 'FAILED', decision: 'BLOCK', reason: error.code || 'execution_error', events };
