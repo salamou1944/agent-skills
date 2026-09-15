@@ -9,12 +9,13 @@
     "test:creative-stage": "node apps/easy-developer-platform/test-creative-stage.mjs",
     "test:creative-provider": "node apps/easy-developer-platform/test-openai-creative-provider.mjs",
     "test:revenue": "node apps/revenue-engine/test-revenue-engine.mjs",
-    "test:revenue:all": "node apps/revenue-engine/test-revenue-engine.mjs && node apps/revenue-engine/test-revenue-components.mjs && node apps/revenue-engine/test-revenue-api.mjs && node apps/revenue-engine/test-revenue-operator.mjs && node apps/revenue-engine/test-market-strategy.mjs && node apps/revenue-engine/test-campaign-planner.mjs",
+    "test:revenue:all": "node apps/revenue-engine/test-revenue-engine.mjs && node apps/revenue-engine/test-revenue-components.mjs && node apps/revenue-engine/test-revenue-api.mjs && node apps/revenue-engine/test-revenue-operator.mjs && node apps/revenue-engine/test-market-strategy.mjs && node apps/revenue-engine/test-campaign-planner.mjs && node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs",
     "revenue:doctor": "node apps/revenue-engine/revenue-operator.mjs doctor",
     "revenue:demo": "node apps/revenue-engine/revenue-operator.mjs demo",
     "revenue:serve": "node apps/revenue-engine/revenue-operator.mjs serve",
     "revenue:markets": "node apps/revenue-engine/test-market-strategy.mjs",
-    "revenue:campaign": "node apps/revenue-engine/test-campaign-planner.mjs"
+    "revenue:campaign": "node apps/revenue-engine/test-campaign-planner.mjs",
+    "revenue:affiliate:test": "node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
