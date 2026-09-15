@@ -69,14 +69,22 @@ export async function runCreativeJob(input = {}, provider = null) {
     });
     mark('product-dna', 'PASS', { fingerprint: dna.fingerprint, extraction: analyzed.source || 'provider-analysis' });
     const compiled = compileCreativeInstruction(dna, input.request);
-    mark('compile', 'PASS', { fingerprint: compiled.fingerprint });
-    const output = await provider.generateCreative(compiled.instruction, input);
+    const instruction = {
+      ...compiled.instruction,
+      output: {
+        ...compiled.instruction.output,
+        generationEnabled: true,
+        provider: provider.name,
+      },
+    };
+    mark('compile', 'PASS', { fingerprint: compiled.fingerprint, generationEnabled: true, provider: provider.name });
+    const output = await provider.generateCreative(instruction, input);
     mark('generation', 'PASS', { provider: output.provider || provider.name, generatedImage: Boolean(output.dataUrl || output.base64) });
 
     const coreValidation = validateCreativeOutput(dna, output);
     mark('integrity-core', coreValidation.decision, { mismatches: coreValidation.mismatches, inventedClaims: coreValidation.inventedClaims });
     if (coreValidation.decision !== 'PASS') {
-      return { jobId, status: 'BLOCKED', decision: 'BLOCK', reason: coreValidation.reason, dna, instruction: compiled.instruction, output, validation: coreValidation, events };
+      return { jobId, status: 'BLOCKED', decision: 'BLOCK', reason: coreValidation.reason, dna, instruction, output, validation: coreValidation, events };
     }
 
     const providerValidation = await provider.validateOutput(dna, output);
@@ -89,7 +97,7 @@ export async function runCreativeJob(input = {}, provider = null) {
           decision: 'BLOCK',
           reason: providerValidation.reason,
           dna,
-          instruction: compiled.instruction,
+          instruction,
           output,
           validation: { core: coreValidation, provider: providerValidation },
           events,
@@ -103,7 +111,7 @@ export async function runCreativeJob(input = {}, provider = null) {
       status: 'SUCCEEDED',
       decision: 'PASS',
       dna,
-      instruction: compiled.instruction,
+      instruction,
       output,
       validation: { core: coreValidation, provider: providerValidation },
       events,
