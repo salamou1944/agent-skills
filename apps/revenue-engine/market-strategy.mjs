@@ -66,7 +66,7 @@ export function selectOffers({ marketCodes = TARGET_MARKETS.map((m) => m.code), 
       audienceMatch: wanted.size === 0 ? 1 : offer.audience.filter((x) => wanted.has(x)).length / wanted.size,
       marketCoverage: offer.marketFit.filter((code) => markets.has(code)).length
     }))
-    .sort((a, b) => b.rank - a.rank || b.marketCoverage - a.marketCoverage);
+    .sort((a, b) => a.rank - b.rank || b.marketCoverage - a.marketCoverage);
 }
 
 export function buildCampaignPlan({ offer, markets = TARGET_MARKETS, channels = ['search_content', 'youtube', 'short_video', 'community_content'] } = {}) {
