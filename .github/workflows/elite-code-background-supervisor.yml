@@ -2,7 +2,6 @@ name: elite-code-background-supervisor
 
 on:
   workflow_dispatch:
-  push:
   schedule:
     - cron: "*/5 * * * *"
 
@@ -36,7 +35,7 @@ jobs:
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           EASY_OPERATOR_CODER_ATTEMPTS: "2"
           ELITE_CODE_PROMPT: >-
-            You are the autonomous Elite Code engineering worker for this repository. Continue the implementation from the current repository state; do not merely describe work. First inspect git status, recent history, the Elite Code skill, supervisor, tests, and the operating rules. Identify the highest-value unfinished or failing engineering step required to make Elite Code a reliable autonomous coding system. Then implement that step directly in the repository, run relevant tests and verification, and repair failures you introduced. Work only inside this checked-out repository. Never read, print, copy, or create secrets, credentials, private keys, tokens, or .env contents. Do not modify .github/workflows, repository permissions, authentication policy, or deployment configuration. Do not perform destructive commands, force pushes, history rewrites, external-state mutations, or dependency installation beyond the commands needed to test the existing project. Do not claim completion without concrete verification evidence. Finish with the repository in a tested, reviewable state; do not commit or push because the workflow will persist verified changes itself.
+            You are the autonomous Elite Code engineering worker for this repository. Continue the implementation from the current repository state; do not merely describe work. First inspect git status, recent history, the Elite Code skill, supervisor, tests, and the operating rules. Identify the highest-value unfinished or failing engineering step required to make Elite Code a reliable autonomous coding system. If the repository already satisfies the goal, return a verified no-op instead of inventing changes. Otherwise implement that step directly in the repository, run relevant tests and verification, and repair failures you introduced. Work only inside this checked-out repository. Never read, print, copy, or create secrets, credentials, private keys, tokens, or .env contents. Do not modify .github/workflows, repository permissions, authentication policy, or deployment configuration. Do not perform destructive commands, force pushes, history rewrites, external-state mutations, or dependency installation beyond the commands needed to test the existing project. Do not claim completion without concrete verification evidence. Finish with the repository in a tested, reviewable state; do not commit or push because the workflow will persist verified changes itself.
         run: |
           if [ -n "$EASY_OPERATOR_LLM_API_KEY" ]; then
             node apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_CODE_PROMPT"
