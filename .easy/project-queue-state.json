@@ -74,7 +74,7 @@
           "error": "provider_http_429"
         }
       ],
-      "updatedAt": "2026-09-16T20:53:49.643Z"
+      "updatedAt": "2026-09-16T20:57:36.476Z"
     }
   },
   "history": [
@@ -345,6 +345,17 @@
         }
       ],
       "at": "2026-09-16T20:53:49.643Z"
+    },
+    {
+      "id": "mony.first-revenue-blocker",
+      "status": "FAILED",
+      "evidence": [
+        {
+          "kind": "autonomous-coder",
+          "error": "provider_http_429"
+        }
+      ],
+      "at": "2026-09-16T20:57:36.477Z"
     }
   ]
 }
