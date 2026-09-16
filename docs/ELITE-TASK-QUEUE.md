@@ -14,6 +14,7 @@
 8. Record concrete evidence for substantive work; distinguish implemented, verified, blocked, and no-op states.
 9. If a higher-priority blocker is discovered in the current repository, handle it before lower-priority queue items.
 10. After each task, re-inspect the repository and tests before advancing.
+11. Review this complete rules list before every response or action, then apply it; do not invent additional project rules as a substitute for the repository/user rules.
 
 ## Priority order
 
