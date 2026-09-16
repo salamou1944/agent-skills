@@ -67,17 +67,14 @@
       "updatedAt": "2026-09-16T20:16:02.019Z"
     },
     "mony.first-revenue-blocker": {
-      "status": "BLOCKED",
+      "status": "FAILED",
       "evidence": [
         {
-          "kind": "provider-blocked",
-          "error": "provider_http_429",
-          "errorClass": "http_429",
-          "task": "mony.first-revenue-blocker",
-          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+          "kind": "autonomous-coder",
+          "error": "all_providers_exhausted:primary:provider_http_429"
         }
       ],
-      "updatedAt": "2026-09-16T22:52:21.805Z"
+      "updatedAt": "2026-09-16T23:02:41.386Z"
     }
   },
   "history": [
@@ -555,6 +552,17 @@
         }
       ],
       "at": "2026-09-16T22:52:21.805Z"
+    },
+    {
+      "id": "mony.first-revenue-blocker",
+      "status": "FAILED",
+      "evidence": [
+        {
+          "kind": "autonomous-coder",
+          "error": "all_providers_exhausted:primary:provider_http_429"
+        }
+      ],
+      "at": "2026-09-16T23:02:41.386Z"
     }
   ]
 }
