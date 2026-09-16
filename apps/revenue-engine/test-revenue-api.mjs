@@ -73,6 +73,13 @@ await withRevenueApi(async (base) => {
   const opportunity = await created.json();
   assert.equal(opportunity.status, 'discovered');
 
+  const revenueInDryRun = await fetch(`${base}/revenue/event`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ confirmed: true, provider: 'billing', externalEventId: 'evt_test', amount: 10, currency: 'USD' })
+  });
+  assert.equal(revenueInDryRun.status, 409);
+  assert.equal((await revenueInDryRun.json()).error, 'live_mode_required');
+
   const missing = await fetch(`${base}/missing`);
   assert.equal(missing.status, 405);
   const malformed = await fetch(`${base}/opportunity`, { method: 'POST', body: '{' });
