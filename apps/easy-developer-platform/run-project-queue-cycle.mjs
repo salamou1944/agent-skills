@@ -22,12 +22,20 @@ function run(command,args){return new Promise(resolve=>{
   child.on('close',code=>resolve({code,stdout,stderr})); child.on('error',e=>resolve({code:1,stdout,stderr:e.message}));
 });}
 
+function providerBlocker(error){
+  const message=String(error?.message||error||'');
+  const match=message.match(/^provider_(?:http_(408|429|404|410|5\\d{2})|timeout|quota_exhausted|unavailable|llm_provider_not_configured)$/);
+  if(!match)return null;
+  const code=match[1] ? `http_${match[1]}` : message.slice('provider_'.length);
+  return {code,message};
+}
+
 // A task-specific passing native test is sufficient for a verified no-op only where
 // the test directly exercises that task's acceptance boundary. This keeps the loop
 // usable even when an external LLM provider is unavailable.
 const preflightSafeNoop=new Set(['mony.payment-billing','mony.pipeline','mony.reusable-services','mony.affiliate','mony.market-testing']);
 if(preflightSafeNoop.has(task.id)){
-  const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
+  const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
   if(verification.code===0){
     const evidence=[{kind:'preflight-native-test',command:task.verify,exitCode:0,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}];
     await markTask(stateFile,task.id,'NOOP',evidence);
@@ -39,8 +47,12 @@ if(preflightSafeNoop.has(task.id)){
 let coding;
 try { coding=await autonomousExecute(task.goal); }
 catch(error){
-  await markTask(stateFile,task.id,'FAILED',[{kind:'autonomous-coder',error:error.message}]);
-  console.error(JSON.stringify({status:'FAILED',task:task.id,error:error.message},null,2));
+  const blocker=providerBlocker(error);
+  const evidence=blocker
+    ? [{kind:'provider-blocked',error:blocker.message,errorClass:blocker.code,task:task.id,action:'Use the configured provider fallback or resolve the provider dependency before retrying this queue task.'}]
+    : [{kind:'autonomous-coder',error:error.message}];
+  await markTask(stateFile,task.id,blocker?'BLOCKED':'FAILED',evidence);
+  console.error(JSON.stringify({status:blocker?'BLOCKED':'FAILED',task:task.id,error:error.message,evidence},null,2));
   process.exit(1);
 }
 
@@ -50,7 +62,7 @@ if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
   process.exit(1);
 }
 
-const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
+const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
 const evidence=[
   {kind:'autonomous-coder',status:coding.status,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
   {kind:'verification-command',command:task.verify,exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}
