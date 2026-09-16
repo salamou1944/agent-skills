@@ -3,6 +3,7 @@ import { createEngine } from './revenue-engine.mjs';
 import { createProductListingSales } from './product-listing-sales.mjs';
 import { createSalesPipeline } from './sales-pipeline.mjs';
 import { renderProductListingSalesPage } from './product-listing-sales-page.mjs';
+import { verifyRevenueEventSignature } from './live-provider-adapters.mjs';
 import { SERVICE_OFFERS, SERVICE_MARKET_SOURCES, rankServices, buildTargetProfile, buildProspectingQueries } from './service-market-intelligence.mjs';
 
 function json(res, status, body) {
@@ -35,6 +36,13 @@ export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), p
       if (req.method === 'GET' && req.url.startsWith('/market/prospecting/')) return json(res, 200, buildProspectingQueries(decodeURIComponent(req.url.slice('/market/prospecting/'.length))));
       if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
       const input = await body(req);
+      if (req.url === '/revenue/event') {
+        if (engine.mode !== 'live') return json(res, 409, { error: 'live_mode_required' });
+        const signature = req.headers['x-revenue-signature'];
+        if (!verifyRevenueEventSignature(input, signature)) return json(res, 401, { error: 'invalid_revenue_signature' });
+        const result = engine.recordRevenue(input);
+        return json(res, result.status === 'recorded' ? 201 : 422, result);
+      }
       if (req.url === '/opportunity') return json(res, 200, engine.discover(input));
       if (req.url === '/opportunity/verify') return json(res, 200, engine.verify(input.opportunity, input.evidence));
       if (req.url === '/opportunity/score') return json(res, 200, engine.score(input.opportunity, input.metrics));
