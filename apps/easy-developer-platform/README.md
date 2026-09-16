@@ -78,10 +78,6 @@ A failed gate stops progression. The platform never claims an external Agent, Gi
 
 - Optional bearer API-key authentication when `EASY_API_KEY` is configured.
 - Health and platform metadata remain readable for operational discovery.
-- Health and platform metadata remain readable for operational discovery.
-- Health and platform metadata remain readable for operational discovery.
-- Health and platform metadata remain readable for operational discovery.
-- Health and platform metadata remain readable for operational discovery.
 - Workspace paths are confined to project roots.
 - Workspace writes are Guardian-gated before persistence.
 - Request bodies are capped at 2 MB.
