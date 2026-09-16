@@ -24,7 +24,7 @@ function run(command,args){return new Promise(resolve=>{
 
 function providerBlocker(error){
   const message=String(error?.message||error||'');
-  const match=message.match(/^provider_(?:http_(408|429|404|410|5\\d{2})|timeout|quota_exhausted|unavailable|llm_provider_not_configured)$/);
+  const match=message.match(/^provider_(?:http_(408|429|404|410|5\d{2})|timeout|quota_exhausted|unavailable|llm_provider_not_configured)$/);
   if(!match)return null;
   const code=match[1] ? `http_${match[1]}` : message.slice('provider_'.length);
   return {code,message};
@@ -35,7 +35,7 @@ function providerBlocker(error){
 // usable even when an external LLM provider is unavailable.
 const preflightSafeNoop=new Set(['mony.payment-billing','mony.pipeline','mony.reusable-services','mony.affiliate','mony.market-testing']);
 if(preflightSafeNoop.has(task.id)){
-  const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
+  const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
   if(verification.code===0){
     const evidence=[{kind:'preflight-native-test',command:task.verify,exitCode:0,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}];
     await markTask(stateFile,task.id,'NOOP',evidence);
@@ -62,7 +62,7 @@ if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
   process.exit(1);
 }
 
-const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
+const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
 const evidence=[
   {kind:'autonomous-coder',status:coding.status,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
   {kind:'verification-command',command:task.verify,exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}
