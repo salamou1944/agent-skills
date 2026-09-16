@@ -1,0 +1,11 @@
+import { PRODUCT_LISTING_OFFER } from './product-listing-sales.mjs';
+
+function esc(value) {
+  return String(value).replace(/[&<>\"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[char]));
+}
+
+export function renderProductListingSalesPage({ action = '/product-listing/qualify' } = {}) {
+  const starter = PRODUCT_LISTING_OFFER.plans.find((p) => p.id === 'starter');
+  const scale = PRODUCT_LISTING_OFFER.plans.find((p) => p.id === 'scale');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(PRODUCT_LISTING_OFFER.name)}</title><meta name="description" content="Turn product details into ready-to-publish ecommerce copy."><style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 18px;line-height:1.5}main{border:1px solid #ddd;border-radius:16px;padding:28px}h1{margin-top:0}input,textarea,select,button{width:100%;box-sizing:border-box;margin:7px 0 14px;padding:12px;border:1px solid #bbb;border-radius:8px}button{cursor:pointer;font-weight:700}.plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}.plan{border:1px solid #ddd;border-radius:10px;padding:14px}.free{margin-bottom:18px}</style></head><body><main><h1>${esc(PRODUCT_LISTING_OFFER.name)}</h1><p>Give us your product details. Get structured listing copy for your store and ads.</p><div class="free"><strong>Free sample:</strong> 1 product. No payment required.</div><div class="plans"><div class="plan"><strong>${starter.label}</strong><br>$${starter.price}</div><div class="plan"><strong>${scale.label}</strong><br>$${scale.price}</div></div><form method="post" action="${esc(action)}"><label>Product name<input name="product_name" required maxlength="200"></label><label>Product details<textarea name="product_details" required maxlength="8000" rows="7"></textarea></label><label>Language<select name="language"><option>English</option><option>French</option><option>Arabic</option><option>Spanish</option></select></label><label>Image URL (optional)<input name="image_url" type="url"></label><button type="submit">Get my sample</button></form><p><small>Output should be reviewed for product facts before publishing.</small></p></main></body></html>`;
+}
