@@ -31,7 +31,17 @@ jobs:
         with:
           node-version: 22
 
+      - name: Cache installed dependencies
+        id: node_modules_cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: elite-project-queue-node22-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            elite-project-queue-node22-${{ runner.os }}-
+
       - name: Install dependencies
+        if: steps.node_modules_cache.outputs.cache-hit != 'true'
         run: npm ci --ignore-scripts
 
       - name: Verify queue contract
