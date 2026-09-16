@@ -2,7 +2,8 @@ import { CreativeProviderError, createProviderAdapter } from './creative-orchest
 
 const API_BASE = String(process.env.EASY_OPENAI_API_BASE || 'https://api.openai.com/v1').replace(/\/$/, '');
 const IMAGE_MODEL = String(process.env.EASY_OPENAI_IMAGE_MODEL || 'gpt-image-2');
-const VISION_MODEL = String(process.env.EASY_OPENAI_VISION_MODEL || 'gpt-5.6-luna');
+const configuredVisionModel = String(process.env.EASY_OPENAI_VISION_MODEL || 'gpt-4.1-mini');
+const VISION_MODEL = configuredVisionModel === 'gpt-5.6-luna' ? 'gpt-4.1-mini' : configuredVisionModel;
 const API_KEY = String(process.env.EASY_OPENAI_API_KEY || '').trim();
 
 function requireKey() {
@@ -94,7 +95,6 @@ export function openAICreativeProvider() {
       const form=new FormData();
       form.append('model',IMAGE_MODEL);
       form.append('prompt',prompt);
-      // GPT Image models return base64 by default; response_format is a legacy DALL-E parameter.
       form.append('image',dataUrlToBlob(dataUrl,asset.mimeType||'image/png'),asset.fileName||'product.png');
       const body=await openai('/images/edits',{method:'POST',body:form});
       const item=body?.data?.[0];
