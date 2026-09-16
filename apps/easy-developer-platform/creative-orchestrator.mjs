@@ -82,9 +82,19 @@ export async function runCreativeJob(input = {}, provider = null) {
     mark('generation', 'PASS', { provider: output.provider || provider.name, generatedImage: Boolean(output.dataUrl || output.base64) });
 
     const coreValidation = validateCreativeOutput(dna, output);
-    mark('integrity-core', coreValidation.decision, { mismatches: coreValidation.mismatches, inventedClaims: coreValidation.inventedClaims });
+    mark('integrity', coreValidation.decision, { mismatches: coreValidation.mismatches, inventedClaims: coreValidation.inventedClaims });
     if (coreValidation.decision !== 'PASS') {
-      return { jobId, status: 'BLOCKED', decision: 'BLOCK', reason: coreValidation.reason, dna, instruction, output, validation: coreValidation, events };
+      return {
+        jobId,
+        status: 'BLOCKED',
+        decision: 'BLOCK',
+        reason: coreValidation.reason,
+        dna,
+        instruction,
+        output,
+        validation: { ...coreValidation, core: coreValidation, provider: null },
+        events,
+      };
     }
 
     const providerValidation = await provider.validateOutput(dna, output);
@@ -99,7 +109,7 @@ export async function runCreativeJob(input = {}, provider = null) {
           dna,
           instruction,
           output,
-          validation: { core: coreValidation, provider: providerValidation },
+          validation: { ...coreValidation, core: coreValidation, provider: providerValidation },
           events,
         };
       }
@@ -113,7 +123,7 @@ export async function runCreativeJob(input = {}, provider = null) {
       dna,
       instruction,
       output,
-      validation: { core: coreValidation, provider: providerValidation },
+      validation: { ...coreValidation, core: coreValidation, provider: providerValidation },
       events,
     };
   } catch (error) {

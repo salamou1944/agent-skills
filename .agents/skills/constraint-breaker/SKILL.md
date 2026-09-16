@@ -13,3 +13,5 @@ For each constraint ask:
 5. Can a new interface make it irrelevant?
 
 Protected boundaries remain intact. When a protected boundary blocks the direct route, design a compliant alternative instead. Record which constraints were genuinely broken, which were relaxed, and which remain.
+
+**Verification:** test the proposed workaround against the original constraint, safety boundaries, and stated goal before treating it as a valid resolution.

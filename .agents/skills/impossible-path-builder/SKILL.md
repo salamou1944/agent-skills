@@ -14,4 +14,6 @@ Treat “cannot do X directly” as a constraint, not the end of the task.
 7. Define the smallest missing capability that would unlock the original path.
 8. Never claim the original capability exists when only a substitute was built.
 
+**Verification:** test the alternative against the original blocker and success criteria; record what remains unverified.
+
 Success = useful progress despite the blocked path.

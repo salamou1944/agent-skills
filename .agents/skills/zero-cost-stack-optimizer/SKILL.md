@@ -24,3 +24,6 @@ Never solve a quota problem by silently adding a paid provider. First try provid
 
 ## Safety
 Do not rotate or share credentials to evade provider limits. Do not create fake accounts. Do not bypass rate limits.
+
+## Validation contract
+Before selecting any provider route, verify the documented free limits, commercial-use eligibility, and current terms. Record the source and verification date in the ledger, select a tested fallback, and fail closed when required evidence is missing.
