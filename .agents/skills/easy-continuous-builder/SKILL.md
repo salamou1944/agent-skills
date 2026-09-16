@@ -1,3 +1,8 @@
+---
+name: easy-continuous-builder
+description: Advance the EASY application safely from verified repository state to a deployable, tested increment.
+---
+
 # EASY Continuous Builder
 
 ## Purpose
