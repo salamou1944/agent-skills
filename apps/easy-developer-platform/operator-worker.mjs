@@ -5,7 +5,7 @@ function config(overrides={}) {
   return {
     stateFile: overrides.stateFile || process.env.EASY_OPERATOR_STATE || '.easy/operator-state.json',
     workspace: overrides.workspace || process.env.EASY_OPERATOR_WORKSPACE || '.',
-    intervalMs: Math.max(250, Number(overrides.intervalMs || process.env.EASY_OPERATOR_INTERVAL_MS || 2000)),
+    intervalMs: Math.max(5000, Number(overrides.intervalMs || process.env.EASY_OPERATOR_INTERVAL_MS || 300000)),
     maxAttempts: Math.max(1, Number(overrides.maxAttempts || process.env.EASY_OPERATOR_MAX_ATTEMPTS || 3))
   };
 }
@@ -19,17 +19,25 @@ export async function submit(goal, metadata={}, options={}) {
 export async function runOnce(options={}) {
   const cfg=config(options), task=await nextRunnable(cfg.stateFile);
   if (!task) return null;
-  await updateTask(cfg.stateFile, task.id, { status:'RUNNING', attempts:task.attempts+1 });
+  await updateTask(cfg.stateFile, task.id, { status:'RUNNING', attempts:task.attempts+1, updatedAt:new Date().toISOString() });
   try {
     const result=await execute(task.goal, { workspace:cfg.workspace, allowHighRisk:false });
     const status=result.status==='VERIFIED'?'VERIFIED':result.status==='BLOCKED'?'BLOCKED':'FAILED';
-    await updateTask(cfg.stateFile, task.id, { status, evidence:result.evidence||[], result, finishedAt:new Date().toISOString() });
-    return { taskId:task.id, status, result };
+    const attempts=task.attempts+1;
+    const retry=status==='FAILED' && attempts<cfg.maxAttempts;
+    await updateTask(cfg.stateFile, task.id, {
+      status:retry?'QUEUED':status,
+      evidence:result.evidence||[],
+      result,
+      finishedAt:retry?null:new Date().toISOString(),
+      updatedAt:new Date().toISOString()
+    });
+    return { taskId:task.id, status:retry?'QUEUED':status, attempts, result };
   } catch (error) {
     const attempts=task.attempts+1;
-    const status=attempts>=cfg.maxAttempts?'FAILED':'QUEUED';
-    await updateTask(cfg.stateFile, task.id, { status, result:{status:'FAILED',error:error.message}, finishedAt:status==='FAILED'?new Date().toISOString():null });
-    return { taskId:task.id, status, error:error.message };
+    const retry=attempts<cfg.maxAttempts;
+    await updateTask(cfg.stateFile, task.id, { status:retry?'QUEUED':'FAILED', result:{status:'FAILED',error:error.message}, finishedAt:retry?null:new Date().toISOString(), updatedAt:new Date().toISOString() });
+    return { taskId:task.id, status:retry?'QUEUED':'FAILED', attempts, error:error.message };
   }
 }
 
@@ -38,7 +46,7 @@ export async function worker({once=false, signal=undefined, ...options}={}) {
   const stop=()=>{stopped=true};
   if (signal) signal.addEventListener('abort', stop, {once:true});
   while (!stopped) {
-    await runOnce(cfg);
+    try { await runOnce(cfg); } catch (error) { console.error(JSON.stringify({service:'easy-ai-operator-background',event:'cycle-error',error:error.message})); }
     if (once) break;
     await new Promise(resolve => setTimeout(resolve, cfg.intervalMs));
   }
