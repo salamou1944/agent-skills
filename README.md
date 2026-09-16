@@ -2,9 +2,26 @@
 
 A collection of skills for AI coding agents. Skills are packaged instructions and scripts that extend agent capabilities.
 
-Skills follow the [Agent Skills](https://agentskills.io/) format.
-
 [![skills.sh](https://skills.sh/b/vercel-labs/agent-skills)](https://skills.sh/vercel-labs/agent-skills)
+
+## AI Automation & API Engineering Services
+
+**From manual process to working automation.**
+
+Paid implementation, pilot, repair, and integration support for businesses:
+
+- n8n workflow automation
+- AI agents and business-process automation
+- WhatsApp lead qualification, follow-up, and human handoff
+- CRM integrations and synchronization
+- REST API and webhook integrations
+- Document and data automation
+- Workflow debugging, reliability hardening, and monitoring
+- Rapid MVP and production implementation
+
+**Contact:** easy@agentmail.to
+
+**Full service details:** [SERVICES.md](SERVICES.md)
 
 ## Available Skills
 
@@ -60,7 +77,7 @@ React and Next.js performance optimization guidelines from Vercel Engineering. C
 - Writing new React components or Next.js pages
 - Implementing data fetching (client or server-side)
 - Reviewing code for performance issues
-- Optimizing bundle size or load times
+- Optimizing bundle size or build output
 
 ### web-design-guidelines
 
@@ -72,7 +89,7 @@ Review docs and prose for compliance with the Vercel writing handbook.
 
 ### react-native-guidelines
 
-React Native best practices optimized for AI agents, covering performance, architecture, animation, images, state management, and platform concerns.
+React Native best practices optimized for AI agents, covering performance, architecture, animation, images, state management, and accessibility.
 
 ### react-view-transitions
 
