@@ -33,7 +33,9 @@ jobs:
       - run: node --check apps/revenue-engine/market-strategy.mjs
       - run: node --check apps/revenue-engine/campaign-planner.mjs
       - run: node --check apps/revenue-engine/product-listing-sales.mjs
+      - run: node --check apps/revenue-engine/service-market-intelligence.mjs
       - run: node --check apps/revenue-engine/test-product-listing-sales.mjs
+      - run: node --check apps/revenue-engine/test-service-market-intelligence.mjs
       - run: node apps/revenue-engine/test-revenue-engine.mjs
       - run: node apps/revenue-engine/test-revenue-components.mjs
       - run: node apps/revenue-engine/test-revenue-api.mjs
@@ -41,3 +43,4 @@ jobs:
       - run: node apps/revenue-engine/test-market-strategy.mjs
       - run: node apps/revenue-engine/test-campaign-planner.mjs
       - run: node apps/revenue-engine/test-product-listing-sales.mjs
+      - run: node apps/revenue-engine/test-service-market-intelligence.mjs
