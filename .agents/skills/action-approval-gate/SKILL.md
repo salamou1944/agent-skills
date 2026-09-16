@@ -10,3 +10,5 @@ Classify each action as:
 - `BLOCK`: unauthorized, prohibited, or impossible with available capabilities.
 
 For `CONFIRM`, state the exact action and consequence and wait for explicit approval. Do not silently reinterpret broad delegation as approval for a new sensitive action.
+
+**Validation:** verify the classification, authorization, and approval state before executing any `CONFIRM` action; fail closed when evidence is missing.
