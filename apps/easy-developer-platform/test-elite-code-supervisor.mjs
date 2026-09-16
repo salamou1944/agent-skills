@@ -34,6 +34,7 @@ test('Autonomous coder has a verified no-op, protected paths, provider fallback,
   assert.match(coder, /EASY_OPERATOR_PLAN_FILE/);
   assert.match(coder, /gpt-4o-mini/);
   assert.match(coder, /provider_quota_exhausted/);
+  assert.match(coder, /provider_http_410/);
 });
 
 test('Quota-exhausted 429 immediately falls through to the configured fallback provider', async () => {
@@ -68,6 +69,40 @@ test('Quota-exhausted 429 immediately falls through to the configured fallback p
 
   assert.equal(result.summary, 'fallback');
   assert.deepEqual(calls, ['https://primary.invalid', 'https://fallback.invalid']);
+});
+
+test('Retired primary provider endpoint falls through to the configured fallback provider', async () => {
+  const calls = [];
+  const fetchImpl = async (endpoint) => {
+    calls.push(endpoint);
+    if (calls.length === 1) {
+      return {
+        ok: false,
+        status: 410,
+        headers: new Headers(),
+        clone() { return this; },
+        async json() { return { error: { code: 'gone' } }; },
+      };
+    }
+    return {
+      ok: true,
+      async json() { return { choices: [{ message: { content: '{"summary":"410-fallback","changes":[]}' } }] }; },
+    };
+  };
+
+  const result = await ask('test retired endpoint fallback', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.retired.invalid',
+    model: 'retired-model',
+    githubToken: 'fallback-test-token',
+    githubEndpoint: 'https://fallback.invalid',
+    githubModel: 'fallback-model',
+    providerRetries: 3,
+    fetchImpl,
+  });
+
+  assert.equal(result.summary, '410-fallback');
+  assert.deepEqual(calls, ['https://primary.retired.invalid', 'https://fallback.invalid']);
 });
 
 test('Supervisor workflow has bounded execution, multi-provider recovery, and post-change verification', async () => {
