@@ -25,7 +25,14 @@ function inspectText(path, text) {
     [/(?:ignore|bypass|disable)\b.{0,100}\b(?:security|policy|approval|validation)\b/i, 'instruction attempting to weaken security controls detected'],
     [/(?:reveal|print|dump|send|upload|exfiltrat\w*)\b.{0,100}\b(?:secret|token|credential|password|api[_ -]?key)\b/i, 'credential disclosure/exfiltration instruction detected']
   ];
-  for (const [pattern, message] of dangerous) if (pattern.test(normalized)) add(path, message);
+  const lines = normalized.split('\n');
+  const negatedInstruction = /\b(?:never|do not|don't|must not|must never)\b/i;
+  for (const [pattern, message] of dangerous) {
+    const match = lines.find((line) => pattern.test(line));
+    if (!match) continue;
+    if ((message.includes('weaken security controls') || message.includes('credential disclosure/exfiltration instruction')) && negatedInstruction.test(match)) continue;
+    add(path, message);
+  }
   if (normalized.length > 50000) add(path, 'skill file is unusually large; review for hidden/irrelevant instructions');
   if (/\b(?:data|credential|secret|token)\b.{0,80}\b(?:paste|upload|send|post)\b/i.test(lower)) add(path, 'possible sensitive-data transfer instruction detected');
 }
