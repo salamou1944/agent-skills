@@ -14,6 +14,7 @@ function cfg(env=process.env){
     model:env.EASY_OPERATOR_LLM_MODEL||'gpt-4.1-mini',
     apiKey:env.EASY_OPERATOR_LLM_API_KEY||env.OPENAI_API_KEY||env.EASY_OPENAI_API_KEY||'',
     maxAttempts:Math.max(1,Number(env.EASY_OPERATOR_CODER_ATTEMPTS||2)),
+    providerRetries:Math.max(1,Number(env.EASY_OPERATOR_PROVIDER_RETRIES||5)),
     workspace:resolve(env.EASY_OPERATOR_WORKSPACE||'.')
   };
 }
@@ -32,7 +33,19 @@ async function context(root){
 
 function extractJson(text){const cleaned=String(text||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();try{return JSON.parse(cleaned)}catch{const start=cleaned.indexOf('{'),end=cleaned.lastIndexOf('}');if(start<0||end<=start)throw new Error('provider_non_json');return JSON.parse(cleaned.slice(start,end+1))}}
 
-async function ask(prompt,{endpoint,model,apiKey}){const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${apiKey}`},body:JSON.stringify({model,messages:[{role:'system',content:'You are Elite Code, a senior autonomous software engineer. Return JSON only. Make minimal, evidence-driven repository changes. If no safe change is required, return an empty changes array. Never request or expose secrets. Never modify CI workflows, credentials, deployment configuration, or authentication policy.'},{role:'user',content:prompt}],temperature:0})});if(!response.ok)throw new Error(`provider_http_${response.status}`);const body=await response.json();const text=body?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw new Error('provider_empty');return extractJson(text)}
+function sleep(ms){return new Promise(resolveResult=>setTimeout(resolveResult,ms))}
+
+async function ask(prompt,{endpoint,model,apiKey,providerRetries=5}){
+  for(let attempt=1;attempt<=providerRetries;attempt++){
+    const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${apiKey}`},body:JSON.stringify({model,messages:[{role:'system',content:'You are Elite Code, a senior autonomous software engineer. Return JSON only. Make minimal, evidence-driven repository changes. If no safe change is required, return an empty changes array. Never request or expose secrets. Never modify CI workflows, credentials, deployment configuration, or authentication policy.'},{role:'user',content:prompt}],temperature:0})});
+    if(response.ok){const body=await response.json();const text=body?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw new Error('provider_empty');return extractJson(text)}
+    if(response.status!==429||attempt===providerRetries)throw new Error(`provider_http_${response.status}`);
+    const retryAfter=Number(response.headers.get('retry-after'));
+    const delay=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,60000):Math.min(2000*2**(attempt-1),60000);
+    await sleep(delay);
+  }
+  throw new Error('provider_http_429');
+}
 
 function validateChanges(changes,root){if(!Array.isArray(changes)||changes.length>MAX_CHANGES)throw new Error('invalid_change_set');for(const c of changes){if(!c||typeof c.path!=='string'||c.path.startsWith('/')||c.path.includes('..')||!ALLOWED.test(c.path)||FORBIDDEN.test(c.path)||c.path.startsWith('.github/workflows/'))throw new Error(`unsafe_path:${c?.path}`);if(typeof c.content!=='string'||c.content.length>200000)throw new Error(`invalid_content:${c.path}`);const target=resolve(root,c.path);if(target!==root&&!target.startsWith(root+'/'))throw new Error(`path_escape:${c.path}`)}}
 
