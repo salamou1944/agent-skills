@@ -124,7 +124,7 @@ export function createProductListingSales({
       product: PRODUCT_LISTING_OFFER.id,
       plan: selected.id,
       price: selected.price,
-      currency: selected.price === 0 ? 'USD' : PRODUCT_LISTING_OFFER.currency,
+      currency: PRODUCT_LISTING_OFFER.currency,
       status: 'ready_for_generation',
       input: normalized,
       createdAt: new Date().toISOString()
@@ -133,8 +133,7 @@ export function createProductListingSales({
 
   async function generate(order) {
     if (!order?.id || !order.input) throw new Error('valid_order_required');
-    const canUseUpstream = mode === 'live' || Boolean(apiBaseUrl && apiKey);
-    if (!canUseUpstream) {
+    if (mode !== 'live') {
       const result = fixtureContent(order.input);
       return { ok: true, source: 'safe-fixture', status: 'generated', order, result, deliverable: markdownDeliverable(order, result) };
     }
