@@ -59,6 +59,24 @@ async function providerHealth() {
   return { ok: Object.values(result).every((item) => item.ok), providers: result };
 }
 
+async function liveProbe() {
+  const providers = createLiveProviderRegistry();
+  const result = {};
+  for (const [category, adapter] of Object.entries(providers)) {
+    const health = await adapter.healthCheck();
+    result[category] = { ...health, endpointConfigured: adapter.configured };
+  }
+  const configured = Object.values(result).filter((item) => item.endpointConfigured);
+  return {
+    ok: configured.length > 0 && configured.every((item) => item.ok),
+    mode: 'live-probe',
+    configuredCategories: configured.length,
+    providers: result,
+    revenueRecorded: false,
+    rule: 'A live probe verifies reachability only; it never fabricates or records revenue.'
+  };
+}
+
 async function affiliateStatus() {
   const adapters = Object.values(createAffiliateProviders());
   const status = [];
@@ -91,6 +109,7 @@ function demo() {
 const command = process.argv[2] || 'doctor';
 if (command === 'doctor') print(doctor());
 else if (command === 'provider-health') print(await providerHealth());
+else if (command === 'live-probe') print(await liveProbe());
 else if (command === 'affiliate-status') print(await affiliateStatus());
 else if (command === 'demo') print(demo());
 else if (command === 'serve') {
