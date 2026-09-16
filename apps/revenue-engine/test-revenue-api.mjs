@@ -6,6 +6,57 @@ await withRevenueApi(async (base) => {
   assert.equal(health.status, 200);
   assert.equal((await health.json()).ok, true);
 
+  const offer = await fetch(`${base}/product-listing/offer`);
+  assert.equal(offer.status, 200);
+  const offerPayload = await offer.json();
+  assert.equal(offerPayload.id, 'ai-product-listing-generator');
+  assert.equal(offerPayload.mode, 'dry-run');
+  assert.equal(offerPayload.plans.find((plan) => plan.id === 'starter').price, 79);
+
+  const qualify = await fetch(`${base}/product-listing/qualify`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ product_name: 'Demo Mug', product_details: 'Ceramic mug', language: 'English' })
+  });
+  assert.equal(qualify.status, 200);
+  const qualification = await qualify.json();
+  assert.equal(qualification.qualified, true);
+
+  const orderResponse = await fetch(`${base}/product-listing/order`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ product: qualification.input, plan: 'starter' })
+  });
+  assert.equal(orderResponse.status, 200);
+  const order = await orderResponse.json();
+  assert.equal(order.status, 'ready_for_generation');
+  assert.equal(order.price, 79);
+
+  const generatedResponse = await fetch(`${base}/product-listing/generate`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ order })
+  });
+  assert.equal(generatedResponse.status, 200);
+  const generated = await generatedResponse.json();
+  assert.equal(generated.source, 'safe-fixture');
+  assert.match(generated.deliverable, /# Demo Mug/);
+
+  const handoffResponse = await fetch(`${base}/product-listing/payment-handoff`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ order })
+  });
+  assert.equal(handoffResponse.status, 200);
+  const handoff = await handoffResponse.json();
+  assert.equal(handoff.status, 'payment_ready');
+  assert.equal(handoff.amount, 79);
+  assert.equal(handoff.paymentProvider, null);
+
+  const page = await fetch(`${base}/product-listing/sales-page`);
+  assert.equal(page.status, 200);
+  assert.match(await page.text(), /Get my sample/);
+
   const created = await fetch(`${base}/opportunity`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
