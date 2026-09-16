@@ -48,7 +48,63 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Run autonomous Elite Code engineering cycle
+      - name: Build safe fallback context
+        run: |
+          : > /tmp/elite-code-context.txt
+          for file in \
+            CORE-RULES.md \
+            skills/elite-code-engineer/SKILL.md \
+            skills/code-progress-supervisor/SKILL.md \
+            apps/easy-developer-platform/autonomous-coder.mjs \
+            apps/easy-developer-platform/test-elite-code-supervisor.mjs \
+            package.json; do
+            if [ -f "$file" ]; then
+              printf '\n--- %s ---\n' "$file" >> /tmp/elite-code-context.txt
+              sed -n '1,260p' "$file" >> /tmp/elite-code-context.txt
+            fi
+          done
+          cat > /tmp/elite-code-fallback.prompt.yml <<'EOF'
+messages:
+  - role: system
+    content: >-
+      You are the fallback Elite Code engineering planner. Return only JSON matching the supplied schema. Inspect the repository context and make the smallest safe repository change that advances the Elite Code + Supervisor task. Do not edit workflows, secrets, credentials, authentication policy, deployment configuration, or perform destructive actions. If no safe change is required, return an empty changes array.
+  - role: user
+    content: >-
+      Continue the current Elite Code engineering task from the repository context below. Identify the highest-value unfinished or failing engineering step, implement it as complete file contents in the changes array, and keep the changes minimal. The runner will validate and apply the plan.
+      Repository context: {{context}}
+model: openai/gpt-4o-mini
+responseFormat: json_schema
+jsonSchema: |-
+  {
+    "name": "elite_code_plan",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "summary": {"type": "string"},
+        "changes": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "content": {"type": "string"}
+            },
+            "additionalProperties": false,
+            "required": ["path", "content"]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": ["summary", "changes"]
+    }
+  }
+EOF
+
+      - name: Run primary Elite Code engineering cycle
+        id: primary
+        continue-on-error: true
         env:
           EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           EASY_OPERATOR_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
@@ -63,6 +119,21 @@ jobs:
         run: |
           test -n "$EASY_OPERATOR_LLM_API_KEY" || test -n "$GITHUB_TOKEN"
           node apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_CODE_PROMPT"
+
+      - name: Run GitHub Models fallback
+        id: github_models
+        if: steps.primary.outcome != 'success'
+        uses: actions/ai-inference@v2.1.1
+        with:
+          prompt-file: /tmp/elite-code-fallback.prompt.yml
+          token: ${{ github.token }}
+
+      - name: Apply verified GitHub Models fallback plan
+        if: steps.primary.outcome != 'success'
+        env:
+          EASY_OPERATOR_PLAN_FILE: ${{ steps.github_models.outputs.response-file }}
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+        run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified fallback plan"
 
       - name: Run Elite Code contract tests
         run: npm run test:elite
