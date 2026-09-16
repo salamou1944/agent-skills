@@ -1,5 +1,5 @@
 import { createTask, enqueue, loadState, nextRunnable, updateTask } from './operator-state.mjs';
-import { execute } from './ai-operator.mjs';
+import { runEliteEngine } from './elite-engine.mjs';
 
 function config(overrides={}) {
   return {
@@ -21,8 +21,8 @@ export async function runOnce(options={}) {
   if (!task) return null;
   await updateTask(cfg.stateFile, task.id, { status:'RUNNING', attempts:task.attempts+1, updatedAt:new Date().toISOString() });
   try {
-    const result=await execute(task.goal, { workspace:cfg.workspace, allowHighRisk:false });
-    const status=result.status==='VERIFIED'?'VERIFIED':result.status==='BLOCKED'?'BLOCKED':'FAILED';
+    const result=await runEliteEngine(task.goal, { root:cfg.workspace, policy:{ maxRepairs:2 } });
+    const status=result.status==='verified'?'VERIFIED':result.status==='blocked'?'BLOCKED':'FAILED';
     const attempts=task.attempts+1;
     const retry=status==='FAILED' && attempts<cfg.maxAttempts;
     await updateTask(cfg.stateFile, task.id, {
@@ -36,8 +36,8 @@ export async function runOnce(options={}) {
   } catch (error) {
     const attempts=task.attempts+1;
     const retry=attempts<cfg.maxAttempts;
-    await updateTask(cfg.stateFile, task.id, { status:retry?'QUEUED':'FAILED', result:{status:'FAILED',error:error.message}, finishedAt:retry?null:new Date().toISOString(), updatedAt:new Date().toISOString() });
-    return { taskId:task.id, status:retry?'QUEUED':'FAILED', attempts, error:error.message };
+    await updateTask(cfg.stateFile, task.id, { status:retry?'QUEUED':'FAILED', result:{status:'FAILED',error:error.message,code:error.code||null}, finishedAt:retry?null:new Date().toISOString(), updatedAt:new Date().toISOString() });
+    return { taskId:task.id, status:retry?'QUEUED':'FAILED', attempts, error:error.message, code:error.code||null };
   }
 }
 
@@ -46,7 +46,7 @@ export async function worker({once=false, signal=undefined, ...options}={}) {
   const stop=()=>{stopped=true};
   if (signal) signal.addEventListener('abort', stop, {once:true});
   while (!stopped) {
-    try { await runOnce(cfg); } catch (error) { console.error(JSON.stringify({service:'easy-ai-operator-background',event:'cycle-error',error:error.message})); }
+    try { await runOnce(cfg); } catch (error) { console.error(JSON.stringify({service:'elite-background-worker',event:'cycle-error',error:error.message})); }
     if (once) break;
     await new Promise(resolve => setTimeout(resolve, cfg.intervalMs));
   }
@@ -54,7 +54,7 @@ export async function worker({once=false, signal=undefined, ...options}={}) {
 
 export function report(state) {
   const tasks=state.tasks||[];
-  return { version:1, generatedAt:new Date().toISOString(), totals:{queued:tasks.filter(t=>t.status==='QUEUED').length,running:tasks.filter(t=>t.status==='RUNNING').length,verified:tasks.filter(t=>t.status==='VERIFIED').length,failed:tasks.filter(t=>t.status==='FAILED').length,blocked:tasks.filter(t=>t.status==='BLOCKED').length}, tasks:tasks.map(t=>({id:t.id,goal:t.goal,status:t.status,attempts:t.attempts,updatedAt:t.updatedAt,summary:t.result?.summary||t.result?.error||null})) };
+  return { version:2, engine:'elite', generatedAt:new Date().toISOString(), totals:{queued:tasks.filter(t=>t.status==='QUEUED').length,running:tasks.filter(t=>t.status==='RUNNING').length,verified:tasks.filter(t=>t.status==='VERIFIED').length,failed:tasks.filter(t=>t.status==='FAILED').length,blocked:tasks.filter(t=>t.status==='BLOCKED').length}, tasks:tasks.map(t=>({id:t.id,goal:t.goal,status:t.status,attempts:t.attempts,updatedAt:t.updatedAt,summary:t.result?.summary||t.result?.error||null})) };
 }
 
 if (import.meta.url===`file://${process.argv[1]}`) {
