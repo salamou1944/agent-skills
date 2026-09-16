@@ -11,7 +11,7 @@ import { analyzePatch } from './elite-patch.mjs';
 import { securityReview } from './elite-security.mjs';
 import { createMetrics, persistMetric } from './elite-observability.mjs';
 import { remember } from './elite-memory.mjs';
-import { withIsolatedWorktree } from './elite-worktree.mjs';
+import { withIsolatedWorktree, workspaceStatus } from './elite-worktree.mjs';
 
 const execFileAsync = promisify(execFile);
 function trim(value, max = 8000) { return String(value ?? '').slice(0, max); }
@@ -92,6 +92,8 @@ export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, 
   const metrics = createMetrics();
   const effectivePolicy = { ...policy, metricsPath: policy.metricsPath || join(root, '.elite', 'metrics.jsonl'), memoryPath: policy.memoryPath || join(root, '.elite', 'memory.jsonl') };
   if (!isolate) return runCore(goal, { root, policy: effectivePolicy, env, journalPath, provider, metrics });
+  const status = await workspaceStatus(root);
+  if (!status.clean) { const error = new Error('workspace_dirty_refusing_isolated_execution'); error.code = 'workspace_dirty'; throw error; }
   return withIsolatedWorktree(root, `task-${Date.now()}`, async (worktree, { promote }) => {
     const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics });
     if (result.status === 'verified' && result.changedFiles.length) await promote(result.changedFiles);
