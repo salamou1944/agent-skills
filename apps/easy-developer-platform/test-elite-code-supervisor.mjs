@@ -31,24 +31,27 @@ test('Autonomous coder has a verified no-op, protected paths, provider fallback,
   assert.match(coder, /models\.github\.ai\/inference/);
   assert.match(coder, /githubToken/);
   assert.match(coder, /EASY_OPERATOR_PLAN_FILE/);
+  assert.match(coder, /gpt-4o-mini/);
 });
 
-test('Supervisor workflow has bounded execution, official model recovery, and verification', async () => {
+test('Supervisor workflow has bounded execution, recovery, and post-change verification', async () => {
   const workflow = await read('.github/workflows/elite-code-background-supervisor.yml');
   const prompt = await read('.github/prompts/elite-code-fallback.prompt.yml');
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /\*\/5 \* \* \* \*/);
   assert.match(workflow, /EASY_OPENAI_API_KEY/);
+  assert.match(workflow, /EASY_OPERATOR_LLM_MODEL:.*gpt-4o-mini/);
   assert.match(workflow, /models:\s*read/);
   assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
   assert.match(workflow, /prompt-file: \.github\/prompts\/elite-code-fallback\.prompt\.yml/);
   assert.match(workflow, /file_input:/);
   assert.match(workflow, /response-file/);
   assert.match(workflow, /continue-on-error: true/);
-  assert.match(workflow, /autonomous-coder\.mjs/);
-  assert.match(workflow, /node --check apps\/easy-developer-platform\/operator-worker\.mjs/);
+  assert.match(workflow, /Apply verified GitHub Models fallback plan/);
+  assert.match(workflow, /Run Elite Code contract tests/);
+  assert.match(workflow, /Verify repository after autonomous cycle/);
   assert.match(workflow, /git diff --check/);
+  assert.doesNotMatch(workflow, /npm install -g @github\/copilot/);
   assert.match(prompt, /responseFormat: json_schema/);
   assert.match(prompt, /elite_code_plan/);
-  assert.doesNotMatch(workflow, /npm install -g @github\/copilot/);
 });
