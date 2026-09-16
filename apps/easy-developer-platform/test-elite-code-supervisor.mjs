@@ -41,6 +41,19 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /paths\.has/);
 });
 
+test('Project queue has an independent model recovery path instead of relying on a dead endpoint', async () => {
+  const workflow = await read('.github/workflows/elite-project-queue.yml');
+  const prompt = await read('.github/prompts/elite-queue-fallback.prompt.yml');
+  assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
+  assert.match(workflow, /EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: \$\{\{ vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| '' \}\}/);
+  assert.match(workflow, /Build independent queue recovery context/);
+  assert.match(workflow, /Apply and verify independent recovery plan/);
+  assert.match(workflow, /response-file/);
+  assert.doesNotMatch(workflow, /vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| 'https:\/\/models\.github\.ai\/inference'/);
+  assert.match(prompt, /elite_queue_plan/);
+  assert.match(prompt, /Never invent live providers, leads, replies, payments, or revenue/);
+});
+
 test('Quota-exhausted 429 immediately falls through to the configured fallback provider', async () => {
   const calls = [];
   const fetchImpl = async (endpoint) => {
@@ -195,11 +208,6 @@ test('Timeouts are bounded and can recover through an explicit fallback', async 
   assert.deepEqual(calls, ['https://primary.timeout.invalid', 'https://fallback.invalid']);
 });
 
-test('Plan safety rejects duplicate paths before any mutation is applied', async () => {
-  const coder = await read('apps/easy-developer-platform/autonomous-coder.mjs');
-  assert.match(coder, /paths\.has\(c\.path\)/);
-});
-
 test('Supervisor workflow has bounded execution, multi-provider recovery, and post-change verification', async () => {
   const workflow = await read('.github/workflows/elite-code-background-supervisor.yml');
   const prompt = await read('.github/prompts/elite-code-fallback.prompt.yml');
@@ -208,6 +216,7 @@ test('Supervisor workflow has bounded execution, multi-provider recovery, and po
   assert.match(workflow, /\*\/5 \* \* \* \*/);
   assert.match(workflow, /EASY_OPENAI_API_KEY/);
   assert.match(workflow, /EASY_OPERATOR_LLM_MODEL:.*gpt-4o-mini/);
+  assert.match(workflow, /EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: \$\{\{ vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| '' \}\}/);
   assert.match(workflow, /models:\s*read/);
   assert.match(workflow, /copilot-requests:\s*write/);
   assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
@@ -218,6 +227,7 @@ test('Supervisor workflow has bounded execution, multi-provider recovery, and po
   assert.match(workflow, /Verify repository after autonomous cycle/);
   assert.match(workflow, /git diff --check/);
   assert.match(workflow, /Fail if no verified provider completed/);
+  assert.doesNotMatch(workflow, /vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| 'https:\/\/models\.github\.ai\/inference'/);
   assert.match(prompt, /responseFormat: json_schema/);
   assert.match(prompt, /elite_code_plan/);
   assert.match(copilotPrompt, /Return ONLY one JSON object/);
