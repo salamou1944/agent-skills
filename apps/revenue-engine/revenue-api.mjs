@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { createEngine } from './revenue-engine.mjs';
+import { createProductListingSales } from './product-listing-sales.mjs';
 
 function json(res, status, body) {
   const payload = JSON.stringify(body);
@@ -16,10 +17,11 @@ async function body(req) {
   return raw ? JSON.parse(raw) : {};
 }
 
-export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }) } = {}) {
+export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), productListingSales = createProductListingSales() } = {}) {
   return async (req, res) => {
     try {
       if (req.method === 'GET' && req.url === '/health') return json(res, 200, { ok: true, mode: engine.mode });
+      if (req.method === 'GET' && req.url === '/product-listing/offer') return json(res, 200, productListingSales.offer());
       if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
       const input = await body(req);
       if (req.url === '/opportunity') return json(res, 200, engine.discover(input));
@@ -27,6 +29,10 @@ export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }) } 
       if (req.url === '/opportunity/score') return json(res, 200, engine.score(input.opportunity, input.metrics));
       if (req.url === '/plan') return json(res, 200, engine.plan(input.opportunity));
       if (req.url === '/fanout') return json(res, 200, engine.fanOut(input.opportunity, input.plan));
+      if (req.url === '/product-listing/qualify') return json(res, 200, productListingSales.qualify(input));
+      if (req.url === '/product-listing/order') return json(res, 200, productListingSales.createOrder(input.product, input.plan));
+      if (req.url === '/product-listing/generate') return json(res, 200, await productListingSales.generate(input.order));
+      if (req.url === '/product-listing/payment-handoff') return json(res, 200, productListingSales.paymentHandoff(input.order));
       return json(res, 404, { error: 'not_found' });
     } catch (error) {
       return json(res, 400, { error: error.message });
