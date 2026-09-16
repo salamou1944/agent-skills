@@ -63,44 +63,6 @@ jobs:
               sed -n '1,260p' "$file" >> /tmp/elite-code-context.txt
             fi
           done
-          cat > /tmp/elite-code-fallback.prompt.yml <<'EOF'
-messages:
-  - role: system
-    content: >-
-      You are the fallback Elite Code engineering planner. Return only JSON matching the supplied schema. Inspect the repository context and make the smallest safe repository change that advances the Elite Code + Supervisor task. Do not edit workflows, secrets, credentials, authentication policy, deployment configuration, or perform destructive actions. If no safe change is required, return an empty changes array.
-  - role: user
-    content: >-
-      Continue the current Elite Code engineering task from the repository context below. Identify the highest-value unfinished or failing engineering step, implement it as complete file contents in the changes array, and keep the changes minimal. The runner will validate and apply the plan.
-      Repository context: {{context}}
-model: openai/gpt-4o-mini
-responseFormat: json_schema
-jsonSchema: |-
-  {
-    "name": "elite_code_plan",
-    "strict": true,
-    "schema": {
-      "type": "object",
-      "properties": {
-        "summary": {"type": "string"},
-        "changes": {
-          "type": "array",
-          "maxItems": 12,
-          "items": {
-            "type": "object",
-            "properties": {
-              "path": {"type": "string"},
-              "content": {"type": "string"}
-            },
-            "additionalProperties": false,
-            "required": ["path", "content"]
-          }
-        }
-      },
-      "additionalProperties": false,
-      "required": ["summary", "changes"]
-    }
-  }
-EOF
 
       - name: Run primary Elite Code engineering cycle
         id: primary
@@ -125,7 +87,9 @@ EOF
         if: steps.primary.outcome != 'success'
         uses: actions/ai-inference@v2.1.1
         with:
-          prompt-file: /tmp/elite-code-fallback.prompt.yml
+          prompt-file: .github/prompts/elite-code-fallback.prompt.yml
+          file_input: |
+            context: /tmp/elite-code-context.txt
           token: ${{ github.token }}
 
       - name: Apply verified GitHub Models fallback plan
