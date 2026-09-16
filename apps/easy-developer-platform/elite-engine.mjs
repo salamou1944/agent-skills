@@ -6,87 +6,15 @@ import { runEliteTask } from './elite-harness.mjs';
 import { ask } from './autonomous-coder.mjs';
 
 const execFileAsync = promisify(execFile);
-
 function trim(value, max = 6000) { return String(value ?? '').slice(0, max); }
+async function git(root, args, timeout = 30_000) { try { const { stdout, stderr } = await execFileAsync('git', args, { cwd: root, timeout, maxBuffer: 2_000_000 }); return { ok: true, stdout: trim(stdout), stderr: trim(stderr) }; } catch (error) { return { ok: false, stdout: trim(error.stdout), stderr: trim(error.stderr || error.message) }; } }
+async function inspect({ root, goal, maxContextBytes }) { const status = await git(root, ['status', '--short']); const log = await git(root, ['log', '-8', '--oneline', '--decorate']); const files = await git(root, ['ls-files']); const context = JSON.stringify({ goal, status: status.stdout, log: log.stdout, files: files.stdout }); return { summary: 'repository inspected', context: context.slice(0, maxContextBytes) }; }
+function makeProvider(env) { return async ({ role, goal, context, failedPlan, failure, constraints }) => { const prompt = role === 'repair' ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.` : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.`; return ask(prompt, env); }; }
+async function execute({ changes }) { for (const change of changes) { const current = await readFile(change.target, 'utf8').catch(() => null); if (current === change.content) continue; const { writeFile, mkdir } = await import('node:fs/promises'); await mkdir(join(change.target, '..'), { recursive: true }); await writeFile(change.target, change.content, 'utf8'); } return { ok: true, summary: `applied ${changes.length} planned change(s)` }; }
+async function test({ root }) { const diff = await git(root, ['diff', '--check']); return diff.ok ? { ok: true, summary: 'git diff --check passed' } : { ok: false, reason: 'git_diff_check_failed', summary: diff.stderr }; }
+async function review({ changes }) { if (!changes.length) return { ok: true, summary: 'no changes require review' }; const paths = changes.map(c => c.path); return paths.some(p => p.startsWith('.github/workflows/') || p === '.env') ? { ok: false, reason: 'protected_path_review_block' } : { ok: true, summary: 'protected-path review passed' }; }
+async function verify({ root, changes }) { const diff = await git(root, ['diff', '--check']); if (!diff.ok) return { ok: false, reason: 'git_diff_check_failed', evidence: diff.stderr }; for (const change of changes) if (/\.(mjs|js|cjs)$/i.test(change.path)) { const result = await execFileAsync(process.execPath, ['--check', change.target], { cwd: root, timeout: 30_000 }).catch(e => ({ error: e })); if (result.error) return { ok: false, reason: `syntax_failed:${change.path}`, evidence: trim(result.error.stderr || result.error.message) }; } return { ok: true, evidence: { gitDiffCheck: true, syntaxChecked: changes.filter(c => /\.(mjs|js|cjs)$/i.test(c.path)).map(c => c.path) } }; }
 
-async function git(root, args, timeout = 30_000) {
-  try {
-    const { stdout, stderr } = await execFileAsync('git', args, { cwd: root, timeout, maxBuffer: 2_000_000 });
-    return { ok: true, stdout: trim(stdout), stderr: trim(stderr) };
-  } catch (error) {
-    return { ok: false, stdout: trim(error.stdout), stderr: trim(error.stderr || error.message) };
-  }
-}
+export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath, provider } = {}) { return runEliteTask(goal, { root, policy, journalPath, provider: provider || makeProvider(env), inspect, execute, test, review, verify }); }
 
-async function inspect({ root, goal, maxContextBytes }) {
-  const status = await git(root, ['status', '--short']);
-  const log = await git(root, ['log', '-8', '--oneline', '--decorate']);
-  const files = await git(root, ['ls-files']);
-  const context = JSON.stringify({ goal, status: status.stdout, log: log.stdout, files: files.stdout });
-  return { summary: 'repository inspected', context: context.slice(0, maxContextBytes) };
-}
-
-function makeProvider(env) {
-  return async ({ role, goal, context, failedPlan, failure, constraints }) => {
-    const prompt = role === 'repair'
-      ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
-      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.`;
-    return ask(prompt, env);
-  };
-}
-
-async function execute({ changes }) {
-  for (const change of changes) {
-    const current = await readFile(change.target, 'utf8').catch(() => null);
-    if (current === change.content) continue;
-    const { writeFile, mkdir } = await import('node:fs/promises');
-    await mkdir(join(change.target, '..'), { recursive: true });
-    await writeFile(change.target, change.content, 'utf8');
-  }
-  return { ok: true, summary: `applied ${changes.length} planned change(s)` };
-}
-
-async function test({ root }) {
-  const diff = await git(root, ['diff', '--check']);
-  if (!diff.ok) return { ok: false, reason: 'git_diff_check_failed', summary: diff.stderr };
-  return { ok: true, summary: 'git diff --check passed' };
-}
-
-async function review({ root, changes }) {
-  if (!changes.length) return { ok: true, summary: 'no changes require review' };
-  const paths = changes.map(c => c.path);
-  if (paths.some(p => p.startsWith('.github/workflows/') || p === '.env')) return { ok: false, reason: 'protected_path_review_block' };
-  return { ok: true, summary: 'protected-path review passed' };
-}
-
-async function verify({ root, changes }) {
-  const diff = await git(root, ['diff', '--check']);
-  if (!diff.ok) return { ok: false, reason: 'git_diff_check_failed', evidence: diff.stderr };
-  for (const change of changes) {
-    if (/\.(mjs|js|cjs)$/i.test(change.path)) {
-      const result = await execFileAsync(process.execPath, ['--check', change.target], { cwd: root, timeout: 30_000 }).catch(e => ({ error: e }));
-      if (result.error) return { ok: false, reason: `syntax_failed:${change.path}`, evidence: trim(result.error.stderr || result.error.message) };
-    }
-  }
-  return { ok: true, evidence: { gitDiffCheck: true, syntaxChecked: changes.filter(c => /\.(mjs|js|cjs)$/i.test(c.path)).map(c => c.path) } };
-}
-
-export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath } = {}) {
-  return runEliteTask(goal, {
-    root,
-    policy,
-    journalPath,
-    provider: makeProvider(env),
-    inspect,
-    execute,
-    test,
-    review,
-    verify,
-  });
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const goal = process.argv.slice(2).join(' ').trim();
-  if (!goal) { console.error('goal_required'); process.exit(2); }
-  runEliteEngine(goal).then(result => console.log(JSON.stringify(result, null, 2))).catch(error => { console.error(JSON.stringify({ status: 'FAILED', error: error.message, code: error.code || null }, null, 2)); process.exit(1); });
-}
+if (import.meta.url === `file://${process.argv[1]}`) { const goal = process.argv.slice(2).join(' ').trim(); if (!goal) { console.error('goal_required'); process.exit(2); } runEliteEngine(goal).then(result => console.log(JSON.stringify(result, null, 2))).catch(error => { console.error(JSON.stringify({ status: 'FAILED', error: error.message, code: error.code || null }, null, 2)); process.exit(1); }); }
