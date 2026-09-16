@@ -20,6 +20,8 @@ export async function withIsolatedWorktree(root, taskId, fn) {
       const safeFiles = files.filter(file => typeof file === 'string' && file && !file.includes('..') && !file.startsWith('/') && !file.startsWith('.git/'));
       if (!safeFiles.length) return { promoted: false, reason: 'no_changes' };
       await git(worktree, ['add', '--', ...safeFiles]);
+      await git(worktree, ['config', 'user.name', 'Elite Autonomous Engineer']);
+      await git(worktree, ['config', 'user.email', 'elite-engineer@users.noreply.github.com']);
       const commit = await git(worktree, ['commit', '-m', `chore(elite): verified task ${taskId}`]);
       const match = commit.stdout.match(/\[detached HEAD ([0-9a-f]+)\]/i);
       if (!match) throw new Error(`isolated_commit_failed:${commit.stdout || commit.stderr}`);
