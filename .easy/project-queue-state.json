@@ -2,14 +2,17 @@
   "version": 1,
   "tasks": {
     "mony.payment-billing": {
-      "status": "FAILED",
+      "status": "NOOP",
       "evidence": [
         {
-          "kind": "autonomous-coder",
-          "error": "provider_http_410"
+          "kind": "preflight-native-test",
+          "command": "npm run test:revenue:all",
+          "exitCode": 0,
+          "stdout": "\n> test:revenue:all\n> node apps/revenue-engine/test-revenue-engine.mjs && node apps/revenue-engine/test-revenue-components.mjs && node apps/revenue-engine/test-revenue-api.mjs && node apps/revenue-engine/test-revenue-operator.mjs && node apps/revenue-engine/test-market-strategy.mjs && node apps/revenue-engine/test-campaign-planner.mjs && node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs && node apps/revenue-engine/test-product-listing-sales.mjs && node apps/revenue-engine/test-sales-pipeline.mjs && node apps/revenue-engine/test-service-market-intelligence.mjs && node apps/revenue-engine/test-payment-billing-adapter.mjs\n\nrevenue-engine: all deterministic tests passed\nrevenue-components: all deterministic tests passed\nrevenue-api: runtime integration tests passed\nrevenue-operator: all activation tests passed\nmarket-strategy: all deterministic tests passed\ncampaign-planner: all tests passed\nelevenlabs-affiliate-adapter: all tests passed\nproduct-listing-sales: tests passed\nsales pipeline and sales page checks passed\nservice-market-intelligence: ok\nTAP version 13\n# Subtest: disabled billing remains payment-ready without inventing a provider\nok 1 - disabled billing remains payment-ready without inventing a provider\n  ---\n  duration_ms: 1.079157\n  type: 'test'\n  ...\n# Subtest: fixture billing creates a deterministic checkout boundary\nok 2 - fixture billing creates a deterministic checkout boundary\n  ---\n  duration_ms: 1.188048\n  type: 'test'\n  ...\n# Subtest: zero-price orders never require a payment provider\nok 3 - zero-price orders never require a payment provider\n  ---\n  duration_ms: 0.237149\n  type: 'test'\n  ...\n# Subtest: enabled non-fixture providers fail closed until a live adapter exists\nok 4 - enabled non-fixture providers fail closed until a live adapter exists\n  ---\n  duration_ms: 0.247378\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 13.039535\n",
+          "stderr": "file:///home/runner/work/agent-skills/agent-skills/apps/revenue-engine/revenue-operator.mjs:56\n  if (missing.length) throw new Error(`live_activation_blocked:missing_providers:${missing.join(',')}`);\n                            ^\n\nError: live_activation_blocked:missing_providers:discovery,affiliate,publishing,billing,analytics\n    at assertLiveActivation (file:///home/runner/work/agent-skills/agent-skills/apps/revenue-engine/revenue-operator.mjs:56:29)\n    at file:///home/runner/work/agent-skills/agent-skills/apps/revenue-engine/revenue-operator.mjs:74:33\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v22.23.2\n"
         }
       ],
-      "updatedAt": "2026-09-16T20:00:15.863Z"
+      "updatedAt": "2026-09-16T20:00:42.693Z"
     }
   },
   "history": [
@@ -34,6 +37,20 @@
         }
       ],
       "at": "2026-09-16T20:00:15.863Z"
+    },
+    {
+      "id": "mony.payment-billing",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:revenue:all",
+          "exitCode": 0,
+          "stdout": "\n> test:revenue:all\n> node apps/revenue-engine/test-revenue-engine.mjs && node apps/revenue-engine/test-revenue-components.mjs && node apps/revenue-engine/test-revenue-api.mjs && node apps/revenue-engine/test-revenue-operator.mjs && node apps/revenue-engine/test-market-strategy.mjs && node apps/revenue-engine/test-campaign-planner.mjs && node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs && node apps/revenue-engine/test-product-listing-sales.mjs && node apps/revenue-engine/test-sales-pipeline.mjs && node apps/revenue-engine/test-service-market-intelligence.mjs && node apps/revenue-engine/test-payment-billing-adapter.mjs\n\nrevenue-engine: all deterministic tests passed\nrevenue-components: all deterministic tests passed\nrevenue-api: runtime integration tests passed\nrevenue-operator: all activation tests passed\nmarket-strategy: all deterministic tests passed\ncampaign-planner: all tests passed\nelevenlabs-affiliate-adapter: all tests passed\nproduct-listing-sales: tests passed\nsales pipeline and sales page checks passed\nservice-market-intelligence: ok\nTAP version 13\n# Subtest: disabled billing remains payment-ready without inventing a provider\nok 1 - disabled billing remains payment-ready without inventing a provider\n  ---\n  duration_ms: 1.079157\n  type: 'test'\n  ...\n# Subtest: fixture billing creates a deterministic checkout boundary\nok 2 - fixture billing creates a deterministic checkout boundary\n  ---\n  duration_ms: 1.188048\n  type: 'test'\n  ...\n# Subtest: zero-price orders never require a payment provider\nok 3 - zero-price orders never require a payment provider\n  ---\n  duration_ms: 0.237149\n  type: 'test'\n  ...\n# Subtest: enabled non-fixture providers fail closed until a live adapter exists\nok 4 - enabled non-fixture providers fail closed until a live adapter exists\n  ---\n  duration_ms: 0.247378\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 13.039535\n",
+          "stderr": "file:///home/runner/work/agent-skills/agent-skills/apps/revenue-engine/revenue-operator.mjs:56\n  if (missing.length) throw new Error(`live_activation_blocked:missing_providers:${missing.join(',')}`);\n                            ^\n\nError: live_activation_blocked:missing_providers:discovery,affiliate,publishing,billing,analytics\n    at assertLiveActivation (file:///home/runner/work/agent-skills/agent-skills/apps/revenue-engine/revenue-operator.mjs:56:29)\n    at file:///home/runner/work/agent-skills/agent-skills/apps/revenue-engine/revenue-operator.mjs:74:33\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v22.23.2\n"
+        }
+      ],
+      "at": "2026-09-16T20:00:42.693Z"
     }
   ]
 }
