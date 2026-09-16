@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, readFile, mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 const exec = promisify(execFile);
 
 async function git(root, args) { return exec('git', args, { cwd: root, timeout: 60_000, maxBuffer: 4_000_000 }); }
@@ -12,12 +12,20 @@ export async function withIsolatedWorktree(root, taskId, fn) {
   const repo = base.stdout.trim();
   const parent = await mkdtemp(join(tmpdir(), 'elite-'));
   const worktree = join(parent, 'worktree');
-  const branch = `elite/task-${String(taskId).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40)}`;
   let added = false;
   try {
     await git(repo, ['worktree', 'add', '--detach', worktree, 'HEAD']);
     added = true;
-    const result = await fn(worktree, { branch, repo });
+    const promote = async (files = []) => {
+      for (const file of files) {
+        if (typeof file !== 'string' || !file || file.includes('..') || file.startsWith('/') || file.startsWith('.git/')) throw new Error(`unsafe promotion path: ${file}`);
+        const source = join(worktree, file), target = join(repo, file);
+        const content = await readFile(source, 'utf8');
+        await mkdir(dirname(target), { recursive: true });
+        await writeFile(target, content, 'utf8');
+      }
+    };
+    const result = await fn(worktree, { repo, promote });
     return { ...result, isolated: true };
   } finally {
     if (added) await git(repo, ['worktree', 'remove', '--force', worktree]).catch(() => {});
