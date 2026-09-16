@@ -14,15 +14,17 @@ async function walk(root,dir=root,out=[]){for(const entry of await (await import
 async function context(root){const status=await run('git',['status','--short'],root),log=await run('git',['log','-8','--oneline','--decorate'],root),files=await walk(root);const priority=files.filter(f=>/^(skills\/elite-code-engineer|skills\/code-progress-supervisor|apps\/easy-developer-platform|tests?|test\/|README)/i.test(f)),ordered=[...priority,...files.filter(f=>!priority.includes(f))];let used=0;const selected=[];for(const file of ordered){if(used>=MAX_CONTEXT_BYTES)break;try{const text=await readFile(join(root,file),'utf8');if(text.length>MAX_FILE_BYTES)continue;selected.push(`\n--- ${file} ---\n${text}`);used+=text.length+file.length+10}catch{}}return {status:status.stdout,log:log.stdout,files:files.slice(0,1000),selected:selected.join('')}}
 function extractJson(text){const cleaned=String(text||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();try{return JSON.parse(cleaned)}catch{const start=cleaned.indexOf('{'),end=cleaned.lastIndexOf('}');if(start<0||end<=start)throw new Error('provider_non_json');return JSON.parse(cleaned.slice(start,end+1))}}
 function sleep(ms){return new Promise(resolveResult=>setTimeout(resolveResult,ms))}
+function shouldFallback(status){return status===408||status===404||status===410||status===429||status>=500}
 
 export async function requestInference(prompt,{endpoint,model,token,providerRetries=3,fetchImpl=fetch}){
   for(let attempt=1;attempt<=providerRetries;attempt++){
     const response=await fetchImpl(endpoint,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token}`},body:JSON.stringify({model,messages:[{role:'system',content:'You are Elite Code, a senior autonomous software engineer. Return JSON only. Make minimal, evidence-driven repository changes. If no safe change is required, return an empty changes array. Never request or expose secrets. Never modify CI workflows, credentials, deployment configuration, or authentication policy.'},{role:'user',content:prompt}],temperature:0})});
     if(response.ok){const body=await response.json(),text=body?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw new Error('provider_empty');return extractJson(text)}
-    if(response.status!==429)throw new Error(`provider_http_${response.status}`);
+    if(!shouldFallback(response.status))throw new Error(`provider_http_${response.status}`);
     let rateLimitCode='';
     try{const body=await response.clone().json();rateLimitCode=String(body?.error?.code||body?.error?.type||'')}catch{}
-    if(rateLimitCode==='insufficient_quota'||rateLimitCode==='quota_exceeded')throw new Error('provider_quota_exhausted');
+    if(response.status===429&&(rateLimitCode==='insufficient_quota'||rateLimitCode==='quota_exceeded'))throw new Error('provider_quota_exhausted');
+    if(response.status!==429)throw new Error(`provider_http_${response.status}`);
     if(attempt===providerRetries)throw new Error('provider_http_429');
     const retryAfter=Number(response.headers.get('retry-after')),delay=Number.isFinite(retryAfter)&&retryAfter>0?Math.min(retryAfter*1000,30000):Math.min(2000*2**(attempt-1),30000);await sleep(delay)
   }
@@ -31,7 +33,7 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
 
 export async function ask(prompt,c){
   const fetchImpl=c.fetchImpl||fetch;
-  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries,fetchImpl})}catch(error){if(!['provider_http_429','provider_quota_exhausted'].includes(error.message)||!c.githubToken)throw error}}
+  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries,fetchImpl})}catch(error){if(!['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted'].includes(error.message)&&!/^provider_http_5\d\d$/.test(error.message))throw error;if(!c.githubToken)throw error}}
   if(c.githubToken)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2,fetchImpl});
   if(c.apiKey)throw new Error('provider_http_429');
   throw new Error('llm_provider_not_configured')
