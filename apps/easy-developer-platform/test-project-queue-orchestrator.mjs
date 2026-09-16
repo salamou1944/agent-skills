@@ -43,3 +43,16 @@ test('state writes retain evidence and history',async()=>{
   assert.equal(state.tasks['mony.payment-billing'].evidence[0].value,'passed');
   assert.equal(state.history.length,1);
 });
+
+test('queue workflow uses supported Copilot recovery rather than retired GitHub Models inference',async()=>{
+  const workflow=await readFile('.github/workflows/elite-project-queue.yml','utf8');
+  const prompt=await readFile('.github/prompts/elite-queue-copilot-fallback.txt','utf8');
+  assert.match(workflow,/copilot-requests:\s*write/);
+  assert.match(workflow,/Install Copilot CLI recovery/);
+  assert.match(workflow,/copilot -s --no-ask-user/);
+  assert.match(workflow,/response-file/);
+  assert.doesNotMatch(workflow,/actions\/ai-inference@/);
+  assert.doesNotMatch(workflow,/models\.github\.ai\/inference/);
+  assert.match(prompt,/Return ONLY one JSON object/);
+  assert.match(prompt,/Never modify \.github\/workflows/);
+});
