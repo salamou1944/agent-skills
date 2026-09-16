@@ -26,7 +26,10 @@ Turn any product idea into an implementation-ready, repository-grounded system c
 A design is incomplete if another soldier must guess a requirement, interface, dependency, security boundary, test, or deployment step. Prefer boring, reversible, observable designs over unnecessary complexity.
 
 ## Skill arsenal
-architecture-xray, assumption-challenger, autonomous-build-loop, cross-agent-handoff, agentic-eval, capability-gap-builder, change-impact-graph, code-review.
+architecture-xray, assumption-challenger, autonomous-build-loop, cross-agent-handoff, agentic-orchestration, agent-skill-authoring, agentic-evaluation, context-and-checkpointing, capability-gap-builder, change-impact-graph, code-review, mcp-tool-safety.
+
+## Agentic capabilities
+Decompose work into bounded specialist soldiers; parallelize only independent tasks; use explicit handoff contracts; checkpoint long-running architecture work; validate every downstream claim against repository/runtime evidence.
 
 ## Mission output
 Implementation contract + dependency graph + acceptance criteria + risk/assumption register + verification plan + precise soldier handoffs.
