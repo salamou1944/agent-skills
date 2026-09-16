@@ -17,6 +17,7 @@
     "revenue:markets": "node apps/revenue-engine/test-market-strategy.mjs",
     "revenue:campaign": "node apps/revenue-engine/test-campaign-planner.mjs",
     "revenue:affiliate:test": "node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs",
+    "test:elite": "node --test apps/easy-developer-platform/test-elite-code-supervisor.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
   "dependencies": {
