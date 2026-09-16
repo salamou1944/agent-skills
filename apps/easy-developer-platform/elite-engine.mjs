@@ -13,6 +13,7 @@ import { securityReview } from './elite-security.mjs';
 import { createMetrics, persistMetric } from './elite-observability.mjs';
 import { remember } from './elite-memory.mjs';
 import { withIsolatedWorktree, workspaceStatus } from './elite-worktree.mjs';
+import { buildEngineeringDNA, predictImpact, recordAttempt, readAttemptLedger, rejectRepeatedStrategy, createProof, shadowDelta } from './elite-dna.mjs';
 
 const execFileAsync = promisify(execFile);
 function trim(value, max = 8000) { return String(value ?? '').slice(0, max); }
@@ -22,12 +23,13 @@ async function inspect({ root, goal, maxContextBytes, decomposer }) {
   const base = await inspectRepository({ root, goal, maxContextBytes });
   const files = (await git(root, ['ls-files'])).stdout.split('\n').filter(Boolean);
   const imports = await scanImports(root, files.filter(p => /\.(mjs|js|cjs)$/.test(p)));
+  const dna = await buildEngineeringDNA({ root, files, imports, goal });
   let decomposition = [];
   if (decomposer) {
     try { const raw = await decomposer({ role: 'decomposer', goal, context: base.context, constraints: { maxSubtasks: 16 } }); decomposition = topologicalSubtasks(normalizeSubtasks(raw)); }
     catch (error) { decomposition = [{ id: 'task-1', goal, dependsOn: [], warning: error.message }]; }
   }
-  return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition }).slice(0, maxContextBytes) };
+  return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition, engineeringDNA: dna }).slice(0, maxContextBytes), dna };
 }
 
 function makeProvider(env) {
@@ -37,8 +39,8 @@ function makeProvider(env) {
       return ask(prompt, env);
     }
     const prompt = role === 'repair'
-      ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
-      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order.\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.`;
+      ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
+      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.`;
     return ask(prompt, env);
   };
 }
@@ -86,7 +88,7 @@ async function review({ root, goal, changes, env, provider, approval }) {
   return independent.ok ? { ok: true, summary: 'parallel specialists and independent final review passed', evidence: { specialists, final: independent.evidence } } : independent;
 }
 
-async function verify({ root, changes }) {
+async function verify({ root, changes, prediction }) {
   const [diff, patch] = await Promise.all([git(root, ['diff', '--check']), analyzePatch(root)]);
   if (!diff.ok) return { ok: false, reason: 'git_diff_check_failed', evidence: diff.stderr };
   if (!patch.ok) return { ok: false, reason: 'patch_gate', evidence: patch.findings };
@@ -96,14 +98,30 @@ async function verify({ root, changes }) {
     if (result.error) return { ok: false, reason: `syntax_failed:${change.path}`, evidence: trim(result.error.stderr || result.error.message) };
     syntaxChecked.push(change.path);
   }
-  return { ok: true, evidence: { gitDiffCheck: true, patch, syntaxChecked } };
+  const actual = [...new Set(changes.map(c => c.path))];
+  return { ok: true, evidence: { gitDiffCheck: true, patch, syntaxChecked, shadow: prediction ? shadowDelta(prediction, actual) : null } };
 }
 
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
   const activeProvider = provider || makeProvider(env);
-  const result = await runEliteTask(goal, { root, policy, journalPath, provider: activeProvider, inspect: args => inspect({ ...args, decomposer: activeProvider }), execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify });
+  const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
+  const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
+  const guardedProvider = async args => {
+    const plan = await activeProvider(args);
+    if (args.role === 'repair') {
+      const ledger = await readAttemptLedger(attemptPath);
+      const gate = rejectRepeatedStrategy(ledger, { plan, failureCode: args.failure?.code, failureMessage: args.failure?.message });
+      if (!gate.ok) throw Object.assign(new Error('Elite refused to repeat a failed strategy'), { code: gate.reason });
+      await recordAttempt(attemptPath, { goal, plan, failureCode: args.failure?.code, failureMessage: args.failure?.message, strategy: plan.summary });
+    }
+    return plan;
+  };
+  const prediction = predictImpact({ dna: inspectResult.dna, changedFiles: [] });
+  const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
+  const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
+  result.evidence = [...(result.evidence || []), { engineeringProof: proof }];
   metrics.finish(result.status); await persistMetric(policy.metricsPath, metrics.metrics);
-  if (policy.memoryPath) await remember(policy.memoryPath, { goal, status: result.status, taskId: result.taskId, steps: result.steps, repairs: result.repairs, evidence: result.evidence });
+  if (policy.memoryPath) await remember(policy.memoryPath, { goal, status: result.status, taskId: result.taskId, steps: result.steps, repairs: result.repairs, evidence: result.evidence, dnaHash: inspectResult.dna.dnaHash, proofHash: proof.proofHash });
   return result;
 }
 
