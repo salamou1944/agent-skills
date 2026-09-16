@@ -30,8 +30,9 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
 }
 
 export async function ask(prompt,c){
-  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries})}catch(error){if(!['provider_http_429','provider_quota_exhausted'].includes(error.message)||!c.githubToken)throw error}}
-  if(c.githubToken)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2});
+  const fetchImpl=c.fetchImpl||fetch;
+  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries,fetchImpl})}catch(error){if(!['provider_http_429','provider_quota_exhausted'].includes(error.message)||!c.githubToken)throw error}}
+  if(c.githubToken)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2,fetchImpl});
   if(c.apiKey)throw new Error('provider_http_429');
   throw new Error('llm_provider_not_configured')
 }
