@@ -2,22 +2,18 @@ name: Elite Harness v2
 
 on:
   push:
-    branches: [main, elite-integration-v21]
+    branches: [main]
     paths:
-      - 'apps/easy-developer-platform/elite-harness.mjs'
-      - 'apps/easy-developer-platform/elite-engine.mjs'
+      - 'apps/easy-developer-platform/elite-*.mjs'
+      - 'apps/easy-developer-platform/test-elite-*.mjs'
       - 'apps/easy-developer-platform/autonomous-coder.mjs'
-      - 'apps/easy-developer-platform/test-elite-harness.mjs'
-      - 'apps/easy-developer-platform/test-elite-engine.mjs'
       - 'package.json'
   pull_request:
     branches: [main]
     paths:
-      - 'apps/easy-developer-platform/elite-harness.mjs'
-      - 'apps/easy-developer-platform/elite-engine.mjs'
+      - 'apps/easy-developer-platform/elite-*.mjs'
+      - 'apps/easy-developer-platform/test-elite-*.mjs'
       - 'apps/easy-developer-platform/autonomous-coder.mjs'
-      - 'apps/easy-developer-platform/test-elite-harness.mjs'
-      - 'apps/easy-developer-platform/test-elite-engine.mjs'
       - 'package.json'
 
 permissions:
@@ -26,7 +22,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,4 +32,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:elite:harness
       - run: npm run test:elite:engine
+      - run: npm run test:elite:components
+      - run: npm run test:elite:queue
+      - run: npm run test:elite:benchmark
       - run: git diff --check
