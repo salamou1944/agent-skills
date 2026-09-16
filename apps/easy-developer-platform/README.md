@@ -78,6 +78,10 @@ A failed gate stops progression. The platform never claims an external Agent, Gi
 
 - Optional bearer API-key authentication when `EASY_API_KEY` is configured.
 - Health and platform metadata remain readable for operational discovery.
+- Health and platform metadata remain readable for operational discovery.
+- Health and platform metadata remain readable for operational discovery.
+- Health and platform metadata remain readable for operational discovery.
+- Health and platform metadata remain readable for operational discovery.
 - Workspace paths are confined to project roots.
 - Workspace writes are Guardian-gated before persistence.
 - Request bodies are capped at 2 MB.
@@ -87,3 +91,7 @@ A failed gate stops progression. The platform never claims an external Agent, Gi
 ## Version
 
 2.1.0 foundation + Creative Engine 0.1.0
+
+## Runtime resilience
+
+Railway E2E smoke checks are diagnostic in the hosted runtime: a smoke mismatch is logged and surfaced without terminating the application before the platform healthcheck can report service availability.
