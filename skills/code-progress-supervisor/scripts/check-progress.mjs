@@ -2,7 +2,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 
 const root = process.cwd();
 const run = (cmd, args) => {
@@ -56,8 +56,9 @@ const report = {
 
 report.ok = Object.values(checks).every((check) => check.ok);
 
-const output = process.env.SUPERVISOR_REPORT_PATH
-  ? join(root, process.env.SUPERVISOR_REPORT_PATH)
+const configuredOutput = process.env.SUPERVISOR_REPORT_PATH;
+const output = configuredOutput
+  ? (isAbsolute(configuredOutput) ? configuredOutput : join(root, configuredOutput))
   : join(root, 'supervisor-progress.json');
 writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
