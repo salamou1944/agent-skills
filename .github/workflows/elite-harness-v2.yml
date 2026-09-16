@@ -2,16 +2,22 @@ name: Elite Harness v2
 
 on:
   push:
-    branches: [main, elite-next-harness]
+    branches: [main, elite-integration-v21]
     paths:
       - 'apps/easy-developer-platform/elite-harness.mjs'
+      - 'apps/easy-developer-platform/elite-engine.mjs'
+      - 'apps/easy-developer-platform/autonomous-coder.mjs'
       - 'apps/easy-developer-platform/test-elite-harness.mjs'
+      - 'apps/easy-developer-platform/test-elite-engine.mjs'
       - 'package.json'
   pull_request:
     branches: [main]
     paths:
       - 'apps/easy-developer-platform/elite-harness.mjs'
+      - 'apps/easy-developer-platform/elite-engine.mjs'
+      - 'apps/easy-developer-platform/autonomous-coder.mjs'
       - 'apps/easy-developer-platform/test-elite-harness.mjs'
+      - 'apps/easy-developer-platform/test-elite-engine.mjs'
       - 'package.json'
 
 permissions:
@@ -29,4 +35,5 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run test:elite:harness
+      - run: npm run test:elite:engine
       - run: git diff --check
