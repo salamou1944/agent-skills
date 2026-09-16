@@ -8,6 +8,22 @@ Skills follow the [Agent Skills](https://agentskills.io/) format.
 
 ## Available Skills
 
+### elite-code-engineer
+
+High-rigor coding workflow for turning requirements into production-quality software. It combines repository archaeology, architecture selection, implementation discipline, failure-path testing, adversarial review, repair loops, integration verification, and evidence-backed completion.
+
+**Use when:**
+
+- Building a feature or application from a requirement
+- Repairing non-trivial bugs
+- Refactoring code without breaking existing behavior
+- Working on security-sensitive or integration-heavy code
+- Requiring real validation instead of plausible generated code
+
+**Core loop:**
+
+`requirements -> inspect -> design -> implement -> test -> adversarial review -> repair -> verify -> evidence`
+
 ### vercel-optimize
 
 Audits a Vercel project for cost, performance, reliability, caching, function usage, and billing opportunities. It collects Vercel metrics first, then investigates only the routes and files those metrics point to.
@@ -69,7 +85,7 @@ Review UI code for compliance with web interface best practices. Audits your cod
 
 ### writing-guidelines
 
-Review docs and prose for compliance with the Vercel writing handbook. Audits your pages for 80+ rules covering voice, structure, content types, code samples, typography, and AI workflow.
+Review docs and prose for compliance with the Vercel writing handbook. Audits your pages for 80+ rules covering voice, structure, content types, typography, and AI workflow.
 
 **Use when:**
 
@@ -124,19 +140,17 @@ Implement smooth, native-feeling animations using React's View Transition API. C
 - Adding page transitions or route animations
 - Animating enter/exit of components
 - Creating shared element transitions (list-to-detail morphing)
-- Implementing directional (forward/back) navigation animations
+- Implementing directional (forward/back) navigation
 - Integrating view transitions in Next.js App Router
 - Animating list reorder or Suspense fallback reveals
 
 **Topics covered:**
 
 - `<ViewTransition>` component (enter, exit, update, share triggers)
-- `addTransitionType` for directional/context-specific animations
+- `addTransitionType` for directional/context-specific transitions
 - View Transition Classes and CSS pseudo-elements
-- Shared element transitions with the `name` prop
 - JavaScript animations via Web Animations API
 - Next.js `transitionTypes` prop on `next/link`
-- Ready-to-use CSS animation recipes (fade, slide, scale, flip)
 - Accessibility (`prefers-reduced-motion`)
 
 ### composition-patterns
@@ -178,7 +192,7 @@ Deploy applications and websites to Vercel instantly. Designed for use with clau
 **How it works:**
 
 1. Packages your project into a tarball
-2. Detects framework (Next.js, Vite, Astro, etc.)
+2. Detects framework
 3. Uploads to deployment service
 4. Returns preview URL and claim URL
 
@@ -204,7 +218,7 @@ Skills are automatically available once installed. The agent will use them when 
 **Examples:**
 
 ```
-Deploy my app
+Build this feature and verify it end-to-end
 ```
 
 ```
