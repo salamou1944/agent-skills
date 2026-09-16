@@ -24,6 +24,7 @@ function run(command,args){return new Promise(resolve=>{
 
 function providerBlocker(error){
   const message=String(error?.message||error||'');
+  if(message.startsWith('all_providers_exhausted:'))return {code:'all_providers_exhausted',message};
   const match=message.match(/^provider_(?:http_(408|429|404|410|5\d{2})|timeout|quota_exhausted|unavailable|llm_provider_not_configured)$/);
   if(!match)return null;
   const code=match[1] ? `http_${match[1]}` : message.slice('provider_'.length);
@@ -31,13 +32,13 @@ function providerBlocker(error){
 }
 
 // A task-specific passing native test is sufficient for a verified no-op only where
-// the test directly exercises that task's acceptance boundary. This keeps the loop
-// usable even when an external LLM provider is unavailable.
+// the test directly exercises that task's acceptance boundary and emits no errors.
+// This keeps the loop fail-closed when a chained command masks a sub-check failure.
 const preflightSafeNoop=new Set(['mony.payment-billing','mony.pipeline','mony.reusable-services','mony.affiliate','mony.market-testing']);
 if(preflightSafeNoop.has(task.id)){
   const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
-  if(verification.code===0){
-    const evidence=[{kind:'preflight-native-test',command:task.verify,exitCode:0,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}];
+  if(verification.code===0&&verification.stderr.trim()===''){
+    const evidence=[{kind:'preflight-native-test',command:task.verify,exitCode:0,stdout:verification.stdout.slice(-4000),stderr:''}];
     await markTask(stateFile,task.id,'NOOP',evidence);
     console.log(JSON.stringify({status:'NOOP',task,verification:'passed',evidence},null,2));
     process.exit(0);
