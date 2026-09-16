@@ -8,7 +8,7 @@ on:
     - cron: "*/5 * * * *"
 
 concurrency:
-  group: elite-code-background-supervisor
+  group: elite-monorepo-state
   cancel-in-progress: false
 
 permissions:
@@ -53,14 +53,16 @@ jobs:
           : > /tmp/elite-code-context.txt
           for file in \
             CORE-RULES.md \
+            docs/ELITE-TASK-QUEUE.md \
             skills/elite-code-engineer/SKILL.md \
             skills/code-progress-supervisor/SKILL.md \
             apps/easy-developer-platform/autonomous-coder.mjs \
-            apps/easy-developer-platform/test-elite-code-supervisor.mjs \
+            apps/easy-developer-platform/project-queue-orchestrator.mjs \
+            apps/easy-developer-platform/run-project-queue-cycle.mjs \
             package.json; do
             if [ -f "$file" ]; then
               printf '\n--- %s ---\n' "$file" >> /tmp/elite-code-context.txt
-              sed -n '1,260p' "$file" >> /tmp/elite-code-context.txt
+              sed -n '1,320p' "$file" >> /tmp/elite-code-context.txt
             fi
           done
 
@@ -74,17 +76,13 @@ jobs:
           EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT || '' }}
           EASY_OPERATOR_GITHUB_MODELS_MODEL: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_MODEL || 'openai/gpt-4o-mini' }}
           EASY_OPERATOR_PROVIDER_TIMEOUT_MS: "45000"
-          GITHUB_TOKEN: ${{ github.token }}
+          EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "120000"
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
-          EASY_OPERATOR_CODER_ATTEMPTS: "2"
-          ELITE_CODE_PROMPT: >-
-            You are the autonomous Elite Code engineering worker for this repository. Continue the implementation from the current repository state; do not merely describe work. First inspect git status, recent history, the Elite Code skill, supervisor, tests, and the operating rules. Identify the highest-value unfinished or failing engineering step required to make Elite Code a reliable autonomous coding system. If the repository already satisfies the goal, return a verified no-op instead of inventing changes. Otherwise implement that step directly in the repository, run relevant tests and verification, and repair failures you introduced. Work only inside this checked-out repository. Never read, print, copy, or create secrets, credentials, private keys, tokens, or .env contents. Do not modify .github/workflows, repository permissions, authentication policy, or deployment configuration. Do not perform destructive commands, force pushes, history rewrites, external-state mutations, or dependency installation beyond the commands needed to test the existing project. Do not claim completion without concrete verification evidence. Finish with the repository in a tested, reviewable state; do not commit or push because the workflow will persist verified changes itself.
-        run: |
-          test -n "$EASY_OPERATOR_LLM_API_KEY" || test -n "$GITHUB_TOKEN"
-          node apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_CODE_PROMPT"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node apps/easy-developer-platform/autonomous-coder.mjs "Improve Elite Code autonomous engineering reliability using the verified repository state, tests, and rules. Do not edit workflows, secrets, deployment configuration, authentication policy, or protected paths. Make the smallest safe verified change; return VERIFIED_NOOP when no justified change exists."
 
-      - name: Run GitHub Models fallback
-        id: github_models
+      - name: Run independent Elite Code recovery
+        id: recovery
         if: steps.primary.conclusion != 'success'
         continue-on-error: true
         uses: actions/ai-inference@v2.1.1
@@ -94,63 +92,44 @@ jobs:
             context: /tmp/elite-code-context.txt
           token: ${{ github.token }}
 
-      - name: Install Copilot CLI recovery
-        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success'
-        run: npm install -g @github/copilot
-
-      - name: Run Copilot recovery planner
-        id: copilot
-        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success'
+      - name: Apply verified recovery plan
+        if: steps.primary.conclusion != 'success' && steps.recovery.conclusion == 'success'
         env:
+          EASY_OPERATOR_PLAN_FILE: ${{ steps.recovery.outputs.response-file }}
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+          EASY_OPERATOR_PROVIDER_TIMEOUT_MS: "45000"
+          EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "120000"
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          cat .github/prompts/elite-code-copilot-fallback.txt /tmp/elite-code-context.txt > /tmp/elite-code-copilot-prompt.txt
-          copilot -p "$(cat /tmp/elite-code-copilot-prompt.txt)" -s --no-ask-user --model gpt-4.1 > /tmp/copilot-plan.json
-
-      - name: Apply verified GitHub Models fallback plan
-        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion == 'success'
-        env:
-          EASY_OPERATOR_PLAN_FILE: ${{ steps.github_models.outputs.response-file }}
-          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
-        run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified fallback plan"
-
-      - name: Apply verified Copilot recovery plan
-        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success' && steps.copilot.conclusion == 'success'
-        env:
-          EASY_OPERATOR_PLAN_FILE: /tmp/copilot-plan.json
-          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
-        run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified Copilot recovery plan"
+        run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified recovery plan for the Elite Code engineering cycle."
 
       - name: Run Elite Code contract tests
-        if: steps.primary.conclusion == 'success' || steps.github_models.conclusion == 'success' || steps.copilot.conclusion == 'success'
+        if: steps.primary.conclusion == 'success' || steps.recovery.conclusion == 'success'
         run: npm run test:elite
 
       - name: Verify repository after autonomous cycle
-        if: steps.primary.conclusion == 'success' || steps.github_models.conclusion == 'success' || steps.copilot.conclusion == 'success'
+        if: steps.primary.conclusion == 'success' || steps.recovery.conclusion == 'success'
         run: |
           git diff --check
-          node --check apps/easy-developer-platform/operator-worker.mjs
-          node --check apps/easy-developer-platform/operator-api.mjs
-          node --check apps/easy-developer-platform/ai-operator.mjs
-          node --check apps/easy-developer-platform/operator-state.mjs
-          node --check apps/easy-developer-platform/operator-intelligence.mjs
           node --check apps/easy-developer-platform/autonomous-coder.mjs
-          node --check skills/code-progress-supervisor/scripts/check-progress.mjs
+          node --check apps/easy-developer-platform/operator-worker.mjs
+          npm run test:elite
 
-      - name: Persist verified changes
-        if: steps.primary.conclusion == 'success' || steps.github_models.conclusion == 'success' || steps.copilot.conclusion == 'success'
+      - name: Persist verified Elite Code progress
+        if: steps.primary.conclusion == 'success' || steps.recovery.conclusion == 'success'
         run: |
-          if ! git diff --quiet || ! git diff --cached --quiet; then
+          if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -A
             git diff --cached --check
-            git commit -m "chore(supervisor): continue elite-code engineering"
-            git push
+            git commit -m "chore(elite): persist verified engineering progress"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
 
       - name: Fail if no verified provider completed
-        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success' && steps.copilot.conclusion != 'success'
+        if: steps.primary.conclusion != 'success' && steps.recovery.conclusion != 'success'
         run: |
-          echo "No autonomous provider completed successfully. Primary, GitHub Models, and Copilot recovery all failed."
+          echo "Elite Code did not obtain a verified engineering plan from any available provider."
           exit 1
