@@ -52,9 +52,10 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
 
 export async function ask(prompt,c){
   const fetchImpl=c.fetchImpl||fetch;
+  const sleepImpl=c.sleepImpl||sleep;
   const telemetry=c.telemetry;
-  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries,timeoutMs:c.providerTimeoutMs,rateLimitWaitMs:c.rateLimitWaitMs,fetchImpl,telemetry})}catch(error){if(!['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted','provider_timeout'].includes(error.message)&&!/^provider_http_5\d\d$/.test(error.message))throw error;if(!c.githubToken||!c.githubEndpoint)throw error}}
-  if(c.githubToken&&c.githubEndpoint)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2,timeoutMs:c.providerTimeoutMs,rateLimitWaitMs:c.rateLimitWaitMs,fetchImpl,telemetry});
+  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries,timeoutMs:c.providerTimeoutMs,rateLimitWaitMs:c.rateLimitWaitMs,fetchImpl,sleepImpl,telemetry})}catch(error){if(!['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted','provider_timeout'].includes(error.message)&&!/^provider_http_5\d\d$/.test(error.message))throw error;if(!c.githubToken||!c.githubEndpoint)throw error}}
+  if(c.githubToken&&c.githubEndpoint)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2,timeoutMs:c.providerTimeoutMs,rateLimitWaitMs:c.rateLimitWaitMs,fetchImpl,sleepImpl,telemetry});
   if(c.apiKey)throw new Error('provider_unavailable');
   throw new Error('llm_provider_not_configured')
 }
