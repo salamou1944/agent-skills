@@ -17,9 +17,10 @@ export async function withIsolatedWorktree(root, taskId, fn) {
     await git(repo, ['worktree', 'add', '--detach', worktree, 'HEAD']);
     added = true;
     const promote = async (files = []) => {
-      const safeFiles = files.filter(file => typeof file === 'string' && file && !file.includes('..') && !file.startsWith('/') && !file.startsWith('.git/'));
-      if (!safeFiles.length) return { promoted: false, reason: 'no_changes' };
-      await git(worktree, ['add', '--', ...safeFiles]);
+      const unsafe = files.filter(file => typeof file !== 'string' || !file || file.includes('..') || file.startsWith('/') || file.startsWith('.git/'));
+      if (unsafe.length) throw new Error(`unsafe_promotion_paths:${unsafe.join(',')}`);
+      if (!files.length) return { promoted: false, reason: 'no_changes' };
+      await git(worktree, ['add', '-A', '--', ...files]);
       await git(worktree, ['config', 'user.name', 'Elite Autonomous Engineer']);
       await git(worktree, ['config', 'user.email', 'elite-engineer@users.noreply.github.com']);
       const commit = await git(worktree, ['commit', '-m', `chore(elite): verified task ${taskId}`]);
