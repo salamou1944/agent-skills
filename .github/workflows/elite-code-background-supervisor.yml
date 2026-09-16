@@ -36,7 +36,7 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ github.token }}
           COPILOT_AUTO_UPDATE: "false"
         run: |
-          copilot -p ""
+          cat > /tmp/elite-code-prompt.txt <<'PROMPT'
           You are the autonomous Elite Code engineering worker for this repository.
           Continue the implementation from the current repository state; do not merely describe work.
           First inspect git status, recent history, the Elite Code skill, supervisor, tests, and the operating rules.
@@ -49,7 +49,8 @@ jobs:
           Do not claim completion without concrete verification evidence.
           If the requested engineering step is blocked by a genuinely unavailable external dependency, make the safe repository-local improvement that removes or isolates the dependency and leave a precise evidence note.
           Finish with the repository in a tested, reviewable state; do not commit or push because the workflow will persist the verified changes itself.
-          " --allow-tool='write' --allow-tool='shell(git:*)' --allow-tool='shell(node:*)' --allow-tool='shell(npm:*)' --allow-tool='shell(npx:*)' --deny-tool='shell(git push)' --deny-tool='shell(git reset)' --deny-tool='shell(git clean)' --deny-tool='write(.github/workflows)' --no-ask-user
+          PROMPT
+          copilot -p "$(cat /tmp/elite-code-prompt.txt)" --allow-tool='write' --allow-tool='shell(git:*)' --allow-tool='shell(node:*)' --allow-tool='shell(npm:*)' --allow-tool='shell(npx:*)' --deny-tool='shell(git push)' --deny-tool='shell(git reset)' --deny-tool='shell(git clean)' --deny-tool='write(.github/workflows)' --no-ask-user
 
       - name: Verify repository after autonomous cycle
         run: |
