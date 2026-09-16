@@ -74,9 +74,14 @@ jobs:
           EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           EASY_OPERATOR_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
           EASY_OPERATOR_LLM_MODEL: ${{ vars.EASY_OPERATOR_LLM_MODEL || 'gpt-4o-mini' }}
+          EASY_OPERATOR_LLM_FALLBACK_MODEL: ${{ vars.EASY_OPERATOR_LLM_FALLBACK_MODEL || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_SECONDARY_LLM_API_KEY || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_SECONDARY_LLM_ENDPOINT || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_SECONDARY_LLM_MODEL || '' }}
           EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT || '' }}
           EASY_OPERATOR_GITHUB_MODELS_MODEL: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_MODEL || 'openai/gpt-4o-mini' }}
           EASY_OPERATOR_PROVIDER_TIMEOUT_MS: "45000"
+          EASY_OPERATOR_PROVIDER_RETRIES: "3"
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "120000"
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -110,7 +115,9 @@ jobs:
 
       - name: Run Elite Code contract tests
         if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
-        run: npm run test:elite
+        run: |
+          npm run test:elite
+          node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs
 
       - name: Verify repository after autonomous cycle
         if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
@@ -118,6 +125,7 @@ jobs:
           git diff --check
           node --check apps/easy-developer-platform/autonomous-coder.mjs
           node --check apps/easy-developer-platform/operator-worker.mjs
+          node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs
           npm run test:elite
 
       - name: Persist verified Elite Code progress
