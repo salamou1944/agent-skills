@@ -23,18 +23,19 @@ test('Supervisor contract is a control loop with completion and evidence gates',
   assert.match(skill, /machine-readable record/i);
 });
 
-test('Autonomous coder has a verified no-op, protected paths, provider fallback, and plan execution', async () => {
+test('Autonomous coder has a verified no-op, protected paths, optional provider fallback, and plan execution', async () => {
   const coder = await read('apps/easy-developer-platform/autonomous-coder.mjs');
   assert.match(coder, /VERIFIED_NOOP/);
   assert.match(coder, /\.github\/workflows/);
   assert.match(coder, /FORBIDDEN/);
   assert.match(coder, /diff.*--check/s);
-  assert.match(coder, /models\.github\.ai\/inference/);
+  assert.match(coder, /githubEndpoint:env\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT\|\|''/);
   assert.match(coder, /githubToken/);
   assert.match(coder, /EASY_OPERATOR_PLAN_FILE/);
   assert.match(coder, /gpt-4o-mini/);
   assert.match(coder, /provider_quota_exhausted/);
-  assert.match(coder, /provider_http_410/);
+  assert.match(coder, /relevance\(b,goal\)/);
+  assert.match(coder, /ctx \|\|= await context\(root,goal\)/);
 });
 
 test('Quota-exhausted 429 immediately falls through to the configured fallback provider', async () => {
@@ -71,7 +72,7 @@ test('Quota-exhausted 429 immediately falls through to the configured fallback p
   assert.deepEqual(calls, ['https://primary.invalid', 'https://fallback.invalid']);
 });
 
-test('Retired primary provider endpoint falls through to the configured fallback provider', async () => {
+test('Retired primary provider endpoint falls through only to an explicitly configured fallback', async () => {
   const calls = [];
   const fetchImpl = async (endpoint) => {
     calls.push(endpoint);
@@ -103,6 +104,30 @@ test('Retired primary provider endpoint falls through to the configured fallback
 
   assert.equal(result.summary, '410-fallback');
   assert.deepEqual(calls, ['https://primary.retired.invalid', 'https://fallback.invalid']);
+});
+
+test('No fallback endpoint means a retired primary fails fast without probing a dead default', async () => {
+  const calls = [];
+  const fetchImpl = async (endpoint) => {
+    calls.push(endpoint);
+    return {
+      ok: false,
+      status: 410,
+      headers: new Headers(),
+      clone() { return this; },
+      async json() { return { error: { code: 'gone' } }; },
+    };
+  };
+
+  await assert.rejects(() => ask('test no dead fallback', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.retired.invalid',
+    model: 'retired-model',
+    githubToken: 'github-token-without-endpoint',
+    githubEndpoint: '',
+    fetchImpl,
+  }), /provider_http_410/);
+  assert.deepEqual(calls, ['https://primary.retired.invalid']);
 });
 
 test('Supervisor workflow has bounded execution, multi-provider recovery, and post-change verification', async () => {
