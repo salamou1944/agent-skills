@@ -4,7 +4,7 @@ description: "Continuous engineering supervisor that tracks repository and CI pr
 license: MIT
 metadata:
   author: salamou1944
-  version: '1.0.1'
+  version: '1.0.2'
 ---
 
 # Code Progress Supervisor
@@ -22,9 +22,9 @@ Act as the continuous engineering supervisor around a coding agent. This is a co
 3. Classify failures as implementation defect, regression, test defect, dependency/environment failure, configuration failure, transient external failure, or acceptance mismatch.
 4. For repairable defects use `failing evidence -> root cause -> smallest coherent patch -> focused validation -> broader validation`.
 5. After every repair rerun the failing check and all affected broader checks. Never weaken tests or disable security/quality gates to obtain green CI.
-6. Detect stuck states: recurring failures, alternating regressions, unchanged CI failures, unavailable dependencies, or no meaningful progress across cycles. Stop blind mutation and record the blocker.
-7. Completion requires an evidence-backed state: `implemented`, `tested`, `verified`, or `blocked`. Never report a stronger state than the evidence supports.
-8. Keep a machine-readable evidence record containing timestamp, target, observed state, failures, diagnosis, actions, validation, change/commit evidence, and remaining blockers.
+6. Apply **stuck-state detection**: recurring failures, alternating regressions, unchanged CI failures, unavailable dependencies, or no meaningful progress across cycles. Stop blind mutation and record the blocker.
+7. Apply a **completion gate**: completion requires an evidence-backed state: `implemented`, `tested`, `verified`, or `blocked`. Never report a stronger state than the evidence supports.
+8. Keep a **machine-readable record** containing timestamp, target, observed state, failures, diagnosis, actions, validation, change/commit evidence, and remaining blockers.
 
 ## Security boundary
 
