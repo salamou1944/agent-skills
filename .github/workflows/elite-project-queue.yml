@@ -14,6 +14,7 @@ concurrency:
 permissions:
   contents: write
   models: read
+  copilot-requests: write
 
 jobs:
   execute-next:
@@ -86,16 +87,21 @@ jobs:
             fi
           done
 
-      - name: Run independent model recovery
+      - name: Install Copilot CLI recovery
+        if: steps.cycle.conclusion != 'success'
+        continue-on-error: true
+        run: npm install -g @github/copilot
+
+      - name: Run independent queue recovery
         id: recovery
         if: steps.cycle.conclusion != 'success'
         continue-on-error: true
-        uses: actions/ai-inference@v2.1.1
-        with:
-          prompt-file: .github/prompts/elite-queue-fallback.prompt.yml
-          file_input: |
-            context: /tmp/elite-queue-context.txt
-          token: ${{ github.token }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          cat .github/prompts/elite-queue-copilot-fallback.txt /tmp/elite-queue-context.txt | copilot -s --no-ask-user > /tmp/elite-queue-recovery-plan.json
+          node -e "JSON.parse(require('fs').readFileSync('/tmp/elite-queue-recovery-plan.json','utf8'))"
+          echo 'response-file=/tmp/elite-queue-recovery-plan.json' >> "$GITHUB_OUTPUT"
 
       - name: Apply and verify independent recovery plan
         if: steps.cycle.conclusion != 'success' && steps.recovery.conclusion == 'success'
