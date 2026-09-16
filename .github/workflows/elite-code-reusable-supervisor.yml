@@ -50,6 +50,15 @@ jobs:
           done
           echo "=== GOAL ==="
           printf '%s\n' "$GOAL"
+          {
+            git status --short
+            git log -8 --oneline --decorate
+            for f in PROJECT-RULES.md CORE-RULES.md AGENTS.md CONTRIBUTING.md SECURITY.md; do
+              if [ -f "$f" ]; then printf '\n--- %s ---\n' "$f"; sed -n '1,260p' "$f"; fi
+            done
+            printf '\n--- file inventory ---\n'
+            find . -maxdepth 3 -type f -not -path './.git/*' -not -path './node_modules/*' | sort | head -400
+          } > /tmp/target-context.txt
 
       - name: Run Elite Code worker
         id: elite
@@ -72,9 +81,6 @@ jobs:
         run: |
           git diff --check
           node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
-          if [ -f package.json ]; then
-            node -e "const p=require('./package.json'); const s=p.scripts||{}; process.exit(s.test ? 0 : 0)"
-          fi
 
       - name: Run fallback planner
         id: fallback
@@ -82,13 +88,9 @@ jobs:
         continue-on-error: true
         uses: actions/ai-inference@v2.1.1
         with:
-          prompt: >-
-            Work as the fallback implementation planner for the target repository.
-            Read the repository state and rules shown in this workflow run. Goal: ${{ inputs.goal }}.
-            Return JSON only with shape {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.
-            Make the smallest safe, evidence-driven change. Do not modify .github/workflows, secrets,
-            credentials, authentication policy, deployment configuration, or destructive data. Never
-            include secret values. If no safe change is justified, return an empty changes array.
+          prompt-file: .elite-code-tools/.github/prompts/elite-code-fallback.prompt.yml
+          file_input: |
+            context: /tmp/target-context.txt
           token: ${{ github.token }}
 
       - name: Apply fallback plan
@@ -102,7 +104,7 @@ jobs:
         run: |
           git diff --check
           if [ -f package.json ]; then
-            node -e "const p=require('./package.json'); const s=p.scripts||{}; console.log('scripts:', Object.keys(s).sort().join(', '))"
+            node -e "const p=require('./package.json'); console.log('scripts:', Object.keys(p.scripts||{}).sort().join(', '))"
             if node -e "const p=require('./package.json'); process.exit(p.scripts?.test ? 0 : 1)"; then npm test --if-present; fi
           fi
 
