@@ -1,0 +1,32 @@
+name: Elite Harness v2
+
+on:
+  push:
+    branches: [main, elite-next-harness]
+    paths:
+      - 'apps/easy-developer-platform/elite-harness.mjs'
+      - 'apps/easy-developer-platform/test-elite-harness.mjs'
+      - 'package.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/easy-developer-platform/elite-harness.mjs'
+      - 'apps/easy-developer-platform/test-elite-harness.mjs'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:elite:harness
+      - run: git diff --check
