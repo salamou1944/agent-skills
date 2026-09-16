@@ -35,6 +35,9 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /gpt-4o-mini/);
   assert.match(coder, /provider_quota_exhausted/);
   assert.match(coder, /providerTimeoutMs/);
+  assert.match(coder, /rateLimitWaitMs/);
+  assert.match(coder, /retry-after/);
+  assert.match(coder, /x-ratelimit-reset/);
   assert.match(coder, /AbortController/);
   assert.match(coder, /relevance\(b,goal\)/);
   assert.match(coder, /ctx \|\|= await context\(root,goal\)/);
@@ -96,6 +99,76 @@ test('Quota-exhausted 429 immediately falls through to the configured fallback p
 
   assert.equal(result.summary, 'fallback');
   assert.deepEqual(calls, ['https://primary.invalid', 'https://fallback.invalid']);
+});
+
+test('Rate-limited 429 honors Retry-After and recovers before invoking fallback', async () => {
+  const calls = [];
+  const waits = [];
+  const fetchImpl = async (endpoint) => {
+    calls.push(endpoint);
+    if (calls.length < 3) {
+      return {
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'retry-after': '7' }),
+        clone() { return this; },
+        async json() { return { error: { type: 'rate_limit_exceeded' } }; },
+      };
+    }
+    return {
+      ok: true,
+      async json() { return { choices: [{ message: { content: '{"summary":"429-recovered","changes":[]}' } }] }; },
+    };
+  };
+
+  const result = await ask('test rate limit recovery', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.invalid',
+    model: 'primary-model',
+    providerRetries: 3,
+    providerTimeoutMs: 1000,
+    rateLimitWaitMs: 10000,
+    fetchImpl,
+    sleepImpl: async (ms) => waits.push(ms),
+  });
+
+  assert.equal(result.summary, '429-recovered');
+  assert.deepEqual(calls, ['https://primary.invalid', 'https://primary.invalid', 'https://primary.invalid']);
+  assert.deepEqual(waits, [7000, 7000]);
+});
+
+test('Rate-limited 429 can recover from a reset header expressed as an epoch timestamp', async () => {
+  const waits = [];
+  let calls = 0;
+  const reset = Math.floor((Date.now() + 5000) / 1000);
+  const fetchImpl = async () => {
+    calls += 1;
+    if (calls === 1) {
+      return {
+        ok: false,
+        status: 429,
+        headers: new Headers({ 'x-ratelimit-reset-requests': String(reset) }),
+        clone() { return this; },
+        async json() { return { error: { type: 'rate_limit_exceeded' } }; },
+      };
+    }
+    return { ok: true, async json() { return { choices: [{ message: { content: '{"summary":"reset-recovered","changes":[]}' } }] }; } };
+  };
+
+  const result = await ask('test reset recovery', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.invalid',
+    model: 'primary-model',
+    providerRetries: 2,
+    providerTimeoutMs: 1000,
+    rateLimitWaitMs: 10000,
+    fetchImpl,
+    sleepImpl: async (ms) => waits.push(ms),
+  });
+
+  assert.equal(result.summary, 'reset-recovered');
+  assert.equal(calls, 2);
+  assert.ok(waits[0] >= 0 && waits[0] <= 10000);
 });
 
 test('Retired primary provider endpoint falls through only to an explicitly configured fallback', async () => {
