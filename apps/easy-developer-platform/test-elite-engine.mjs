@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runEliteEngine } from './elite-engine.mjs';
@@ -16,7 +16,7 @@ async function gitInit(root) {
 }
 
 function providerForPlan() {
-  return async ({ role }) => role === 'reviewer'
+  return async ({ role }) => role === 'reviewer' || role === 'correctness' || role === 'security' || role === 'regression' || role === 'final'
     ? { approved: true, findings: [], reason: 'deterministic test approval' }
     : { summary: 'safe plan', changes: [{ path: 'feature.mjs', content: 'export const answer = 42;\n' }] };
 }
@@ -34,8 +34,15 @@ test('integrated Elite engine executes isolated lifecycle and promotes only veri
 test('engine entry point verifies a no-op task without a provider network call', async () => {
   const root = await mkdtemp(join(tmpdir(), 'elite-engine-import-'));
   await gitInit(root);
-  const provider = async ({ role }) => role === 'reviewer' ? { approved: true } : { summary: 'noop', changes: [] };
+  const provider = async ({ role }) => role === 'reviewer' || role === 'correctness' || role === 'security' || role === 'regression' || role === 'final' ? { approved: true } : { summary: 'noop', changes: [] };
   const result = await runEliteEngine('confirm repository is safe', { root, provider });
   assert.equal(result.status, 'verified');
   assert.deepEqual(result.changedFiles, []);
+});
+
+test('engine fails closed when the base workspace is dirty', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'elite-engine-dirty-'));
+  await gitInit(root);
+  await writeFile(join(root, 'dirty.mjs'), 'export const dirty = true;\n');
+  await assert.rejects(() => runEliteEngine('do work', { root, provider: providerForPlan() }), error => error.code === 'workspace_dirty');
 });
