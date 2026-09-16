@@ -3,6 +3,7 @@ import { createEngine } from './revenue-engine.mjs';
 import { createProductListingSales } from './product-listing-sales.mjs';
 import { createSalesPipeline } from './sales-pipeline.mjs';
 import { renderProductListingSalesPage } from './product-listing-sales-page.mjs';
+import { SERVICE_OFFERS, SERVICE_MARKET_SOURCES, rankServices, buildTargetProfile, buildProspectingQueries } from './service-market-intelligence.mjs';
 
 function json(res, status, body) {
   const payload = JSON.stringify(body);
@@ -29,6 +30,9 @@ export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), p
         res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
         return res.end(html);
       }
+      if (req.method === 'GET' && req.url === '/market/services') return json(res, 200, { sources: SERVICE_MARKET_SOURCES, services: rankServices() });
+      if (req.method === 'GET' && req.url.startsWith('/market/target/')) return json(res, 200, buildTargetProfile(decodeURIComponent(req.url.slice('/market/target/'.length))));
+      if (req.method === 'GET' && req.url.startsWith('/market/prospecting/')) return json(res, 200, buildProspectingQueries(decodeURIComponent(req.url.slice('/market/prospecting/'.length))));
       if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
       const input = await body(req);
       if (req.url === '/opportunity') return json(res, 200, engine.discover(input));
