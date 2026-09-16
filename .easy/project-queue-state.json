@@ -52,6 +52,19 @@
         }
       ],
       "updatedAt": "2026-09-16T20:12:58.321Z"
+    },
+    "mony.market-testing": {
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:service-market",
+          "exitCode": 0,
+          "stdout": "\n> test:service-market\n> node apps/revenue-engine/test-service-market-intelligence.mjs\n\nservice-market-intelligence: ok\n",
+          "stderr": ""
+        }
+      ],
+      "updatedAt": "2026-09-16T20:16:02.019Z"
     }
   },
   "history": [
@@ -132,6 +145,20 @@
         }
       ],
       "at": "2026-09-16T20:12:58.321Z"
+    },
+    {
+      "id": "mony.market-testing",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:service-market",
+          "exitCode": 0,
+          "stdout": "\n> test:service-market\n> node apps/revenue-engine/test-service-market-intelligence.mjs\n\nservice-market-intelligence: ok\n",
+          "stderr": ""
+        }
+      ],
+      "at": "2026-09-16T20:16:02.019Z"
     }
   ]
 }
