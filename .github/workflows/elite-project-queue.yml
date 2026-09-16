@@ -104,7 +104,7 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
         run: |
-          copilot -s --no-ask-user -p "$(cat .github/prompts/elite-queue-copilot-fallback.txt /tmp/elite-queue-context.txt)" > /tmp/elite-queue-recovery-plan.json
+          timeout --signal=TERM --kill-after=15s 120s copilot -s --no-ask-user -p "$(cat .github/prompts/elite-queue-copilot-fallback.txt /tmp/elite-queue-context.txt)" > /tmp/elite-queue-recovery-plan.json
           node -e "JSON.parse(require('fs').readFileSync('/tmp/elite-queue-recovery-plan.json','utf8'))"
           echo 'response-file=/tmp/elite-queue-recovery-plan.json' >> "$GITHUB_OUTPUT"
 
