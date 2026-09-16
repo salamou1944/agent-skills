@@ -91,6 +91,33 @@ function markdownDeliverable(order, content) {
   ].join('\n');
 }
 
+function deliveryArtifact(order, content) {
+  return {
+    type: 'markdown',
+    filename: `${order.id}.md`,
+    contentType: 'text/markdown; charset=utf-8',
+    content: markdownDeliverable(order, content)
+  };
+}
+
+function generatedResult(order, source, result) {
+  const deliverable = markdownDeliverable(order, result);
+  return {
+    ok: true,
+    source,
+    status: 'generated',
+    order,
+    result,
+    deliverable,
+    deliveryArtifact: {
+      type: 'markdown',
+      filename: `${order.id}.md`,
+      contentType: 'text/markdown; charset=utf-8',
+      content: deliverable
+    }
+  };
+}
+
 export function createProductListingSales({
   apiBaseUrl = process.env.PRODUCT_CONTENT_API_URL || '',
   apiKey = process.env.PRODUCT_CONTENT_API_KEY || '',
@@ -133,10 +160,7 @@ export function createProductListingSales({
 
   async function generate(order) {
     if (!order?.id || !order.input) throw new Error('valid_order_required');
-    if (mode !== 'live') {
-      const result = fixtureContent(order.input);
-      return { ok: true, source: 'safe-fixture', status: 'generated', order, result, deliverable: markdownDeliverable(order, result) };
-    }
+    if (mode !== 'live') return generatedResult(order, 'safe-fixture', fixtureContent(order.input));
     if (!apiBaseUrl || !apiKey) throw new Error('product_content_api_not_configured');
     const response = await fetchImpl(`${apiBaseUrl.replace(/\/$/, '')}/v1/product-content`, {
       method: 'POST',
@@ -146,7 +170,7 @@ export function createProductListingSales({
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(`product_content_api_${response.status}`);
     if (!payload?.ok || !payload?.result) throw new Error('invalid_product_content_response');
-    return { ok: true, source: 'sal-31-api', status: 'generated', order, result: payload.result, deliverable: markdownDeliverable(order, payload.result) };
+    return generatedResult(order, 'sal-31-api', payload.result);
   }
 
   function paymentHandoff(order) {

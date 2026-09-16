@@ -34,6 +34,12 @@ const generated = await sales.generate(order);
 assert.equal(generated.source, 'sal-31-api');
 assert.equal(generated.result.title, 'Verified Lamp');
 assert.match(generated.deliverable, /# Verified Lamp/);
+assert.deepEqual(generated.deliveryArtifact, {
+  type: 'markdown',
+  filename: `${order.id}.md`,
+  contentType: 'text/markdown; charset=utf-8',
+  content: generated.deliverable
+});
 assert.equal(calls.length, 1);
 assert.equal(calls[0].options.headers['x-api-key'], 'test-key');
 assert.equal(JSON.parse(calls[0].options.body).product_name, 'Verified Lamp');
@@ -48,6 +54,8 @@ const fixtureOrder = fixture.createOrder({ product_name: 'Demo Mug' });
 const fixtureResult = await fixture.generate(fixtureOrder);
 assert.equal(fixtureResult.source, 'safe-fixture');
 assert.equal(fixtureResult.ok, true);
+assert.equal(fixtureResult.deliveryArtifact.filename, `${fixtureOrder.id}.md`);
+assert.equal(fixtureResult.deliveryArtifact.content, fixtureResult.deliverable);
 assert.equal(calls.length, 1, 'dry-run must not call the upstream API');
 
 assert.throws(() => sales.qualify({}), /product_input_required/);
