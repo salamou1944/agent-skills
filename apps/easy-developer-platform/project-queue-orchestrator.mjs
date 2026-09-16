@@ -42,6 +42,12 @@ export async function markTask(file,id,status,evidence=[]) {
 
 if(import.meta.url===`file://${process.argv[1]}`){
   const file=process.env.ELITE_QUEUE_STATE||'.easy/project-queue-state.json';
-  const state=await loadState(file); const task=selectNext(state);
-  console.log(JSON.stringify({stateFile:file,next:task,completed:Object.entries(state.tasks||{}).filter(([,v])=>['VERIFIED','NOOP'].includes(v.status)).map(([id])=>id)},null,2));
+  const command=process.argv[2]||'next';
+  if(command==='mark'){
+    const id=process.argv[3], status=process.argv[4], evidence=process.argv[5]?JSON.parse(process.argv[5]):[];
+    console.log(JSON.stringify(await markTask(file,id,status,evidence),null,2));
+  } else {
+    const state=await loadState(file); const task=selectNext(state);
+    console.log(JSON.stringify({stateFile:file,next:task,completed:Object.entries(state.tasks||{}).filter(([,v])=>['VERIFIED','NOOP'].includes(v.status)).map(([id])=>id),monyComplete:TASKS.filter(t=>t.phase==='mony').every(t=>['VERIFIED','NOOP'].includes(state.tasks?.[t.id]?.status))},null,2));
+  }
 }
