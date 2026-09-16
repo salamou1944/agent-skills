@@ -39,6 +39,19 @@
         }
       ],
       "updatedAt": "2026-09-16T20:02:42.199Z"
+    },
+    "mony.affiliate": {
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run revenue:affiliate:test",
+          "exitCode": 0,
+          "stdout": "\n> revenue:affiliate:test\n> node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs\n\nelevenlabs-affiliate-adapter: all tests passed\n",
+          "stderr": ""
+        }
+      ],
+      "updatedAt": "2026-09-16T20:12:58.321Z"
     }
   },
   "history": [
@@ -105,6 +118,20 @@
         }
       ],
       "at": "2026-09-16T20:02:42.199Z"
+    },
+    {
+      "id": "mony.affiliate",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run revenue:affiliate:test",
+          "exitCode": 0,
+          "stdout": "\n> revenue:affiliate:test\n> node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs\n\nelevenlabs-affiliate-adapter: all tests passed\n",
+          "stderr": ""
+        }
+      ],
+      "at": "2026-09-16T20:12:58.321Z"
     }
   ]
 }
