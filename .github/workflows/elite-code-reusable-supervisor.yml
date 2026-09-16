@@ -1,0 +1,124 @@
+name: elite-code-reusable-supervisor
+
+on:
+  workflow_call:
+    secrets:
+      EASY_OPENAI_API_KEY:
+        required: false
+    inputs:
+      goal:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  models: read
+  copilot-requests: write
+
+jobs:
+  supervise:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Checkout Elite Code tools
+        uses: actions/checkout@v6
+        with:
+          repository: salamou1944/agent-skills
+          ref: main
+          path: .elite-code-tools
+          fetch-depth: 1
+
+      - name: Inspect target rules and state
+        env:
+          GOAL: ${{ inputs.goal }}
+        run: |
+          echo '=== TARGET ==='
+          git status --short
+          git log -8 --oneline --decorate
+          echo '=== RULE FILES ==='
+          for f in PROJECT-RULES.md CORE-RULES.md AGENTS.md CONTRIBUTING.md SECURITY.md; do
+            if [ -f "$f" ]; then
+              echo "--- $f ---"
+              sed -n '1,260p' "$f"
+            fi
+          done
+          echo "=== GOAL ==="
+          printf '%s\n' "$GOAL"
+
+      - name: Run Elite Code worker
+        id: elite
+        continue-on-error: true
+        env:
+          EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          EASY_OPERATOR_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
+          EASY_OPERATOR_LLM_MODEL: ${{ vars.EASY_OPERATOR_LLM_MODEL || 'gpt-4o-mini' }}
+          EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT || 'https://models.github.ai/inference' }}
+          EASY_OPERATOR_GITHUB_MODELS_MODEL: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_MODEL || 'openai/gpt-4o-mini' }}
+          GITHUB_TOKEN: ${{ github.token }}
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+          EASY_OPERATOR_CODER_ATTEMPTS: '2'
+          ELITE_GOAL: ${{ inputs.goal }}
+        run: |
+          node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_GOAL"
+
+      - name: Verify worker result
+        if: steps.elite.outcome == 'success'
+        run: |
+          git diff --check
+          node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
+          if [ -f package.json ]; then
+            node -e "const p=require('./package.json'); const s=p.scripts||{}; process.exit(s.test ? 0 : 0)"
+          fi
+
+      - name: Run fallback planner
+        id: fallback
+        if: steps.elite.outcome != 'success'
+        continue-on-error: true
+        uses: actions/ai-inference@v2.1.1
+        with:
+          prompt: >-
+            Work as the fallback implementation planner for the target repository.
+            Read the repository state and rules shown in this workflow run. Goal: ${{ inputs.goal }}.
+            Return JSON only with shape {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.
+            Make the smallest safe, evidence-driven change. Do not modify .github/workflows, secrets,
+            credentials, authentication policy, deployment configuration, or destructive data. Never
+            include secret values. If no safe change is justified, return an empty changes array.
+          token: ${{ github.token }}
+
+      - name: Apply fallback plan
+        if: steps.elite.outcome != 'success' && steps.fallback.outcome == 'success'
+        env:
+          EASY_OPERATOR_PLAN_FILE: ${{ steps.fallback.outputs.response-file }}
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+        run: node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs 'Apply verified fallback plan'
+
+      - name: Run repository-native verification
+        run: |
+          git diff --check
+          if [ -f package.json ]; then
+            node -e "const p=require('./package.json'); const s=p.scripts||{}; console.log('scripts:', Object.keys(s).sort().join(', '))"
+            if node -e "const p=require('./package.json'); process.exit(p.scripts?.test ? 0 : 1)"; then npm test --if-present; fi
+          fi
+
+      - name: Persist verified changes
+        run: |
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -A
+            git diff --cached --check
+            git commit -m 'chore(supervisor): continue project engineering'
+            git push
+          fi
+
+      - name: Fail closed if both coding paths failed
+        if: steps.elite.outcome != 'success' && steps.fallback.outcome != 'success'
+        run: |
+          echo 'Elite Code worker and fallback planner both failed.'
+          exit 1
