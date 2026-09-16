@@ -35,15 +35,20 @@ test('Autonomous coder has a verified no-op, protected paths, provider fallback,
 
 test('Supervisor workflow has bounded execution, official model recovery, and verification', async () => {
   const workflow = await read('.github/workflows/elite-code-background-supervisor.yml');
+  const prompt = await read('.github/prompts/elite-code-fallback.prompt.yml');
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /\*\/5 \* \* \* \*/);
   assert.match(workflow, /EASY_OPENAI_API_KEY/);
   assert.match(workflow, /models:\s*read/);
   assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
+  assert.match(workflow, /prompt-file: \.github\/prompts\/elite-code-fallback\.prompt\.yml/);
+  assert.match(workflow, /file_input:/);
   assert.match(workflow, /response-file/);
   assert.match(workflow, /continue-on-error: true/);
   assert.match(workflow, /autonomous-coder\.mjs/);
   assert.match(workflow, /node --check apps\/easy-developer-platform\/operator-worker\.mjs/);
   assert.match(workflow, /git diff --check/);
+  assert.match(prompt, /responseFormat: json_schema/);
+  assert.match(prompt, /elite_code_plan/);
   assert.doesNotMatch(workflow, /npm install -g @github\/copilot/);
 });
