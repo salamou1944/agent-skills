@@ -1,6 +1,8 @@
 import { createServer } from 'node:http';
 import { createEngine } from './revenue-engine.mjs';
 import { createProductListingSales } from './product-listing-sales.mjs';
+import { createSalesPipeline } from './sales-pipeline.mjs';
+import { renderProductListingSalesPage } from './product-listing-sales-page.mjs';
 
 function json(res, status, body) {
   const payload = JSON.stringify(body);
@@ -17,11 +19,16 @@ async function body(req) {
   return raw ? JSON.parse(raw) : {};
 }
 
-export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), productListingSales = createProductListingSales() } = {}) {
+export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), productListingSales = createProductListingSales(), salesPipeline = createSalesPipeline() } = {}) {
   return async (req, res) => {
     try {
       if (req.method === 'GET' && req.url === '/health') return json(res, 200, { ok: true, mode: engine.mode });
       if (req.method === 'GET' && req.url === '/product-listing/offer') return json(res, 200, productListingSales.offer());
+      if (req.method === 'GET' && req.url === '/product-listing/sales-page') {
+        const html = renderProductListingSalesPage();
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+        return res.end(html);
+      }
       if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
       const input = await body(req);
       if (req.url === '/opportunity') return json(res, 200, engine.discover(input));
@@ -33,6 +40,9 @@ export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), p
       if (req.url === '/product-listing/order') return json(res, 200, productListingSales.createOrder(input.product, input.plan));
       if (req.url === '/product-listing/generate') return json(res, 200, await productListingSales.generate(input.order));
       if (req.url === '/product-listing/payment-handoff') return json(res, 200, productListingSales.paymentHandoff(input.order));
+      if (req.url === '/sales-pipeline/create') return json(res, 201, salesPipeline.create(input));
+      if (req.url === '/sales-pipeline/advance') return json(res, 200, salesPipeline.advance(input.id, input.stage, input.evidence));
+      if (req.url === '/sales-pipeline/list') return json(res, 200, salesPipeline.list(input.stage));
       return json(res, 404, { error: 'not_found' });
     } catch (error) {
       return json(res, 400, { error: error.message });
