@@ -94,7 +94,7 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
         run: |
-          cat .github/prompts/elite-code-copilot-fallback.txt /tmp/elite-code-context.txt | copilot -s --no-ask-user > /tmp/elite-code-recovery-plan.json
+          copilot -s -p "$(cat .github/prompts/elite-code-copilot-fallback.txt /tmp/elite-code-context.txt)" --no-ask-user > /tmp/elite-code-recovery-plan.json
           node -e "JSON.parse(require('fs').readFileSync('/tmp/elite-code-recovery-plan.json','utf8'))"
           echo 'response-file=/tmp/elite-code-recovery-plan.json' >> "$GITHUB_OUTPUT"
 
