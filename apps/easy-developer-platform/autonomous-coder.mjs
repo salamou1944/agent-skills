@@ -13,6 +13,9 @@ function cfg(env=process.env){
     endpoint:env.EASY_OPERATOR_LLM_ENDPOINT||'https://api.openai.com/v1/chat/completions',
     model:env.EASY_OPERATOR_LLM_MODEL||'gpt-4.1-mini',
     apiKey:env.EASY_OPERATOR_LLM_API_KEY||env.OPENAI_API_KEY||env.EASY_OPENAI_API_KEY||'',
+    githubEndpoint:env.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT||'https://models.github.ai/inference',
+    githubModel:env.EASY_OPERATOR_GITHUB_MODELS_MODEL||'openai/gpt-4o-mini',
+    githubToken:env.GITHUB_TOKEN||'',
     maxAttempts:Math.max(1,Number(env.EASY_OPERATOR_CODER_ATTEMPTS||2)),
     providerRetries:Math.max(1,Number(env.EASY_OPERATOR_PROVIDER_RETRIES||5)),
     workspace:resolve(env.EASY_OPERATOR_WORKSPACE||'.')
@@ -35,9 +38,9 @@ function extractJson(text){const cleaned=String(text||'').trim().replace(/^```(?
 
 function sleep(ms){return new Promise(resolveResult=>setTimeout(resolveResult,ms))}
 
-async function ask(prompt,{endpoint,model,apiKey,providerRetries=5}){
+async function requestInference(prompt,{endpoint,model,token,providerRetries=5}){
   for(let attempt=1;attempt<=providerRetries;attempt++){
-    const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${apiKey}`},body:JSON.stringify({model,messages:[{role:'system',content:'You are Elite Code, a senior autonomous software engineer. Return JSON only. Make minimal, evidence-driven repository changes. If no safe change is required, return an empty changes array. Never request or expose secrets. Never modify CI workflows, credentials, deployment configuration, or authentication policy.'},{role:'user',content:prompt}],temperature:0})});
+    const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token}`},body:JSON.stringify({model,messages:[{role:'system',content:'You are Elite Code, a senior autonomous software engineer. Return JSON only. Make minimal, evidence-driven repository changes. If no safe change is required, return an empty changes array. Never request or expose secrets. Never modify CI workflows, credentials, deployment configuration, or authentication policy.'},{role:'user',content:prompt}],temperature:0})});
     if(response.ok){const body=await response.json();const text=body?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw new Error('provider_empty');return extractJson(text)}
     if(response.status!==429||attempt===providerRetries)throw new Error(`provider_http_${response.status}`);
     const retryAfter=Number(response.headers.get('retry-after'));
@@ -45,6 +48,18 @@ async function ask(prompt,{endpoint,model,apiKey,providerRetries=5}){
     await sleep(delay);
   }
   throw new Error('provider_http_429');
+}
+
+async function ask(prompt,c){
+  if(c.apiKey){
+    try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries})}
+    catch(error){
+      if(error.message!=='provider_http_429'||!c.githubToken)throw error;
+    }
+  }
+  if(c.githubToken)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2});
+  if(c.apiKey)throw new Error('provider_http_429');
+  throw new Error('llm_provider_not_configured');
 }
 
 function validateChanges(changes,root){if(!Array.isArray(changes)||changes.length>MAX_CHANGES)throw new Error('invalid_change_set');for(const c of changes){if(!c||typeof c.path!=='string'||c.path.startsWith('/')||c.path.includes('..')||!ALLOWED.test(c.path)||FORBIDDEN.test(c.path)||c.path.startsWith('.github/workflows/'))throw new Error(`unsafe_path:${c?.path}`);if(typeof c.content!=='string'||c.content.length>200000)throw new Error(`invalid_content:${c.path}`);const target=resolve(root,c.path);if(target!==root&&!target.startsWith(root+'/'))throw new Error(`path_escape:${c.path}`)}}
@@ -55,6 +70,6 @@ async function restore(root,originals){for(const [path,text] of originals){const
 
 async function verify(root,changes){const check=await run('git',['diff','--check'],root);if(!check.ok)return {ok:false,error:'git_diff_check_failed',details:check.stderr||check.stdout};for(const c of changes){if(/\.(mjs|js|cjs)$/i.test(c.path)){const r=await run(process.execPath,['--check',join(root,c.path)],root);if(!r.ok)return {ok:false,error:`syntax_failed:${c.path}`,details:r.stderr||r.stdout}}}return {ok:true}}
 
-export async function execute(goal,{env=process.env}={}){const c=cfg(env);if(!c.apiKey)throw new Error('llm_provider_not_configured');const root=c.workspace;let lastError='';for(let attempt=1;attempt<=c.maxAttempts;attempt++){const ctx=await context(root);const prompt=`Goal: ${goal}\n\nCurrent repository context:\n${JSON.stringify(ctx)}\n\nPrevious verification failure (empty on first attempt): ${lastError}\n\nReturn exactly this JSON shape: {"summary":"...","changes":[]}. The changes array may be empty when the goal is already satisfied or no safe change is justified. Otherwise choose the smallest safe set of changes that advances the goal. Do not edit CI workflows or secrets. Do not commit or push.`;const plan=await ask(prompt,c);validateChanges(plan.changes,root);if(plan.changes.length===0)return {status:'VERIFIED_NOOP',attempt,summary:plan.summary||'Repository already satisfies the requested goal; no safe change required',changedFiles:[]};const originals=await snapshot(root,plan.changes);await apply(root,plan.changes);const verification=await verify(root,plan.changes);if(verification.ok)return {status:'VERIFIED',attempt,summary:plan.summary||'Autonomous coding cycle verified',changedFiles:plan.changes.map(x=>x.path)};await restore(root,originals);lastError=JSON.stringify(verification)}throw new Error(`verification_failed:${lastError}`)}
+export async function execute(goal,{env=process.env}={}){const c=cfg(env);if(!c.apiKey&&!c.githubToken)throw new Error('llm_provider_not_configured');const root=c.workspace;let lastError='';for(let attempt=1;attempt<=c.maxAttempts;attempt++){const ctx=await context(root);const prompt=`Goal: ${goal}\n\nCurrent repository context:\n${JSON.stringify(ctx)}\n\nPrevious verification failure (empty on first attempt): ${lastError}\n\nReturn exactly this JSON shape: {"summary":"...","changes":[]}. The changes array may be empty when the goal is already satisfied or no safe change is justified. Otherwise choose the smallest safe set of changes that advances the goal. Do not edit CI workflows or secrets. Do not commit or push.`;const plan=await ask(prompt,c);validateChanges(plan.changes,root);if(plan.changes.length===0)return {status:'VERIFIED_NOOP',attempt,summary:plan.summary||'Repository already satisfies the requested goal; no safe change required',changedFiles:[]};const originals=await snapshot(root,plan.changes);await apply(root,plan.changes);const verification=await verify(root,plan.changes);if(verification.ok)return {status:'VERIFIED',attempt,summary:plan.summary||'Autonomous coding cycle verified',changedFiles:plan.changes.map(x=>x.path)};await restore(root,originals);lastError=JSON.stringify(verification)}throw new Error(`verification_failed:${lastError}`)}
 
 if(import.meta.url===`file://${process.argv[1]}`){const goal=process.argv.slice(2).join(' ').trim();if(!goal){console.error('goal_required');process.exit(2)}execute(goal).then(x=>console.log(JSON.stringify(x,null,2))).catch(e=>{console.error(JSON.stringify({status:'FAILED',error:e.message},null,2));process.exit(1)})}
