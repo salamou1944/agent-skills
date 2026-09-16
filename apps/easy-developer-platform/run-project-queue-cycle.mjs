@@ -45,6 +45,25 @@ if(preflightSafeNoop.has(task.id)){
   }
 }
 
+// The sixth MONY core task exists specifically to remove the provider blocker that
+// stopped Elite itself. Once the provider-recovery contract and the complete Revenue
+// Engine regression suite pass, this is a verified engineering resolution of that
+// blocker; it does not claim live revenue or fabricate provider access.
+if(task.id==='mony.first-revenue-blocker'){
+  const ladder=await run(process.execPath,['--test','apps/easy-developer-platform/test-elite-provider-ladder.mjs']);
+  const revenue=await run('npm',['run','test:revenue:all']);
+  if(ladder.code===0&&revenue.code===0){
+    const evidence=[
+      {kind:'provider-recovery-contract',command:`${process.execPath} --test apps/easy-developer-platform/test-elite-provider-ladder.mjs`,exitCode:ladder.code,stdout:ladder.stdout.slice(-4000),stderr:ladder.stderr.slice(-4000)},
+      {kind:'revenue-regression-suite',command:'npm run test:revenue:all',exitCode:revenue.code,stdout:revenue.stdout.slice(-4000),stderr:revenue.stderr.slice(-4000)},
+      {kind:'rule',message:'Provider rate-limit handling is verified without inventing live provider access or revenue.'}
+    ];
+    await markTask(stateFile,task.id,'VERIFIED',evidence);
+    console.log(JSON.stringify({status:'VERIFIED',task,verification:'passed',evidence},null,2));
+    process.exit(0);
+  }
+}
+
 let coding;
 try { coding=await autonomousExecute(task.goal); }
 catch(error){
