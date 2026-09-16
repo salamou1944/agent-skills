@@ -34,7 +34,7 @@ function providerBlocker(error){
 // A task-specific passing native test is sufficient for a verified no-op only where
 // the test directly exercises that task's acceptance boundary and emits no errors.
 // This keeps the loop fail-closed when a chained command masks a sub-check failure.
-const preflightSafeNoop=new Set(['mony.payment-billing','mony.pipeline','mony.reusable-services','mony.affiliate','mony.market-testing']);
+const preflightSafeNoop=new Set(['mony.product-listing-sales','mony.payment-billing','mony.pipeline','mony.reusable-services','mony.affiliate','mony.market-testing']);
 if(preflightSafeNoop.has(task.id)){
   const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
   if(verification.code===0&&verification.stderr.trim()===''){

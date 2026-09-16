@@ -6,6 +6,7 @@ import { dirname } from 'node:path';
 // reconciliation are kept in this queue so Elite handles them instead of silently
 // converting a failing integration into a NOOP.
 export const TASKS = [
+  { id:'mony.product-listing-sales', phase:'mony', repo:'salamou1944/agent-skills', goal:'Complete and verify the canonical productized listing sales service over the existing Salamou-31 AI Product Content API, covering offer, qualification, order, generation, delivery artifact, and payment-ready handoff without creating a second generation engine.', verify:'npm run test:product-listing-sales' },
   { id:'mony.payment-billing', phase:'mony', repo:'salamou1944/agent-skills', goal:'Complete the provider-neutral payment and billing adapter boundary for Revenue Engine. Preserve payment-ready handoff until live credentials and integration evidence exist.', verify:'npm run test:payment-billing' },
   { id:'mony.pipeline', phase:'mony', repo:'salamou1944/agent-skills', goal:'Complete and verify the Revenue Engine client/opportunity pipeline with explicit found -> submitted -> replied -> call -> accepted -> paid -> delivery -> recurring states.', verify:'npm run test:sales' },
   { id:'mony.reusable-services', phase:'mony', repo:'salamou1944/agent-skills', goal:'Make existing Revenue Engine service/API capabilities directly reusable for paid client work with provider-neutral boundaries and production-readiness checks.', verify:'npm run test:paid-client-readiness' },
