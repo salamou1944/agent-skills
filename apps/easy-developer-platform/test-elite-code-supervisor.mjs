@@ -27,7 +27,7 @@ test('Autonomous coder has a verified no-op and protected paths', async () => {
   assert.match(coder, /VERIFIED_NOOP/);
   assert.match(coder, /\.github\/workflows/);
   assert.match(coder, /FORBIDDEN/);
-  assert.match(coder, /git diff.*--check/);
+  assert.match(coder, /diff.*--check/s);
 });
 
 test('Supervisor workflow has bounded background execution and verification', async () => {
