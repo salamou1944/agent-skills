@@ -36,8 +36,8 @@ Tasks, in order:
 
 Tasks, in order:
 
-1. Inspect the real Revenue Engine state and complete the highest-value unfinished revenue capability.
-2. Complete the productized service path: offer → qualification → delivery workflow → evidence/output → payment-ready handoff.
+1. **Productized listing service:** use `apps/revenue-engine/product-listing-sales.mjs` as the canonical mini-sales product over the existing Salamou-31 AI Product Content API. Verify offer → qualification → order → generation → delivery artifact → payment-ready handoff; do not create a second generation engine.
+2. Complete the remaining payment/billing adapter boundary so a real payment provider can be activated without coupling the sales layer to one provider; preserve the payment-ready handoff until live credentials and integration evidence exist.
 3. Complete the client/opportunity pipeline and ensure opportunity states are explicit: found → submitted → replied → call → accepted → paid → delivery → recurring.
 4. Make the existing service/API capabilities directly reusable for paid client work, with safe provider-neutral boundaries and production-readiness checks.
 5. Complete the affiliate/income integrations already present in the repository, verifying configuration without storing secrets.
