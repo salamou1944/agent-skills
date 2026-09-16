@@ -13,7 +13,7 @@ jobs:
         run: sleep 60
       - name: Run real Creative provider self-test
         env:
-          URL: https://easy-platform-runtime-v3-production.up.railway.app/api/creative-job/self-test
+          URL: https://easy-platform-runtime-v3-production.up.railway.app/api/creative/health
         run: |
           set -u
           response="$(curl --silent --show-error --max-time 300 -w '\nHTTP_STATUS:%{http_code}' "$URL")"
@@ -26,7 +26,7 @@ jobs:
           fi
           node -e '
             const x = JSON.parse(process.argv[1]);
-            if (x.status !== "SUCCEEDED" || x.decision !== "PASS" || x.generatedImage !== true) {
+            if (x.status !== "SUCCEEDED" || x.decision !== "PASS" || x.generatedImage !== true || x.passed !== true) {
               console.error("REAL_PROVIDER_TEST_FAILED", JSON.stringify(x));
               process.exit(1);
             }
