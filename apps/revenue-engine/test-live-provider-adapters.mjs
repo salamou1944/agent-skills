@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHttpProviderAdapter, signRevenueEvent, verifyRevenueEventSignature } from './live-provider-adapters.mjs';
 
-function response(status = 200, body = '') {
-  return { ok: status >= 200 && status < 300, status, headers: new Headers(), async text() { return body; } };
+function response(status = 200, body = '', headers = {}) {
+  const normalized = new Headers(headers);
+  return { ok: status >= 200 && status < 300, status, headers: normalized, async text() { return body; } };
 }
 
 test('live adapter fails closed when endpoint is absent', async () => {
@@ -35,15 +36,37 @@ test('live adapter performs authenticated health check and POST execution', asyn
   assert.equal((await adapter.healthCheck()).ok, true);
   const result = await adapter.execute({ action: 'publish', payload: { title: 'verified' } });
   assert.equal(result.externalId, 'pub_1');
+  assert.equal(result.attempts, 1);
   assert.equal(calls[1].options.headers.authorization, 'Bearer test-token');
   delete process.env.REVENUE_PUBLISHING_URL;
   delete process.env.REVENUE_PUBLISHING_TOKEN;
 });
 
-test('provider HTTP failures remain explicit for retry/recovery layers', async () => {
+test('live adapter retries transient 429 and succeeds without human intervention', async () => {
   process.env.REVENUE_ANALYTICS_URL = 'https://analytics.example.test';
-  const adapter = createHttpProviderAdapter('analytics', { fetchImpl: async () => response(429) });
-  await assert.rejects(() => adapter.execute({ event: 'sale' }), (error) => error.message === 'provider_http_429' && error.status === 429);
+  let attempts = 0;
+  const sleeps = [];
+  const adapter = createHttpProviderAdapter('analytics', {
+    retries: 2,
+    sleep: async (ms) => sleeps.push(ms),
+    fetchImpl: async () => {
+      attempts += 1;
+      return attempts === 1 ? response(429, '', { 'retry-after': '0' }) : response(200, JSON.stringify({ eventId: 'evt_live_1' }));
+    }
+  });
+  const result = await adapter.execute({ event: 'sale' });
+  assert.equal(result.ok, true);
+  assert.equal(result.eventId, 'evt_live_1');
+  assert.equal(result.attempts, 2);
+  assert.equal(attempts, 2);
+  assert.deepEqual(sleeps, [0]);
+  delete process.env.REVENUE_ANALYTICS_URL;
+});
+
+test('provider HTTP failures remain explicit after retry budget is exhausted', async () => {
+  process.env.REVENUE_ANALYTICS_URL = 'https://analytics.example.test';
+  const adapter = createHttpProviderAdapter('analytics', { retries: 1, sleep: async () => {}, fetchImpl: async () => response(429) });
+  await assert.rejects(() => adapter.execute({ event: 'sale' }), (error) => error.message === 'provider_http_429' && error.status === 429 && error.attempts === 2);
   delete process.env.REVENUE_ANALYTICS_URL;
 });
 
