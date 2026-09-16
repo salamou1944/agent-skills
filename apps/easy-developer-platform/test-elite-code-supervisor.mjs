@@ -44,26 +44,30 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /paths\.has/);
 });
 
-test('Project queue recovery receives exact failure evidence and an independent model path', async () => {
+test('Project queue recovery uses current Copilot CLI fallback and exact failure evidence', async () => {
   const workflow = await read('.github/workflows/elite-project-queue.yml');
   const prompt = await read('.github/prompts/elite-queue-fallback.prompt.yml');
+  const copilotPrompt = await read('.github/prompts/elite-queue-copilot-fallback.txt');
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /\*\/5 \* \* \* \*/);
-  assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
-  assert.match(workflow, /EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: \$\{\{ vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| '' \}\}/);
+  assert.match(workflow, /copilot-requests:\s*write/);
+  assert.match(workflow, /Install Copilot CLI recovery/);
+  assert.match(workflow, /copilot -s --no-ask-user/);
   assert.match(workflow, /Build independent queue recovery context/);
   assert.match(workflow, /exact failed cycle output/);
   assert.match(workflow, /tee \/tmp\/elite-cycle-result\.txt/);
   assert.match(workflow, /PIPESTATUS\[0\]/);
   assert.match(workflow, /Apply and verify independent recovery plan/);
   assert.match(workflow, /response-file/);
-  assert.doesNotMatch(workflow, /if: github\.actor != 'github-actions\[bot\]'/);
-  assert.doesNotMatch(workflow, /vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| 'https:\/\/models\.github\.ai\/inference'/);
+  assert.doesNotMatch(workflow, /actions\/ai-inference@/);
+  assert.doesNotMatch(workflow, /models\.github\.ai\/inference/);
   assert.match(prompt, /elite_queue_plan/);
   assert.match(prompt, /HTTP 429/);
   assert.match(prompt, /exhausted quota/);
   assert.match(prompt, /dead endpoints/);
   assert.match(prompt, /Never invent live providers, leads, replies, payments, or revenue/);
+  assert.match(copilotPrompt, /Return ONLY one JSON object/);
+  assert.match(copilotPrompt, /Never modify \.github\/workflows/);
 });
 
 test('Quota-exhausted 429 immediately falls through to the configured fallback provider', async () => {
@@ -290,7 +294,7 @@ test('Timeouts are bounded and can recover through an explicit fallback', async 
   assert.deepEqual(calls, ['https://primary.timeout.invalid', 'https://fallback.invalid']);
 });
 
-test('Supervisor workflow has bounded execution, multi-provider recovery, and post-change verification', async () => {
+test('Supervisor workflow has bounded execution, Copilot recovery, and post-change verification', async () => {
   const workflow = await read('.github/workflows/elite-code-background-supervisor.yml');
   const prompt = await read('.github/prompts/elite-code-fallback.prompt.yml');
   const copilotPrompt = await read('.github/prompts/elite-code-copilot-fallback.txt');
@@ -298,18 +302,16 @@ test('Supervisor workflow has bounded execution, multi-provider recovery, and po
   assert.match(workflow, /\*\/5 \* \* \* \*/);
   assert.match(workflow, /EASY_OPENAI_API_KEY/);
   assert.match(workflow, /EASY_OPERATOR_LLM_MODEL:.*gpt-4o-mini/);
-  assert.match(workflow, /EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: \$\{\{ vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| '' \}\}/);
-  assert.match(workflow, /models:\s*read/);
   assert.match(workflow, /copilot-requests:\s*write/);
-  assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
   assert.match(workflow, /Install Copilot CLI recovery/);
-  assert.match(workflow, /copilot -p/);
-  assert.match(workflow, /Apply verified Copilot recovery plan/);
+  assert.match(workflow, /copilot -s --no-ask-user/);
+  assert.match(workflow, /Apply verified recovery plan/);
   assert.match(workflow, /Run Elite Code contract tests/);
   assert.match(workflow, /Verify repository after autonomous cycle/);
   assert.match(workflow, /git diff --check/);
   assert.match(workflow, /Fail if no verified provider completed/);
-  assert.doesNotMatch(workflow, /vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| 'https:\/\/models\.github\.ai\/inference'/);
+  assert.doesNotMatch(workflow, /actions\/ai-inference@/);
+  assert.doesNotMatch(workflow, /models\.github\.ai\/inference/);
   assert.match(prompt, /responseFormat: json_schema/);
   assert.match(prompt, /elite_code_plan/);
   assert.match(copilotPrompt, /Return ONLY one JSON object/);
