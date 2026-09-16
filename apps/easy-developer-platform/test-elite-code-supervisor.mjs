@@ -34,24 +34,26 @@ test('Autonomous coder has a verified no-op, protected paths, provider fallback,
   assert.match(coder, /gpt-4o-mini/);
 });
 
-test('Supervisor workflow has bounded execution, recovery, and post-change verification', async () => {
+test('Supervisor workflow has bounded execution, multi-provider recovery, and post-change verification', async () => {
   const workflow = await read('.github/workflows/elite-code-background-supervisor.yml');
   const prompt = await read('.github/prompts/elite-code-fallback.prompt.yml');
+  const copilotPrompt = await read('.github/prompts/elite-code-copilot-fallback.txt');
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /\*\/5 \* \* \* \*/);
   assert.match(workflow, /EASY_OPENAI_API_KEY/);
   assert.match(workflow, /EASY_OPERATOR_LLM_MODEL:.*gpt-4o-mini/);
   assert.match(workflow, /models:\s*read/);
+  assert.match(workflow, /copilot-requests:\s*write/);
   assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
-  assert.match(workflow, /prompt-file: \.github\/prompts\/elite-code-fallback\.prompt\.yml/);
-  assert.match(workflow, /file_input:/);
-  assert.match(workflow, /response-file/);
-  assert.match(workflow, /continue-on-error: true/);
-  assert.match(workflow, /Apply verified GitHub Models fallback plan/);
+  assert.match(workflow, /Install Copilot CLI recovery/);
+  assert.match(workflow, /copilot -p/);
+  assert.match(workflow, /Apply verified Copilot recovery plan/);
   assert.match(workflow, /Run Elite Code contract tests/);
   assert.match(workflow, /Verify repository after autonomous cycle/);
   assert.match(workflow, /git diff --check/);
-  assert.doesNotMatch(workflow, /npm install -g @github\/copilot/);
+  assert.match(workflow, /Fail if no verified provider completed/);
   assert.match(prompt, /responseFormat: json_schema/);
   assert.match(prompt, /elite_code_plan/);
+  assert.match(copilotPrompt, /Return ONLY one JSON object/);
+  assert.match(copilotPrompt, /Never modify \.github\/workflows/);
 });
