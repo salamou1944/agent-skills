@@ -12,22 +12,29 @@ async function gitInit(root) {
   await execFileAsync('git', ['init'], { cwd: root });
   await execFileAsync('git', ['config', 'user.email', 'elite-test@example.invalid'], { cwd: root });
   await execFileAsync('git', ['config', 'user.name', 'Elite Test'], { cwd: root });
+  await execFileAsync('git', ['commit', '--allow-empty', '-m', 'baseline'], { cwd: root });
 }
 
-test('integrated Elite engine executes the full harness lifecycle with a provider double', async () => {
+function providerForPlan() {
+  return async ({ role }) => role === 'reviewer'
+    ? { approved: true, findings: [], reason: 'deterministic test approval' }
+    : { summary: 'safe plan', changes: [{ path: 'feature.mjs', content: 'export const answer = 42;\n' }] };
+}
+
+test('integrated Elite engine executes isolated lifecycle and promotes only verified changes', async () => {
   const root = await mkdtemp(join(tmpdir(), 'elite-engine-'));
   await gitInit(root);
-  const provider = async () => ({ summary: 'safe plan', changes: [{ path: 'feature.mjs', content: 'export const answer = 42;\n' }] });
-  const result = await runEliteEngine('create a safe module', { root, provider, policy: { maxSteps: 12, maxRepairs: 1 } });
+  const result = await runEliteEngine('create a safe module', { root, provider: providerForPlan(), policy: { maxSteps: 12, maxRepairs: 1 } });
   assert.equal(result.status, 'verified');
+  assert.equal(result.isolated, true);
   assert.ok(result.steps >= 6);
   assert.equal(await readFile(join(root, 'feature.mjs'), 'utf8'), 'export const answer = 42;\n');
 });
 
-test('engine entry point can verify a no-op task without a provider network call', async () => {
+test('engine entry point verifies a no-op task without a provider network call', async () => {
   const root = await mkdtemp(join(tmpdir(), 'elite-engine-import-'));
   await gitInit(root);
-  const provider = async () => ({ summary: 'noop', changes: [] });
+  const provider = async ({ role }) => role === 'reviewer' ? { approved: true } : { summary: 'noop', changes: [] };
   const result = await runEliteEngine('confirm repository is safe', { root, provider });
   assert.equal(result.status, 'verified');
   assert.deepEqual(result.changedFiles, []);
