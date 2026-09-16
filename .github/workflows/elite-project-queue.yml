@@ -97,7 +97,7 @@ jobs:
         if: steps.cycle.conclusion != 'success'
         continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
         run: |
           cat .github/prompts/elite-queue-copilot-fallback.txt /tmp/elite-queue-context.txt | copilot -s --no-ask-user > /tmp/elite-queue-recovery-plan.json
           node -e "JSON.parse(require('fs').readFileSync('/tmp/elite-queue-recovery-plan.json','utf8'))"
