@@ -14,6 +14,7 @@ import { createMetrics, persistMetric } from './elite-observability.mjs';
 import { remember } from './elite-memory.mjs';
 import { withIsolatedWorktree, workspaceStatus } from './elite-worktree.mjs';
 import { buildEngineeringDNA, predictImpact, recordAttempt, readAttemptLedger, rejectRepeatedStrategy, createProof, shadowDelta } from './elite-dna.mjs';
+import { generateCounterfactuals, chooseCounterfactual, immuneGate, adversarialProbe, appendEvolution, evolutionEvent, projectScope, crossProjectSignal, stopAndExplain, integritySummary } from './elite-unique-intelligence.mjs';
 
 const execFileAsync = promisify(execFile);
 function trim(value, max = 8000) { return String(value ?? '').slice(0, max); }
@@ -24,12 +25,14 @@ async function inspect({ root, goal, maxContextBytes, decomposer }) {
   const files = (await git(root, ['ls-files'])).stdout.split('\n').filter(Boolean);
   const imports = await scanImports(root, files.filter(p => /\.(mjs|js|cjs)$/.test(p)));
   const dna = await buildEngineeringDNA({ root, files, imports, goal });
+  const counterfactuals = generateCounterfactuals({ goal, context: base.context, constraints: {} });
+  const counterfactual = chooseCounterfactual({ candidates: counterfactuals, constraints: {} });
   let decomposition = [];
   if (decomposer) {
     try { const raw = await decomposer({ role: 'decomposer', goal, context: base.context, constraints: { maxSubtasks: 16 } }); decomposition = topologicalSubtasks(normalizeSubtasks(raw)); }
     catch (error) { decomposition = [{ id: 'task-1', goal, dependsOn: [], warning: error.message }]; }
   }
-  return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition, engineeringDNA: dna }).slice(0, maxContextBytes), dna };
+  return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition, engineeringDNA: dna, counterfactuals, selectedCounterfactual: counterfactual }).slice(0, maxContextBytes), dna, counterfactuals, counterfactual };
 }
 
 function makeProvider(env) {
@@ -53,7 +56,12 @@ function makeReviewer(env, injectedProvider) {
   };
 }
 
-async function execute({ changes }) { for (const change of changes) { await mkdir(dirname(change.target), { recursive: true }); await writeFile(change.target, change.content, 'utf8'); } return { ok: true, summary: `applied ${changes.length} planned change(s)` }; }
+async function execute({ changes, goal }) {
+  const attack = adversarialProbe({ goal, changes });
+  if (!attack.ok) return { ok: false, reason: 'adversarial_gate', evidence: attack };
+  for (const change of changes) { await mkdir(dirname(change.target), { recursive: true }); await writeFile(change.target, change.content, 'utf8'); }
+  return { ok: true, summary: `applied ${changes.length} planned change(s)`, evidence: { adversarial: attack } };
+}
 
 async function test({ root, changes }) {
   const diff = await git(root, ['diff', '--check']);
@@ -72,20 +80,22 @@ function highRiskChanges(changes) { return changes.filter(c => /(^|\/)(package\.
 async function review({ root, goal, changes, env, provider, approval }) {
   const local = securityReview({ changes });
   if (!local.ok) return { ok: false, reason: 'security_gate', evidence: local.findings };
+  const attack = adversarialProbe({ goal, changes });
+  if (!attack.ok) return { ok: false, reason: 'adversarial_gate', evidence: attack };
   const risky = highRiskChanges(changes);
   if (risky.length) {
     if (typeof approval !== 'function') return { ok: false, reason: 'human_approval_required', evidence: risky.map(c => c.path) };
     const approved = await approval({ goal, changes: risky.map(c => c.path) });
     if (approved !== true) return { ok: false, reason: 'human_approval_denied', evidence: risky.map(c => c.path) };
   }
-  if (!changes.length) return { ok: true, summary: 'no changes require independent review', evidence: { security: local } };
+  if (!changes.length) return { ok: true, summary: 'no changes require independent review', evidence: { security: local, adversarial: attack } };
   const patch = await analyzePatch(root);
   if (!patch.ok) return { ok: false, reason: 'patch_gate', evidence: patch.findings };
   const reviewer = makeReviewer(env, provider);
   const specialists = await runParallelReview({ goal, patch, changes, reviewer });
   if (!specialists.ok) return { ok: false, reason: 'parallel_review_rejected', evidence: specialists };
   const independent = await independentReview({ root, goal, changes, reviewer: args => reviewer({ ...args, role: 'final' }) });
-  return independent.ok ? { ok: true, summary: 'parallel specialists and independent final review passed', evidence: { specialists, final: independent.evidence } } : independent;
+  return independent.ok ? { ok: true, summary: 'parallel specialists and independent final review passed', evidence: { specialists, final: independent.evidence, adversarial: attack } } : independent;
 }
 
 async function verify({ root, changes, prediction }) {
@@ -99,7 +109,8 @@ async function verify({ root, changes, prediction }) {
     syntaxChecked.push(change.path);
   }
   const actual = [...new Set(changes.map(c => c.path))];
-  return { ok: true, evidence: { gitDiffCheck: true, patch, syntaxChecked, shadow: prediction ? shadowDelta(prediction, actual) : null } };
+  const shadow = prediction ? shadowDelta({ prediction, actualFiles: actual }) : null;
+  return { ok: true, evidence: { gitDiffCheck: true, patch, syntaxChecked, shadow } };
 }
 
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
@@ -111,15 +122,25 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
     if (args.role === 'repair') {
       const ledger = await readAttemptLedger(attemptPath);
       const gate = rejectRepeatedStrategy(ledger, { plan, failureCode: args.failure?.code, failureMessage: args.failure?.message });
-      if (!gate.ok) throw Object.assign(new Error('Elite refused to repeat a failed strategy'), { code: gate.reason });
+      const immune = immuneGate({ knownFailures: ledger, failureCode: args.failure?.code, failureMessage: args.failure?.message, changedFiles: plan?.changes?.map(x => x.path) || [], strategy: plan?.summary });
+      if (!gate.ok || !immune.ok) throw Object.assign(new Error('Elite refused to repeat a failed strategy'), { code: gate.reason || immune.reason });
       await recordAttempt(attemptPath, { goal, plan, failureCode: args.failure?.code, failureMessage: args.failure?.message, strategy: plan.summary });
     }
     return plan;
   };
   const prediction = predictImpact({ dna: inspectResult.dna, changedFiles: [] });
+  const project = projectScope(policy.project || 'default');
+  const counterfactual = inspectResult.counterfactual;
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
-  result.evidence = [...(result.evidence || []), { engineeringProof: proof }];
+  const verification = result.status === 'verified' ? { ok: true } : { ok: false };
+  const completion = stopAndExplain({ result, proof, verification });
+  const evolution = evolutionEvent({ taskId: result.taskId, goal, status: result.status, changedFiles: result.changedFiles, proofHash: proof.proofHash });
+  if (policy.evolutionPath) await appendEvolution(policy.evolutionPath, evolution);
+  const crossProject = crossProjectSignal({ project: policy.project || 'default', kind: 'verified_task', value: result.taskId || goal });
+  const integrity = integritySummary({ counterfactual, immune: { signature: null }, adversarial: result.evidence?.find?.(x => x?.adversarial)?.adversarial || null, evolution, crossProject });
+  result.evidence = [...(result.evidence || []), { engineeringProof: proof }, { eliteIntegrity: integrity, completion, projectScope: project, crossProject }];
+  if (!completion.ok) result.status = 'blocked';
   metrics.finish(result.status); await persistMetric(policy.metricsPath, metrics.metrics);
   if (policy.memoryPath) await remember(policy.memoryPath, { goal, status: result.status, taskId: result.taskId, steps: result.steps, repairs: result.repairs, evidence: result.evidence, dnaHash: inspectResult.dna.dnaHash, proofHash: proof.proofHash });
   return result;

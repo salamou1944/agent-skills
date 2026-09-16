@@ -1,0 +1,43 @@
+name: Elite Unique Intelligence Verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/easy-developer-platform/elite-unique-intelligence.mjs'
+      - 'apps/easy-developer-platform/test-elite-unique-intelligence.mjs'
+      - 'apps/easy-developer-platform/elite-engine.mjs'
+      - 'apps/easy-developer-platform/elite-dna.mjs'
+      - 'package.json'
+      - '.github/workflows/elite-unique-intelligence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Syntax check unique layer
+        run: node --check apps/easy-developer-platform/elite-unique-intelligence.mjs
+      - name: Syntax check engine
+        run: node --check apps/easy-developer-platform/elite-engine.mjs
+      - name: Verify unique intelligence
+        run: npm run test:elite:unique
+      - name: Verify DNA
+        run: npm run test:elite:dna
+      - name: Verify integrated engine
+        run: npm run test:elite:engine
+      - name: Diff check
+        run: git diff --check
