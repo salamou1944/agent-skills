@@ -118,7 +118,9 @@ jobs:
             git add -A
             git diff --cached --check
             git commit -m "chore(elite): advance verified project queue"
-            git push
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
           fi
 
       - name: Fail on unverified queue cycle
