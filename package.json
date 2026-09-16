@@ -26,7 +26,9 @@
     "test:elite": "node --test apps/easy-developer-platform/test-elite-code-supervisor.mjs",
     "test:elite:harness": "node --test apps/easy-developer-platform/test-elite-harness.mjs",
     "test:elite:engine": "node --test apps/easy-developer-platform/test-elite-engine.mjs",
+    "test:elite:components": "node --test apps/easy-developer-platform/test-elite-components.mjs",
     "test:elite:queue": "node --test apps/easy-developer-platform/test-project-queue-orchestrator.mjs",
+    "test:elite:benchmark": "node apps/easy-developer-platform/elite-benchmark.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
   "dependencies": {
