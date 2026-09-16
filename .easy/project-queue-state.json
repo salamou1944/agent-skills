@@ -13,6 +13,19 @@
         }
       ],
       "updatedAt": "2026-09-16T20:00:42.693Z"
+    },
+    "mony.pipeline": {
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:sales",
+          "exitCode": 0,
+          "stdout": "\n> test:sales\n> node apps/revenue-engine/test-sales-pipeline.mjs\n\nsales pipeline and sales page checks passed\n",
+          "stderr": ""
+        }
+      ],
+      "updatedAt": "2026-09-16T20:01:29.259Z"
     }
   },
   "history": [
@@ -51,6 +64,20 @@
         }
       ],
       "at": "2026-09-16T20:00:42.693Z"
+    },
+    {
+      "id": "mony.pipeline",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:sales",
+          "exitCode": 0,
+          "stdout": "\n> test:sales\n> node apps/revenue-engine/test-sales-pipeline.mjs\n\nsales pipeline and sales page checks passed\n",
+          "stderr": ""
+        }
+      ],
+      "at": "2026-09-16T20:01:29.259Z"
     }
   ]
 }
