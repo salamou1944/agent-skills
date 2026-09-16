@@ -22,8 +22,9 @@ export async function loadState(file='.easy/project-queue-state.json') {
   catch { return {version:1,tasks:{},history:[]}; }
 }
 
-export function selectNext(state) {
+export function selectNext(state, phase=null) {
   for (const task of TASKS) {
+    if (phase && task.phase!==phase) continue;
     const s=state.tasks?.[task.id];
     if (!s || !['VERIFIED','NOOP'].includes(s.status)) return task;
   }
@@ -47,7 +48,7 @@ if(import.meta.url===`file://${process.argv[1]}`){
     const id=process.argv[3], status=process.argv[4], evidence=process.argv[5]?JSON.parse(process.argv[5]):[];
     console.log(JSON.stringify(await markTask(file,id,status,evidence),null,2));
   } else {
-    const state=await loadState(file); const task=selectNext(state);
-    console.log(JSON.stringify({stateFile:file,next:task,completed:Object.entries(state.tasks||{}).filter(([,v])=>['VERIFIED','NOOP'].includes(v.status)).map(([id])=>id),monyComplete:TASKS.filter(t=>t.phase==='mony').every(t=>['VERIFIED','NOOP'].includes(state.tasks?.[t.id]?.status))},null,2));
+    const state=await loadState(file); const phase=process.env.ELITE_QUEUE_PHASE||null; const task=selectNext(state,phase);
+    console.log(JSON.stringify({stateFile:file,phase,next:task,completed:Object.entries(state.tasks||{}).filter(([,v])=>['VERIFIED','NOOP'].includes(v.status)).map(([id])=>id),monyComplete:TASKS.filter(t=>t.phase==='mony').every(t=>['VERIFIED','NOOP'].includes(state.tasks?.[t.id]?.status))},null,2));
   }
 }
