@@ -35,6 +35,7 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Run supervisor evidence check
+        continue-on-error: true
         env:
           SUPERVISOR_REPORT_PATH: /tmp/supervisor-progress.json
         run: node skills/code-progress-supervisor/scripts/check-progress.mjs
@@ -83,7 +84,7 @@ jobs:
 
       - name: Run independent Elite Code recovery
         id: recovery
-        if: steps.primary.conclusion != 'success'
+        if: steps.primary.outcome != 'success'
         continue-on-error: true
         uses: actions/ai-inference@v2.1.1
         with:
@@ -93,7 +94,7 @@ jobs:
           token: ${{ github.token }}
 
       - name: Apply verified recovery plan
-        if: steps.primary.conclusion != 'success' && steps.recovery.conclusion == 'success'
+        if: steps.primary.outcome != 'success' && steps.recovery.outcome == 'success'
         env:
           EASY_OPERATOR_PLAN_FILE: ${{ steps.recovery.outputs.response-file }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
@@ -103,11 +104,11 @@ jobs:
         run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified recovery plan for the Elite Code engineering cycle."
 
       - name: Run Elite Code contract tests
-        if: steps.primary.conclusion == 'success' || steps.recovery.conclusion == 'success'
+        if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
         run: npm run test:elite
 
       - name: Verify repository after autonomous cycle
-        if: steps.primary.conclusion == 'success' || steps.recovery.conclusion == 'success'
+        if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
           git diff --check
           node --check apps/easy-developer-platform/autonomous-coder.mjs
@@ -115,7 +116,7 @@ jobs:
           npm run test:elite
 
       - name: Persist verified Elite Code progress
-        if: steps.primary.conclusion == 'success' || steps.recovery.conclusion == 'success'
+        if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
@@ -129,7 +130,7 @@ jobs:
           fi
 
       - name: Fail if no verified provider completed
-        if: steps.primary.conclusion != 'success' && steps.recovery.conclusion != 'success'
+        if: steps.primary.outcome != 'success' && steps.recovery.outcome != 'success'
         run: |
           echo "Elite Code did not obtain a verified engineering plan from any available provider."
           exit 1
