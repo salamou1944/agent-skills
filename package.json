@@ -16,7 +16,8 @@
     "revenue:serve": "node apps/revenue-engine/revenue-operator.mjs serve",
     "revenue:markets": "node apps/revenue-engine/test-market-strategy.mjs",
     "revenue:campaign": "node apps/revenue-engine/test-campaign-planner.mjs",
-    "revenue:affiliate:test": "node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs"
+    "revenue:affiliate:test": "node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs",
+    "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
