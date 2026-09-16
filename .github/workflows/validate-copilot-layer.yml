@@ -1,0 +1,48 @@
+name: Validate Copilot Layer
+
+on:
+  push:
+    paths:
+      - '.github/copilot-instructions.md'
+      - '.github/agents/**'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.agents/skills/**'
+      - '.github/workflows/validate-copilot-layer.yml'
+  pull_request:
+    paths:
+      - '.github/copilot-instructions.md'
+      - '.github/agents/**'
+      - '.github/instructions/**'
+      - '.github/prompts/**'
+      - '.agents/skills/**'
+      - '.github/workflows/validate-copilot-layer.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate required Copilot files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .github/copilot-instructions.md
+          for f in .github/agents/*.agent.md; do
+            grep -q '^description:' "$f"
+          done
+          for f in .agents/skills/*/SKILL.md; do
+            grep -q '^name:' "$f"
+            grep -q '^description:' "$f"
+          done
+      - name: Validate skill naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          for d in .agents/skills/*; do
+            test "$(basename "$d")" = "$(basename "$d" | tr '[:upper:]' '[:lower:]' | tr '_' '-')"
+            test -f "$d/SKILL.md"
+          done
