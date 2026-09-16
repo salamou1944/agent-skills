@@ -60,6 +60,35 @@ jobs:
             find . -maxdepth 3 -type f -not -path './.git/*' -not -path './node_modules/*' | sort | head -400
           } > /tmp/target-context.txt
 
+      - name: Prepare current goal and unfinished task queue
+        env:
+          GOAL: ${{ inputs.goal }}
+          TARGET_REPOSITORY: ${{ github.repository }}
+        run: |
+          {
+            echo 'CURRENT WORKFLOW GOAL — THIS MUST BE FINISHED AND VERIFIED FIRST:'
+            printf '%s\n' "$GOAL"
+            echo
+            echo 'AFTER THE CURRENT GOAL IS VERIFIED COMPLETE OR VERIFIED NO-OP, SELECT THE FIRST UNFINISHED APPLICABLE TASK FROM THIS QUEUE:'
+            case "$TARGET_REPOSITORY" in
+              salamou1944/Easy-)
+                sed -n '/^### P0 — EASY/,/^### P0 — mony/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                ;;
+              salamou1944/Salamou-31)
+                sed -n '/^### P1 — Salamou-31/,/^### P1 — agent-skills engineering core/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                ;;
+              salamou1944/agent-skills)
+                sed -n '/^### P0 — mony/,/^### P1 — Salamou-31/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                sed -n '/^### P1 — agent-skills engineering core/,/^## Advancement rule/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                ;;
+              *)
+                echo 'No repository-specific queue section. Continue only the current workflow goal.'
+                ;;
+            esac
+            echo
+            echo 'QUEUE RULE: do not claim completion from commits/plans/workflow success alone. Implement, test, inspect, and verify the resulting capability before advancing.'
+          } | tee /tmp/elite-goal.txt
+
       - name: Run Elite Code worker
         id: elite
         continue-on-error: true
@@ -72,9 +101,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           EASY_OPERATOR_CODER_ATTEMPTS: '2'
-          ELITE_GOAL: ${{ inputs.goal }}
         run: |
-          node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_GOAL"
+          node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$(cat /tmp/elite-goal.txt)"
 
       - name: Verify worker result
         if: steps.elite.conclusion == 'success'
