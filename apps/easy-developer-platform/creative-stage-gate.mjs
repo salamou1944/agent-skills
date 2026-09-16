@@ -10,7 +10,7 @@ assert.equal(noProvider.status,'BLOCKED');
 const good = await runCreativeJob(base, fixtureProvider());
 assert.equal(good.decision,'PASS');
 assert.equal(good.status,'SUCCEEDED');
-assert.deepEqual(good.events.map(e=>e.stage), ['provider','product-dna','compile','integrity','delivery']);
+assert.deepEqual(good.events.map(e=>e.stage), ['provider','product-dna','compile','generation','integrity','delivery']);
 
 const attack = await runCreativeJob(base, {
   ...fixtureProvider(), name:'integrity-attack',
