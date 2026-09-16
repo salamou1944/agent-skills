@@ -6,8 +6,9 @@ const read = (path) => readFile(path, 'utf8');
 
 test('Elite Code contract contains the full engineering loop', async () => {
   const skill = await read('skills/elite-code-engineer/SKILL.md');
+  const lower = skill.toLowerCase();
   for (const term of ['requirements', 'repository archaeology', 'architecture', 'implementation', 'tests', 'adversarial review', 'repair', 'integration verification', 'evidence']) {
-    assert.match(skill, new RegExp(term.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'), 'i'));
+    assert.ok(lower.includes(term), `missing Elite Code stage: ${term}`);
   }
   assert.match(skill, /Definition of done/i);
   assert.match(skill, /Evidence-backed completion/i);
