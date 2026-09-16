@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "tasks": {
+    "mony.payment-billing": {
+      "status": "FAILED",
+      "evidence": [
+        {
+          "kind": "autonomous-coder",
+          "error": "provider_http_410"
+        }
+      ],
+      "updatedAt": "2026-09-16T19:58:38.350Z"
+    }
+  },
+  "history": [
+    {
+      "id": "mony.payment-billing",
+      "status": "FAILED",
+      "evidence": [
+        {
+          "kind": "autonomous-coder",
+          "error": "provider_http_410"
+        }
+      ],
+      "at": "2026-09-16T19:58:38.350Z"
+    }
+  ]
+}
