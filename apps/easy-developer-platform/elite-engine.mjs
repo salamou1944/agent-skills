@@ -5,6 +5,7 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { runEliteTask } from './elite-harness.mjs';
 import { ask } from './autonomous-coder.mjs';
 import { inspectRepository, discoverTests, scanImports } from './elite-intelligence.mjs';
+import { normalizeSubtasks, topologicalSubtasks } from './elite-planner.mjs';
 import { independentReview } from './elite-reviewer.mjs';
 import { runParallelReview } from './elite-parallel.mjs';
 import { analyzePatch } from './elite-patch.mjs';
@@ -17,18 +18,27 @@ const execFileAsync = promisify(execFile);
 function trim(value, max = 8000) { return String(value ?? '').slice(0, max); }
 async function git(root, args, timeout = 30_000) { try { const { stdout, stderr } = await execFileAsync('git', args, { cwd: root, timeout, maxBuffer: 4_000_000 }); return { ok: true, stdout: trim(stdout), stderr: trim(stderr) }; } catch (error) { return { ok: false, stdout: trim(error.stdout), stderr: trim(error.stderr || error.message) }; } }
 
-async function inspect({ root, goal, maxContextBytes }) {
+async function inspect({ root, goal, maxContextBytes, decomposer }) {
   const base = await inspectRepository({ root, goal, maxContextBytes });
   const files = (await git(root, ['ls-files'])).stdout.split('\n').filter(Boolean);
   const imports = await scanImports(root, files.filter(p => /\.(mjs|js|cjs)$/.test(p)));
-  return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports }).slice(0, maxContextBytes) };
+  let decomposition = [];
+  if (decomposer) {
+    try { const raw = await decomposer({ role: 'decomposer', goal, context: base.context, constraints: { maxSubtasks: 16 } }); decomposition = topologicalSubtasks(normalizeSubtasks(raw)); }
+    catch (error) { decomposition = [{ id: 'task-1', goal, dependsOn: [], warning: error.message }]; }
+  }
+  return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition }).slice(0, maxContextBytes) };
 }
 
 function makeProvider(env) {
   return async ({ role, goal, context, failedPlan, failure, constraints }) => {
+    if (role === 'decomposer') {
+      const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
+      return ask(prompt, env);
+    }
     const prompt = role === 'repair'
       ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
-      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.`;
+      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order.\nConstraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.`;
     return ask(prompt, env);
   };
 }
@@ -90,7 +100,8 @@ async function verify({ root, changes }) {
 }
 
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
-  const result = await runEliteTask(goal, { root, policy, journalPath, provider: provider || makeProvider(env), inspect, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify });
+  const activeProvider = provider || makeProvider(env);
+  const result = await runEliteTask(goal, { root, policy, journalPath, provider: activeProvider, inspect: args => inspect({ ...args, decomposer: activeProvider }), execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify });
   metrics.finish(result.status); await persistMetric(policy.metricsPath, metrics.metrics);
   if (policy.memoryPath) await remember(policy.memoryPath, { goal, status: result.status, taskId: result.taskId, steps: result.steps, repairs: result.repairs, evidence: result.evidence });
   return result;
