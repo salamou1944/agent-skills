@@ -77,7 +77,7 @@
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
-      "updatedAt": "2026-09-16T23:49:48.225Z"
+      "updatedAt": "2026-09-16T23:52:11.110Z"
     },
     "mony.product-listing-sales": {
       "status": "NOOP",
@@ -663,6 +663,20 @@
         }
       ],
       "at": "2026-09-16T23:49:48.225Z"
+    },
+    {
+      "id": "mony.first-revenue-blocker",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "mony.first-revenue-blocker",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "at": "2026-09-16T23:52:11.110Z"
     }
   ]
 }
