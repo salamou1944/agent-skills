@@ -85,7 +85,7 @@ jobs:
 
       - name: Run GitHub Models fallback
         id: github_models
-        if: steps.primary.outcome != 'success'
+        if: steps.primary.conclusion != 'success'
         continue-on-error: true
         uses: actions/ai-inference@v2.1.1
         with:
@@ -95,12 +95,12 @@ jobs:
           token: ${{ github.token }}
 
       - name: Install Copilot CLI recovery
-        if: steps.primary.outcome != 'success' && steps.github_models.outcome != 'success'
+        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success'
         run: npm install -g @github/copilot
 
       - name: Run Copilot recovery planner
         id: copilot
-        if: steps.primary.outcome != 'success' && steps.github_models.outcome != 'success'
+        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -108,25 +108,25 @@ jobs:
           copilot -p "$(cat /tmp/elite-code-copilot-prompt.txt)" -s --no-ask-user --model gpt-4.1 > /tmp/copilot-plan.json
 
       - name: Apply verified GitHub Models fallback plan
-        if: steps.primary.outcome != 'success' && steps.github_models.outcome == 'success'
+        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion == 'success'
         env:
           EASY_OPERATOR_PLAN_FILE: ${{ steps.github_models.outputs.response-file }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
         run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified fallback plan"
 
       - name: Apply verified Copilot recovery plan
-        if: steps.primary.outcome != 'success' && steps.github_models.outcome != 'success' && steps.copilot.outcome == 'success'
+        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success' && steps.copilot.conclusion == 'success'
         env:
           EASY_OPERATOR_PLAN_FILE: /tmp/copilot-plan.json
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
         run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified Copilot recovery plan"
 
       - name: Run Elite Code contract tests
-        if: steps.primary.outcome == 'success' || steps.github_models.outcome == 'success' || steps.copilot.outcome == 'success'
+        if: steps.primary.conclusion == 'success' || steps.github_models.conclusion == 'success' || steps.copilot.conclusion == 'success'
         run: npm run test:elite
 
       - name: Verify repository after autonomous cycle
-        if: steps.primary.outcome == 'success' || steps.github_models.outcome == 'success' || steps.copilot.outcome == 'success'
+        if: steps.primary.conclusion == 'success' || steps.github_models.conclusion == 'success' || steps.copilot.conclusion == 'success'
         run: |
           git diff --check
           node --check apps/easy-developer-platform/operator-worker.mjs
@@ -138,7 +138,7 @@ jobs:
           node --check skills/code-progress-supervisor/scripts/check-progress.mjs
 
       - name: Persist verified changes
-        if: steps.primary.outcome == 'success' || steps.github_models.outcome == 'success' || steps.copilot.outcome == 'success'
+        if: steps.primary.conclusion == 'success' || steps.github_models.conclusion == 'success' || steps.copilot.conclusion == 'success'
         run: |
           if ! git diff --quiet || ! git diff --cached --quiet; then
             git config user.name "github-actions[bot]"
@@ -150,7 +150,7 @@ jobs:
           fi
 
       - name: Fail if no verified provider completed
-        if: steps.primary.outcome != 'success' && steps.github_models.outcome != 'success' && steps.copilot.outcome != 'success'
+        if: steps.primary.conclusion != 'success' && steps.github_models.conclusion != 'success' && steps.copilot.conclusion != 'success'
         run: |
           echo "No autonomous provider completed successfully. Primary, GitHub Models, and Copilot recovery all failed."
           exit 1
