@@ -12,6 +12,11 @@ assert.ok(Array.isArray(doctor.livePrerequisites));
 assert.equal(doctor.nextAction, 'use_dry_run_or_fixture_boundaries_until_live_evidence_exists');
 assert.match(doctor.rule, /provider variable alone never activates production/i);
 
+const probe = JSON.parse(execFileSync(process.execPath, [file, 'live-probe'], { encoding: 'utf8' }));
+assert.equal(probe.mode, 'live-probe');
+assert.equal(probe.revenueRecorded, false);
+assert.match(probe.rule, /never fabricates or records revenue/i);
+
 const demo = JSON.parse(execFileSync(process.execPath, [file, 'demo'], { encoding: 'utf8' }));
 assert.equal(demo.opportunity.status, 'approved_for_build');
 assert.ok(demo.plan.primary);
