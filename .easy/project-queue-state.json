@@ -77,7 +77,7 @@
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
-      "updatedAt": "2026-09-16T22:51:15.715Z"
+      "updatedAt": "2026-09-16T22:52:21.805Z"
     }
   },
   "history": [
@@ -541,6 +541,20 @@
         }
       ],
       "at": "2026-09-16T22:51:15.715Z"
+    },
+    {
+      "id": "mony.first-revenue-blocker",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "provider_http_429",
+          "errorClass": "http_429",
+          "task": "mony.first-revenue-blocker",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "at": "2026-09-16T22:52:21.805Z"
     }
   ]
 }
