@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 
 // Project execution order is deliberately mony-first, then EASY.
 export const TASKS = [
-  { id:'mony.payment-billing', phase:'mony', repo:'salamou1944/agent-skills', goal:'Complete the provider-neutral payment and billing adapter boundary for Revenue Engine. Preserve payment-ready handoff until live credentials and integration evidence exist.', verify:'npm run test:revenue:all' },
+  { id:'mony.payment-billing', phase:'mony', repo:'salamou1944/agent-skills', goal:'Complete the provider-neutral payment and billing adapter boundary for Revenue Engine. Preserve payment-ready handoff until live credentials and integration evidence exist.', verify:'npm run test:payment-billing' },
   { id:'mony.pipeline', phase:'mony', repo:'salamou1944/agent-skills', goal:'Complete and verify the Revenue Engine client/opportunity pipeline with explicit found -> submitted -> replied -> call -> accepted -> paid -> delivery -> recurring states.', verify:'npm run test:sales' },
   { id:'mony.reusable-services', phase:'mony', repo:'salamou1944/agent-skills', goal:'Make existing Revenue Engine service/API capabilities directly reusable for paid client work with provider-neutral boundaries and production-readiness checks.', verify:'npm run test:revenue:all' },
   { id:'mony.affiliate', phase:'mony', repo:'salamou1944/agent-skills', goal:'Complete and verify existing affiliate/income integrations without storing secrets.', verify:'npm run revenue:affiliate:test' },
