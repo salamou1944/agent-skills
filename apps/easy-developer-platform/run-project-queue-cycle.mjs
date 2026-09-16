@@ -22,6 +22,20 @@ function run(command,args){return new Promise(resolve=>{
   child.on('close',code=>resolve({code,stdout,stderr})); child.on('error',e=>resolve({code:1,stdout,stderr:e.message}));
 });}
 
+// A task-specific passing native test is sufficient for a verified no-op only where
+// the test directly exercises that task's acceptance boundary. This keeps the loop
+// usable even when an external LLM provider is unavailable.
+const preflightSafeNoop=new Set(['mony.payment-billing','mony.pipeline','mony.affiliate','mony.market-testing']);
+if(preflightSafeNoop.has(task.id)){
+  const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
+  if(verification.code===0){
+    const evidence=[{kind:'preflight-native-test',command:task.verify,exitCode:0,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}];
+    await markTask(stateFile,task.id,'NOOP',evidence);
+    console.log(JSON.stringify({status:'NOOP',task,verification:'passed',evidence},null,2));
+    process.exit(0);
+  }
+}
+
 let coding;
 try { coding=await autonomousExecute(task.goal); }
 catch(error){
