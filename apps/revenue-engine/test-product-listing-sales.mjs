@@ -43,11 +43,12 @@ assert.equal(handoff.status, 'payment_ready');
 assert.equal(handoff.amount, 79);
 assert.equal(handoff.paymentProvider, null);
 
-const fixture = createProductListingSales({ mode: 'dry-run', fetchImpl: fakeFetch });
+const fixture = createProductListingSales({ apiBaseUrl: 'https://api.example.test', apiKey: 'test-key', mode: 'dry-run', fetchImpl: fakeFetch });
 const fixtureOrder = fixture.createOrder({ product_name: 'Demo Mug' });
 const fixtureResult = await fixture.generate(fixtureOrder);
 assert.equal(fixtureResult.source, 'safe-fixture');
 assert.equal(fixtureResult.ok, true);
+assert.equal(calls.length, 1, 'dry-run must not call the upstream API');
 
 assert.throws(() => sales.qualify({}), /product_input_required/);
 assert.throws(() => sales.createOrder({ product_name: 'x' }, 'unknown'), /unknown_plan/);
