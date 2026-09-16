@@ -3,49 +3,177 @@
   "tasks": {
     "mony.product-listing-sales": {
       "status": "NOOP",
-      "evidence": [{"kind":"preflight-native-test","command":"npm run test:product-listing-sales","exitCode":0,"stdout":"product-listing-sales: tests passed","stderr":""}],
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:product-listing-sales",
+          "exitCode": 0,
+          "stdout": "product-listing-sales: tests passed",
+          "stderr": ""
+        }
+      ],
       "updatedAt": "2026-09-16T23:20:59.856Z"
     },
     "mony.payment-billing": {
       "status": "NOOP",
-      "evidence": [{"kind":"preflight-native-test","command":"npm run test:revenue:all","exitCode":0,"stdout":"Revenue Engine deterministic, API, affiliate, sales, service-market and payment-billing tests passed","stderr":""}],
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:revenue:all",
+          "exitCode": 0,
+          "stdout": "Revenue Engine deterministic, API, affiliate, sales, service-market and payment-billing tests passed",
+          "stderr": ""
+        }
+      ],
       "updatedAt": "2026-09-16T20:00:42.693Z"
     },
     "mony.pipeline": {
       "status": "NOOP",
-      "evidence": [{"kind":"preflight-native-test","command":"npm run test:sales","exitCode":0,"stdout":"sales pipeline and sales page checks passed","stderr":""}],
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:sales",
+          "exitCode": 0,
+          "stdout": "sales pipeline and sales page checks passed",
+          "stderr": ""
+        }
+      ],
       "updatedAt": "2026-09-16T20:01:29.259Z"
     },
     "mony.reusable-services": {
       "status": "NOOP",
-      "evidence": [{"kind":"preflight-native-test","command":"npm run test:paid-client-readiness","exitCode":0,"stdout":"paid-client surface test passed","stderr":""}],
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:paid-client-readiness",
+          "exitCode": 0,
+          "stdout": "paid-client surface test passed",
+          "stderr": ""
+        }
+      ],
       "updatedAt": "2026-09-16T20:02:42.199Z"
     },
     "mony.affiliate": {
       "status": "NOOP",
-      "evidence": [{"kind":"preflight-native-test","command":"npm run revenue:affiliate:test","exitCode":0,"stdout":"elevenlabs-affiliate-adapter: all tests passed","stderr":""}],
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run revenue:affiliate:test",
+          "exitCode": 0,
+          "stdout": "elevenlabs-affiliate-adapter: all tests passed",
+          "stderr": ""
+        }
+      ],
       "updatedAt": "2026-09-16T20:12:58.321Z"
     },
     "mony.market-testing": {
       "status": "NOOP",
-      "evidence": [{"kind":"preflight-native-test","command":"npm run test:service-market","exitCode":0,"stdout":"service-market-intelligence: ok","stderr":""}],
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:service-market",
+          "exitCode": 0,
+          "stdout": "service-market-intelligence: ok",
+          "stderr": ""
+        }
+      ],
       "updatedAt": "2026-09-16T20:16:02.019Z"
     },
     "mony.first-revenue-blocker": {
       "status": "VERIFIED",
       "evidence": [
-        {"kind":"provider-recovery-contract","command":"node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs","exitCode":0,"stdout":"Elite provider ladder tests cover quota exhaustion, model fallback and fail-closed behavior","stderr":""},
-        {"kind":"revenue-regression-suite","command":"npm run test:revenue:all","exitCode":0,"stdout":"Revenue Engine regression suite passed, including live-provider 429 retry coverage","stderr":""},
-        {"kind":"implementation","commit":"243d1597aac36b1095c0b8060bd70855662fea8d","message":"fix(mony): make provider 429 handling rate-limit aware"},
-        {"kind":"implementation","commit":"c80216874791a33e5e546ed2f9ce5bbb29faba95","message":"fix(elite): harden queue recovery plan parsing"},
-        {"kind":"implementation","commit":"d9a135edf5a4086d1a3000800fd00bbe20395d09","message":"fix(elite): verify first-revenue recovery without provider dependency"},
-        {"kind":"rule","message":"Verified engineering resolution only; no live provider access or revenue is fabricated."}
+        {
+          "kind": "provider-recovery-contract",
+          "command": "node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs",
+          "exitCode": 0,
+          "stdout": "Elite provider ladder tests cover quota exhaustion, model fallback and fail-closed behavior",
+          "stderr": ""
+        },
+        {
+          "kind": "revenue-regression-suite",
+          "command": "npm run test:revenue:all",
+          "exitCode": 0,
+          "stdout": "Revenue Engine regression suite passed, including live-provider 429 retry coverage",
+          "stderr": ""
+        },
+        {
+          "kind": "implementation",
+          "commit": "243d1597aac36b1095c0b8060bd70855662fea8d",
+          "message": "fix(mony): make provider 429 handling rate-limit aware"
+        },
+        {
+          "kind": "implementation",
+          "commit": "c80216874791a33e5e546ed2f9ce5bbb29faba95",
+          "message": "fix(elite): harden queue recovery plan parsing"
+        },
+        {
+          "kind": "implementation",
+          "commit": "d9a135edf5a4086d1a3000800fd00bbe20395d09",
+          "message": "fix(elite): verify first-revenue recovery without provider dependency"
+        },
+        {
+          "kind": "rule",
+          "message": "Verified engineering resolution only; no live provider access or revenue is fabricated."
+        }
       ],
       "updatedAt": "2026-09-17T00:00:00.000Z"
+    },
+    "elite.repository-repair": {
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.repository-repair",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "updatedAt": "2026-09-16T23:53:21.911Z"
     }
   },
   "history": [
-    {"id":"mony.first-revenue-blocker","status":"BLOCKED","evidence":[{"kind":"provider-blocked","error":"all_providers_exhausted:primary:provider_http_429"}],"at":"2026-09-16T23:49:48.225Z"},
-    {"id":"mony.first-revenue-blocker","status":"VERIFIED","evidence":[{"kind":"provider-recovery-contract","command":"node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs","exitCode":0},{"kind":"revenue-regression-suite","command":"npm run test:revenue:all","exitCode":0}],"at":"2026-09-17T00:00:00.000Z"}
+    {
+      "id": "mony.first-revenue-blocker",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429"
+        }
+      ],
+      "at": "2026-09-16T23:49:48.225Z"
+    },
+    {
+      "id": "mony.first-revenue-blocker",
+      "status": "VERIFIED",
+      "evidence": [
+        {
+          "kind": "provider-recovery-contract",
+          "command": "node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs",
+          "exitCode": 0
+        },
+        {
+          "kind": "revenue-regression-suite",
+          "command": "npm run test:revenue:all",
+          "exitCode": 0
+        }
+      ],
+      "at": "2026-09-17T00:00:00.000Z"
+    },
+    {
+      "id": "elite.repository-repair",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.repository-repair",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "at": "2026-09-16T23:53:21.911Z"
+    }
   ]
 }
