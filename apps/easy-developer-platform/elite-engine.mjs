@@ -55,9 +55,17 @@ async function test({ root, changes }) {
   return { ok: true, summary: executed.length ? `executed ${executed.length} relevant test(s)` : 'diff check passed; no relevant test script discovered', evidence: { executed, candidates: tests.map(t => t.name) } };
 }
 
-async function review({ root, goal, changes, env, provider }) {
+function highRiskChanges(changes) { return changes.filter(c => /(^|\/)(package\.json|package-lock\.json|migrations?|auth|billing)(\/|$)/i.test(c.path)); }
+
+async function review({ root, goal, changes, env, provider, approval }) {
   const local = securityReview({ changes });
   if (!local.ok) return { ok: false, reason: 'security_gate', evidence: local.findings };
+  const risky = highRiskChanges(changes);
+  if (risky.length) {
+    if (typeof approval !== 'function') return { ok: false, reason: 'human_approval_required', evidence: risky.map(c => c.path) };
+    const approved = await approval({ goal, changes: risky.map(c => c.path) });
+    if (approved !== true) return { ok: false, reason: 'human_approval_denied', evidence: risky.map(c => c.path) };
+  }
   if (!changes.length) return { ok: true, summary: 'no changes require independent review', evidence: { security: local } };
   const patch = await analyzePatch(root);
   if (!patch.ok) return { ok: false, reason: 'patch_gate', evidence: patch.findings };
@@ -82,7 +90,7 @@ async function verify({ root, changes }) {
 }
 
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
-  const result = await runEliteTask(goal, { root, policy, journalPath, provider: provider || makeProvider(env), inspect, execute, test, review: args => review({ ...args, env, provider }), verify });
+  const result = await runEliteTask(goal, { root, policy, journalPath, provider: provider || makeProvider(env), inspect, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify });
   metrics.finish(result.status); await persistMetric(policy.metricsPath, metrics.metrics);
   if (policy.memoryPath) await remember(policy.memoryPath, { goal, status: result.status, taskId: result.taskId, steps: result.steps, repairs: result.repairs, evidence: result.evidence });
   return result;
