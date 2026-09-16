@@ -63,6 +63,47 @@ test('live adapter retries transient 429 and succeeds without human intervention
   delete process.env.REVENUE_ANALYTICS_URL;
 });
 
+test('provider health retries a transient 429 and recovers', async () => {
+  process.env.REVENUE_ANALYTICS_URL = 'https://analytics.example.test/health';
+  let attempts = 0;
+  const sleeps = [];
+  const adapter = createHttpProviderAdapter('analytics', {
+    healthRetries: 2,
+    sleep: async (ms) => sleeps.push(ms),
+    fetchImpl: async () => {
+      attempts += 1;
+      return attempts === 1 ? response(429, '', { 'retry-after': '7' }) : response(200);
+    }
+  });
+  const health = await adapter.healthCheck();
+  assert.equal(health.ok, true);
+  assert.equal(health.httpStatus, 200);
+  assert.equal(health.attempts, 2);
+  assert.equal(attempts, 2);
+  assert.deepEqual(sleeps, [7000]);
+  delete process.env.REVENUE_ANALYTICS_URL;
+});
+
+test('provider health honors rate-limit reset when Retry-After is absent', async () => {
+  process.env.REVENUE_ANALYTICS_URL = 'https://analytics.example.test/health';
+  let attempts = 0;
+  const sleeps = [];
+  const reset = Math.ceil(Date.now() / 1000) + 4;
+  const adapter = createHttpProviderAdapter('analytics', {
+    healthRetries: 1,
+    sleep: async (ms) => sleeps.push(ms),
+    fetchImpl: async () => {
+      attempts += 1;
+      return attempts === 1 ? response(429, '', { 'x-ratelimit-reset': String(reset) }) : response(200);
+    }
+  });
+  const health = await adapter.healthCheck();
+  assert.equal(health.ok, true);
+  assert.equal(attempts, 2);
+  assert.ok(sleeps[0] >= 0 && sleeps[0] <= 4000);
+  delete process.env.REVENUE_ANALYTICS_URL;
+});
+
 test('provider HTTP failures remain explicit after retry budget is exhausted', async () => {
   process.env.REVENUE_ANALYTICS_URL = 'https://analytics.example.test';
   const adapter = createHttpProviderAdapter('analytics', { retries: 1, sleep: async () => {}, fetchImpl: async () => response(429) });
