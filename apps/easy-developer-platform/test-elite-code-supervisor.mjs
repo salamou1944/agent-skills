@@ -44,6 +44,8 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
 test('Project queue recovery receives exact failure evidence and an independent model path', async () => {
   const workflow = await read('.github/workflows/elite-project-queue.yml');
   const prompt = await read('.github/prompts/elite-queue-fallback.prompt.yml');
+  assert.match(workflow, /schedule:/);
+  assert.match(workflow, /\*\/5 \* \* \* \*/);
   assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
   assert.match(workflow, /EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: \$\{\{ vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| '' \}\}/);
   assert.match(workflow, /Build independent queue recovery context/);
@@ -52,6 +54,7 @@ test('Project queue recovery receives exact failure evidence and an independent 
   assert.match(workflow, /PIPESTATUS\[0\]/);
   assert.match(workflow, /Apply and verify independent recovery plan/);
   assert.match(workflow, /response-file/);
+  assert.doesNotMatch(workflow, /if: github\.actor != 'github-actions\[bot\]'/);
   assert.doesNotMatch(workflow, /vars\.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT \|\| 'https:\/\/models\.github\.ai\/inference'/);
   assert.match(prompt, /elite_queue_plan/);
   assert.match(prompt, /HTTP 429/);
