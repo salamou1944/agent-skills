@@ -60,12 +60,19 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           ELITE_QUEUE_STATE: .easy/project-queue-state.json
-        run: node apps/easy-developer-platform/run-project-queue-cycle.mjs
+        run: |
+          set +e
+          node apps/easy-developer-platform/run-project-queue-cycle.mjs 2>&1 | tee /tmp/elite-cycle-result.txt
+          status=${PIPESTATUS[0]}
+          echo "cycle_exit_code=$status" >> /tmp/elite-cycle-result.txt
+          exit "$status"
 
       - name: Build independent queue recovery context
         if: steps.cycle.conclusion != 'success'
         run: |
           : > /tmp/elite-queue-context.txt
+          printf '\n--- exact failed cycle output ---\n' >> /tmp/elite-queue-context.txt
+          sed -n '1,240p' /tmp/elite-cycle-result.txt >> /tmp/elite-queue-context.txt || true
           for file in \
             docs/ELITE-TASK-QUEUE.md \
             apps/easy-developer-platform/project-queue-orchestrator.mjs \
