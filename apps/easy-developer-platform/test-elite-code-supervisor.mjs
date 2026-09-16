@@ -22,7 +22,7 @@ test('Supervisor contract is a control loop with completion and evidence gates',
   assert.match(skill, /machine-readable record/i);
 });
 
-test('Autonomous coder has a verified no-op, protected paths, and provider fallback', async () => {
+test('Autonomous coder has a verified no-op, protected paths, provider fallback, and plan execution', async () => {
   const coder = await read('apps/easy-developer-platform/autonomous-coder.mjs');
   assert.match(coder, /VERIFIED_NOOP/);
   assert.match(coder, /\.github\/workflows/);
@@ -30,15 +30,18 @@ test('Autonomous coder has a verified no-op, protected paths, and provider fallb
   assert.match(coder, /diff.*--check/s);
   assert.match(coder, /models\.github\.ai\/inference/);
   assert.match(coder, /githubToken/);
+  assert.match(coder, /EASY_OPERATOR_PLAN_FILE/);
 });
 
-test('Supervisor workflow has bounded background execution, model permission, fallback, and verification', async () => {
+test('Supervisor workflow has bounded execution, official model recovery, and verification', async () => {
   const workflow = await read('.github/workflows/elite-code-background-supervisor.yml');
   assert.match(workflow, /schedule:/);
   assert.match(workflow, /\*\/5 \* \* \* \*/);
   assert.match(workflow, /EASY_OPENAI_API_KEY/);
   assert.match(workflow, /models:\s*read/);
-  assert.match(workflow, /GITHUB_TOKEN:/);
+  assert.match(workflow, /actions\/ai-inference@v2\.1\.1/);
+  assert.match(workflow, /response-file/);
+  assert.match(workflow, /continue-on-error: true/);
   assert.match(workflow, /autonomous-coder\.mjs/);
   assert.match(workflow, /node --check apps\/easy-developer-platform\/operator-worker\.mjs/);
   assert.match(workflow, /git diff --check/);
