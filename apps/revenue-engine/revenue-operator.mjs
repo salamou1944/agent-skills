@@ -2,6 +2,7 @@ import { createEngine } from './revenue-engine.mjs';
 import { createRevenueApi } from './revenue-api.mjs';
 import { createElevenLabsAffiliateAdapter } from './elevenlabs-affiliate-adapter.mjs';
 import { createHostingerAffiliateAdapter, createPayoneerAffiliateAdapter } from './secondary-affiliate-adapters.mjs';
+import { createLiveProviderRegistry } from './live-provider-adapters.mjs';
 import { createServer } from 'node:http';
 
 const requestedMode = process.env.REVENUE_ENGINE_MODE || 'dry-run';
@@ -17,40 +18,49 @@ const providerNames = {
 };
 
 function print(value) { process.stdout.write(`${JSON.stringify(value, null, 2)}\n`); }
-function providerState() { return Object.fromEntries(Object.entries(providerNames).map(([key, env]) => [key, Boolean(process.env[env])])); }
+function providerState() { return Object.fromEntries(Object.entries(providerNames).map(([key, env]) => [key, Boolean(process.env[env]) || Boolean(process.env[`REVENUE_${key.toUpperCase()}_URL`])])); }
 function missingProviders(providers) { return Object.entries(providers).filter(([, configured]) => !configured).map(([key]) => key); }
-function createProviders() {
+function createAffiliateProviders() {
   return {
     'elevenlabs-affiliate': createElevenLabsAffiliateAdapter(),
     'hostinger-affiliate': createHostingerAffiliateAdapter(),
     'payoneer-affiliate': createPayoneerAffiliateAdapter()
   };
 }
+function createProviders() { return { ...createLiveProviderRegistry(), ...createAffiliateProviders() }; }
 
 function doctor() {
   const providers = providerState();
   const missing = missingProviders(providers);
-  const adapters = Object.values(createProviders());
+  const adapters = Object.values(createAffiliateProviders());
   const livePrerequisites = missing.length
-    ? [`configure_provider_categories:${missing.join(',')}`, 'implement_and_health-check_provider_adapters', 'collect_provider_integration_evidence']
-    : ['implement_and_health-check_provider_adapters', 'collect_provider_integration_evidence'];
+    ? [`configure_provider_categories:${missing.join(',')}`, 'run_revenue:provider-health', 'collect_provider_integration_evidence', 'record_confirmed_provider_event']
+    : ['run_revenue:provider-health', 'collect_provider_integration_evidence', 'record_confirmed_provider_event'];
   return {
     ok: requestedMode !== 'live',
     mode: requestedMode,
     providers,
     missingProviders: missing,
     configuredProviders: Object.values(providers).filter(Boolean).length,
+    liveEndpoints: Object.fromEntries(Object.keys(providerNames).map((key) => [key, Boolean(process.env[`REVENUE_${key.toUpperCase()}_URL`])])),
     affiliateAdapters: adapters.map((adapter) => ({ name: adapter.name, configured: adapter.name === 'elevenlabs-affiliate' ? Boolean(process.env.ELEVENLABS_AFFILIATE_LINK) : adapter.name === 'hostinger-affiliate' ? Boolean(process.env.HOSTINGER_AFFILIATE_LINK) : Boolean(process.env.PAYONEER_AFFILIATE_LINK) })),
-    activation: requestedMode === 'live' ? 'blocked-until-provider-adapters-pass-health-and-integration' : 'dry-run-ready',
+    activation: requestedMode === 'live' ? 'requires-live-provider-health-and-confirmed-event' : 'dry-run-ready',
     activationReady: false,
     nextAction: requestedMode === 'live' ? livePrerequisites[0] : 'use_dry_run_or_fixture_boundaries_until_live_evidence_exists',
     livePrerequisites,
-    rule: 'A provider variable alone never activates production. Adapter contract, health check, and integration evidence are required.'
+    rule: 'A provider variable alone never activates production. Adapter contract, health check, integration evidence, and a confirmed provider event are required.'
   };
 }
 
+async function providerHealth() {
+  const providers = createLiveProviderRegistry();
+  const result = {};
+  for (const [category, adapter] of Object.entries(providers)) result[category] = await adapter.healthCheck();
+  return { ok: Object.values(result).every((item) => item.ok), providers: result };
+}
+
 async function affiliateStatus() {
-  const adapters = Object.values(createProviders());
+  const adapters = Object.values(createAffiliateProviders());
   const status = [];
   for (const adapter of adapters) {
     const health = await adapter.healthCheck();
@@ -59,15 +69,18 @@ async function affiliateStatus() {
   return { ok: status.some((item) => item.health.ok), affiliates: status };
 }
 
-function assertLiveActivation() {
+async function assertLiveActivation() {
   const providers = providerState();
   const missing = missingProviders(providers);
   if (missing.length) throw new Error(`live_activation_blocked:missing_providers:${missing.join(',')}`);
-  throw new Error('live_activation_blocked:provider_adapters_and_health_registry_required');
+  const health = await providerHealth();
+  if (!health.ok) throw new Error(`live_activation_blocked:provider_health:${Object.entries(health.providers).filter(([, item]) => !item.ok).map(([key, item]) => `${key}:${item.reason || item.status || item.httpStatus}`).join(',')}`);
+  if (!process.env.REVENUE_WEBHOOK_SECRET) throw new Error('live_activation_blocked:missing_REVENUE_WEBHOOK_SECRET');
+  return health;
 }
 
 function demo() {
-  const engine = createEngine({ mode: 'dry-run', providers: createProviders() });
+  const engine = createEngine({ mode: 'dry-run', providers: createAffiliateProviders() });
   const opportunity = engine.discover({ title: 'Example verified developer productivity offer', source: 'https://example.com/offer', description: 'Deterministic demonstration only; not a live offer.' });
   const verified = engine.verify(opportunity, { sourceReachable: true, offerExists: true, termsKnown: true, payoutKnown: true, identityKnown: true });
   const scored = engine.score(verified, { revenuePotential: 90, commission: 85, demand: 82, competition: 35, automation: 95, longevity: 80, payout: 90, risk: 10 });
@@ -77,10 +90,11 @@ function demo() {
 
 const command = process.argv[2] || 'doctor';
 if (command === 'doctor') print(doctor());
+else if (command === 'provider-health') print(await providerHealth());
 else if (command === 'affiliate-status') print(await affiliateStatus());
 else if (command === 'demo') print(demo());
 else if (command === 'serve') {
-  if (requestedMode === 'live') assertLiveActivation();
+  if (requestedMode === 'live') await assertLiveActivation();
   const engine = createEngine({ mode: requestedMode, providers: createProviders() });
   const port = Number(process.env.REVENUE_ENGINE_PORT || 8787);
   createServer(createRevenueApi({ engine })).listen(port, '127.0.0.1', () => console.log(`revenue-engine ready on 127.0.0.1:${port} (${requestedMode})`));
