@@ -2,6 +2,8 @@ name: elite-code-background-supervisor
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
   schedule:
     - cron: "*/5 * * * *"
 
@@ -14,6 +16,7 @@ permissions:
 
 jobs:
   supervise:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -27,6 +30,23 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install existing dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run supervisor evidence check
+        env:
+          SUPERVISOR_REPORT_PATH: /tmp/supervisor-progress.json
+        run: node skills/code-progress-supervisor/scripts/check-progress.mjs
+
+      - name: Upload supervisor evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elite-code-supervisor-evidence-${{ github.run_id }}
+          path: /tmp/supervisor-progress.json
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Run autonomous Elite Code engineering cycle
         env:
           EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
@@ -37,12 +57,11 @@ jobs:
           ELITE_CODE_PROMPT: >-
             You are the autonomous Elite Code engineering worker for this repository. Continue the implementation from the current repository state; do not merely describe work. First inspect git status, recent history, the Elite Code skill, supervisor, tests, and the operating rules. Identify the highest-value unfinished or failing engineering step required to make Elite Code a reliable autonomous coding system. If the repository already satisfies the goal, return a verified no-op instead of inventing changes. Otherwise implement that step directly in the repository, run relevant tests and verification, and repair failures you introduced. Work only inside this checked-out repository. Never read, print, copy, or create secrets, credentials, private keys, tokens, or .env contents. Do not modify .github/workflows, repository permissions, authentication policy, or deployment configuration. Do not perform destructive commands, force pushes, history rewrites, external-state mutations, or dependency installation beyond the commands needed to test the existing project. Do not claim completion without concrete verification evidence. Finish with the repository in a tested, reviewable state; do not commit or push because the workflow will persist verified changes itself.
         run: |
-          if [ -n "$EASY_OPERATOR_LLM_API_KEY" ]; then
-            node apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_CODE_PROMPT"
-          else
-            npm install -g @github/copilot
-            copilot -p "$ELITE_CODE_PROMPT" --allow-tool='write' --allow-tool='shell(git:*)' --allow-tool='shell(node:*)' --allow-tool='shell(npm:*)' --allow-tool='shell(npx:*)' --deny-tool='shell(git push)' --deny-tool='shell(git reset)' --deny-tool='shell(git clean)' --deny-tool='write(.github/workflows)' --no-ask-user
-          fi
+          test -n "$EASY_OPERATOR_LLM_API_KEY"
+          node apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_CODE_PROMPT"
+
+      - name: Run Elite Code contract tests
+        run: npm run test:elite
 
       - name: Verify repository after autonomous cycle
         run: |
@@ -53,6 +72,7 @@ jobs:
           node --check apps/easy-developer-platform/operator-state.mjs
           node --check apps/easy-developer-platform/operator-intelligence.mjs
           node --check apps/easy-developer-platform/autonomous-coder.mjs
+          node --check skills/code-progress-supervisor/scripts/check-progress.mjs
 
       - name: Persist verified changes
         run: |
