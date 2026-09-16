@@ -15,6 +15,10 @@ GitHub documents several complementary customization layers:
 - GitHub Copilot CLI — command-line Copilot with custom agents and repository instructions.
 - GitHub CLI — command-line access to repositories, issues, PRs, Actions, secrets/variables, and other GitHub operations where the authenticated account is permitted.
 
+## Copilot access options checked today
+
+GitHub currently documents Copilot Free for individual developers with limited usage, including up to 2,000 code completions per month and limited chat/agent usage. GitHub also documents free Copilot access for eligible students, teachers, and qualifying open-source maintainers. The account's actual entitlement must be checked in GitHub settings; documentation is not proof of eligibility.
+
 ## Our repository architecture
 
 `agent-skills` is the home for generic, reusable agent capabilities. Product-specific code stays in its owning repository. Operational memory/evidence stays in `AI_operating_memory`.
@@ -22,18 +26,15 @@ GitHub documents several complementary customization layers:
 This repository now contains a Copilot configuration layer:
 
 - `.github/copilot-instructions.md`
-- `.github/instructions/security.instructions.md`
-- `.github/instructions/skills.instructions.md`
-- `.github/agents/github-operator.agent.md`
-- `.github/agents/repo-guardian.agent.md`
-- `.github/agents/verification-supervisor.agent.md`
-- `.github/prompts/github-audit.prompt.md`
-- `.github/prompts/ship-verified-change.prompt.md`
-- `.agents/skills/github-capability-audit/SKILL.md`
+- `.github/instructions/` — security and skill-specific rules
+- `.github/agents/` — GitHub Operator, Repository Guardian, and Verification Supervisor
+- `.github/prompts/` — repeatable GitHub audit and verified-change workflows
+- `.agents/skills/github-capability-audit/` — capability/access audit skill
+- `docs/GITHUB-COPILOT-EXCELLENCE.md` — capability map, architecture, security boundaries, and references
 
 ## Operating model
 
-Use the repository-wide instructions for rules that must always apply. Use path-specific instructions for narrow concerns. Use custom agents for specialist roles. Use prompts for repeatable task recipes. Use skills for reusable procedures and helper assets.
+Use repository-wide instructions for rules that must always apply. Use path-specific instructions for narrow concerns. Use custom agents for specialist roles. Use prompts for repeatable task recipes. Use skills for reusable procedures and helper assets.
 
 For GitHub work, the preferred sequence is:
 
@@ -53,6 +54,8 @@ Never commit live credentials. If a credential is suspected to have been committ
 
 ## Official references
 
+- Plans: https://docs.github.com/en/copilot/get-started/plans
+- Getting started/access: https://docs.github.com/en/copilot/how-tos/manage-your-account/get-started-with-a-copilot-plan
 - Repository Copilot customization: https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-copilot-overview
 - Custom instructions: https://docs.github.com/en/copilot/concepts/prompting/response-customization
 - Custom agents: https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-custom-agents
