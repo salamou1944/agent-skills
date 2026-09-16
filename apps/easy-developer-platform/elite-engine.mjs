@@ -1,11 +1,12 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, dirname } from 'node:path';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { runEliteTask } from './elite-harness.mjs';
 import { ask } from './autonomous-coder.mjs';
 import { inspectRepository, discoverTests, scanImports } from './elite-intelligence.mjs';
-import { independentReview, parallelChecks } from './elite-reviewer.mjs';
+import { independentReview } from './elite-reviewer.mjs';
+import { runParallelReview } from './elite-parallel.mjs';
 import { analyzePatch } from './elite-patch.mjs';
 import { securityReview } from './elite-security.mjs';
 import { createMetrics, persistMetric } from './elite-observability.mjs';
@@ -32,10 +33,10 @@ function makeProvider(env) {
   };
 }
 
-function makeIndependentReviewer(env, injectedProvider) {
-  return async ({ goal, patch, changes }) => {
-    if (injectedProvider) return injectedProvider({ role: 'reviewer', goal, context: JSON.stringify({ patch, changes }), constraints: { independent: true } });
-    const prompt = `You are Elite's independent verification reviewer. You did not author the implementation. Review the proposed change for correctness, regression risk, security, minimality, and whether it actually satisfies the goal. Goal: ${goal}\nPatch facts: ${JSON.stringify(patch)}\nChanges: ${JSON.stringify(changes).slice(0, 120000)}\nReturn JSON only: {"approved":true|false,"findings":["..."],"reason":"..."}. Approve only when evidence supports acceptance.`;
+function makeReviewer(env, injectedProvider) {
+  return async ({ role = 'reviewer', goal, patch, changes }) => {
+    if (injectedProvider) return injectedProvider({ role, goal, context: JSON.stringify({ patch, changes }), constraints: { independent: true } });
+    const prompt = `You are Elite's independent ${role} reviewer. You did not author the implementation. Review only the proposed change. Goal: ${goal}\nPatch facts: ${JSON.stringify(patch)}\nChanges: ${JSON.stringify(changes).slice(0, 120000)}\nReturn JSON only: {"approved":true|false,"findings":["..."],"reason":"..."}. Approve only when evidence supports acceptance.`;
     return ask(prompt, env);
   };
 }
@@ -58,8 +59,13 @@ async function review({ root, goal, changes, env, provider }) {
   const local = securityReview({ changes });
   if (!local.ok) return { ok: false, reason: 'security_gate', evidence: local.findings };
   if (!changes.length) return { ok: true, summary: 'no changes require independent review', evidence: { security: local } };
-  const independent = await independentReview({ root, goal, changes, reviewer: makeIndependentReviewer(env, provider) });
-  return independent.ok ? { ok: true, summary: 'independent review passed', evidence: independent.evidence } : independent;
+  const patch = await analyzePatch(root);
+  if (!patch.ok) return { ok: false, reason: 'patch_gate', evidence: patch.findings };
+  const reviewer = makeReviewer(env, provider);
+  const specialists = await runParallelReview({ goal, patch, changes, reviewer });
+  if (!specialists.ok) return { ok: false, reason: 'parallel_review_rejected', evidence: specialists };
+  const independent = await independentReview({ root, goal, changes, reviewer: args => reviewer({ ...args, role: 'final' }) });
+  return independent.ok ? { ok: true, summary: 'parallel specialists and independent final review passed', evidence: { specialists, final: independent.evidence } } : independent;
 }
 
 async function verify({ root, changes }) {
@@ -93,7 +99,7 @@ export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, 
   });
 }
 
-export { parallelChecks };
+export { runParallelReview };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const goal = process.argv.slice(2).join(' ').trim();
