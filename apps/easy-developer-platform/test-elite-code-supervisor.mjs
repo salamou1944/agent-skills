@@ -23,7 +23,7 @@ test('Supervisor contract is a control loop with completion and evidence gates',
   assert.match(skill, /machine-readable record/i);
 });
 
-test('Autonomous coder has a verified no-op, protected paths, optional provider fallback, and plan execution', async () => {
+test('Autonomous coder has a verified no-op, protected paths, optional provider fallback, bounded provider execution, and plan execution', async () => {
   const coder = await read('apps/easy-developer-platform/autonomous-coder.mjs');
   assert.match(coder, /VERIFIED_NOOP/);
   assert.match(coder, /\.github\/workflows/);
@@ -34,8 +34,11 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /EASY_OPERATOR_PLAN_FILE/);
   assert.match(coder, /gpt-4o-mini/);
   assert.match(coder, /provider_quota_exhausted/);
+  assert.match(coder, /providerTimeoutMs/);
+  assert.match(coder, /AbortController/);
   assert.match(coder, /relevance\(b,goal\)/);
   assert.match(coder, /ctx \|\|= await context\(root,goal\)/);
+  assert.match(coder, /paths\.has/);
 });
 
 test('Quota-exhausted 429 immediately falls through to the configured fallback provider', async () => {
@@ -65,6 +68,7 @@ test('Quota-exhausted 429 immediately falls through to the configured fallback p
     githubEndpoint: 'https://fallback.invalid',
     githubModel: 'fallback-model',
     providerRetries: 3,
+    providerTimeoutMs: 1000,
     fetchImpl,
   });
 
@@ -99,6 +103,7 @@ test('Retired primary provider endpoint falls through only to an explicitly conf
     githubEndpoint: 'https://fallback.invalid',
     githubModel: 'fallback-model',
     providerRetries: 3,
+    providerTimeoutMs: 1000,
     fetchImpl,
   });
 
@@ -125,9 +130,74 @@ test('No fallback endpoint means a retired primary fails fast without probing a 
     model: 'retired-model',
     githubToken: 'github-token-without-endpoint',
     githubEndpoint: '',
+    providerTimeoutMs: 1000,
     fetchImpl,
   }), /provider_http_410/);
   assert.deepEqual(calls, ['https://primary.retired.invalid']);
+});
+
+test('Transient provider failures retry with bounded attempts before surfacing the failure', async () => {
+  const calls = [];
+  const fetchImpl = async () => {
+    calls.push(Date.now());
+    return {
+      ok: false,
+      status: 500,
+      headers: new Headers(),
+      clone() { return this; },
+      async json() { return { error: { code: 'server_error' } }; },
+    };
+  };
+  const sleepImpl = async () => {};
+
+  await assert.rejects(() => ask('test transient retry', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.invalid',
+    model: 'primary-model',
+    providerRetries: 3,
+    providerTimeoutMs: 1000,
+    fetchImpl,
+    sleepImpl,
+  }), /provider_http_500/);
+  assert.equal(calls.length, 3);
+});
+
+test('Timeouts are bounded and can recover through an explicit fallback', async () => {
+  const calls = [];
+  const fetchImpl = async (endpoint, options) => {
+    calls.push(endpoint);
+    if (calls.length === 1) {
+      return await new Promise((resolve, reject) => {
+        const onAbort = () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+        if (options.signal.aborted) return onAbort();
+        options.signal.addEventListener('abort', onAbort, { once: true });
+      });
+    }
+    return {
+      ok: true,
+      async json() { return { choices: [{ message: { content: '{"summary":"timeout-recovered","changes":[]}' } }] }; },
+    };
+  };
+
+  const result = await ask('test timeout fallback', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.timeout.invalid',
+    model: 'primary-model',
+    githubToken: 'fallback-test-token',
+    githubEndpoint: 'https://fallback.invalid',
+    githubModel: 'fallback-model',
+    providerRetries: 1,
+    providerTimeoutMs: 10,
+    fetchImpl,
+  });
+
+  assert.equal(result.summary, 'timeout-recovered');
+  assert.deepEqual(calls, ['https://primary.timeout.invalid', 'https://fallback.invalid']);
+});
+
+test('Plan safety rejects duplicate paths before any mutation is applied', async () => {
+  const coder = await read('apps/easy-developer-platform/autonomous-coder.mjs');
+  assert.match(coder, /paths\.has\(c\.path\)/);
 });
 
 test('Supervisor workflow has bounded execution, multi-provider recovery, and post-change verification', async () => {
