@@ -77,14 +77,14 @@ jobs:
           node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$ELITE_GOAL"
 
       - name: Verify worker result
-        if: steps.elite.outcome == 'success'
+        if: steps.elite.conclusion == 'success'
         run: |
           git diff --check
           node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
 
       - name: Run fallback planner
         id: fallback
-        if: steps.elite.outcome != 'success'
+        if: steps.elite.conclusion != 'success'
         continue-on-error: true
         uses: actions/ai-inference@v2.1.1
         with:
@@ -94,7 +94,7 @@ jobs:
           token: ${{ github.token }}
 
       - name: Apply fallback plan
-        if: steps.elite.outcome != 'success' && steps.fallback.outcome == 'success'
+        if: steps.elite.conclusion != 'success' && steps.fallback.conclusion == 'success'
         env:
           EASY_OPERATOR_PLAN_FILE: ${{ steps.fallback.outputs.response-file }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
@@ -120,7 +120,7 @@ jobs:
           fi
 
       - name: Fail closed if both coding paths failed
-        if: steps.elite.outcome != 'success' && steps.fallback.outcome != 'success'
+        if: steps.elite.conclusion != 'success' && steps.fallback.conclusion != 'success'
         run: |
           echo 'Elite Code worker and fallback planner both failed.'
           exit 1
