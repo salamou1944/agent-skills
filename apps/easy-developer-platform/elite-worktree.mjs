@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, rm, readFile, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 const exec = promisify(execFile);
 
 async function git(root, args) { return exec('git', args, { cwd: root, timeout: 60_000, maxBuffer: 4_000_000 }); }
@@ -17,13 +17,19 @@ export async function withIsolatedWorktree(root, taskId, fn) {
     await git(repo, ['worktree', 'add', '--detach', worktree, 'HEAD']);
     added = true;
     const promote = async (files = []) => {
-      for (const file of files) {
-        if (typeof file !== 'string' || !file || file.includes('..') || file.startsWith('/') || file.startsWith('.git/')) throw new Error(`unsafe promotion path: ${file}`);
-        const source = join(worktree, file), target = join(repo, file);
-        const content = await readFile(source, 'utf8');
-        await mkdir(dirname(target), { recursive: true });
-        await writeFile(target, content, 'utf8');
+      const safeFiles = files.filter(file => typeof file === 'string' && file && !file.includes('..') && !file.startsWith('/') && !file.startsWith('.git/'));
+      if (!safeFiles.length) return { promoted: false, reason: 'no_changes' };
+      await git(worktree, ['add', '--', ...safeFiles]);
+      const commit = await git(worktree, ['commit', '-m', `chore(elite): verified task ${taskId}`]);
+      const match = commit.stdout.match(/\[detached HEAD ([0-9a-f]+)\]/i);
+      if (!match) throw new Error(`isolated_commit_failed:${commit.stdout || commit.stderr}`);
+      try {
+        await git(repo, ['cherry-pick', match[1]]);
+      } catch (error) {
+        await git(repo, ['cherry-pick', '--abort']).catch(() => {});
+        throw new Error(`isolated_merge_conflict:${error.stderr || error.message}`);
       }
+      return { promoted: true, commit: match[1] };
     };
     const result = await fn(worktree, { repo, promote });
     return { ...result, isolated: true };
