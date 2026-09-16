@@ -104,8 +104,22 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
         run: |
-          timeout --signal=TERM --kill-after=15s 120s copilot -s --no-ask-user -p "$(cat .github/prompts/elite-queue-copilot-fallback.txt /tmp/elite-queue-context.txt)" > /tmp/elite-queue-recovery-plan.json
-          node -e "JSON.parse(require('fs').readFileSync('/tmp/elite-queue-recovery-plan.json','utf8'))"
+          timeout --signal=TERM --kill-after=15s 120s copilot -s --no-ask-user -p "$(cat .github/prompts/elite-queue-copilot-fallback.txt /tmp/elite-queue-context.txt)" > /tmp/elite-queue-recovery-plan.raw
+          node <<'NODE'
+          const fs = require('fs');
+          const raw = fs.readFileSync('/tmp/elite-queue-recovery-plan.raw', 'utf8').replace(/^\uFEFF/, '').trim();
+          const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+          let parsed;
+          try { parsed = JSON.parse(cleaned); }
+          catch {
+            const start = cleaned.indexOf('{');
+            const end = cleaned.lastIndexOf('}');
+            if (start < 0 || end <= start) throw new Error('recovery_plan_not_json');
+            parsed = JSON.parse(cleaned.slice(start, end + 1));
+          }
+          if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.changes) || typeof parsed.summary !== 'string') throw new Error('recovery_plan_invalid_shape');
+          fs.writeFileSync('/tmp/elite-queue-recovery-plan.json', JSON.stringify(parsed));
+          NODE
           echo 'response-file=/tmp/elite-queue-recovery-plan.json' >> "$GITHUB_OUTPUT"
 
       - name: Apply and verify independent recovery plan
