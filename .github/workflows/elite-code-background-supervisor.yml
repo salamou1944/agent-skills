@@ -93,6 +93,13 @@ jobs:
             context: /tmp/elite-code-context.txt
           token: ${{ github.token }}
 
+      - name: Apply verified GitHub Models fallback plan
+        if: steps.primary.outcome != 'success' && steps.github_models.outcome == 'success'
+        env:
+          EASY_OPERATOR_PLAN_FILE: ${{ steps.github_models.outputs.response-file }}
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+        run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified fallback plan"
+
       - name: Run Elite Code contract tests
         if: steps.primary.outcome == 'success' || steps.github_models.outcome == 'success'
         run: npm run test:elite
@@ -108,13 +115,6 @@ jobs:
           node --check apps/easy-developer-platform/operator-intelligence.mjs
           node --check apps/easy-developer-platform/autonomous-coder.mjs
           node --check skills/code-progress-supervisor/scripts/check-progress.mjs
-
-      - name: Apply verified GitHub Models fallback plan
-        if: steps.primary.outcome != 'success' && steps.github_models.outcome == 'success'
-        env:
-          EASY_OPERATOR_PLAN_FILE: ${{ steps.github_models.outputs.response-file }}
-          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
-        run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified fallback plan"
 
       - name: Persist verified changes
         if: steps.primary.outcome == 'success' || steps.github_models.outcome == 'success'
