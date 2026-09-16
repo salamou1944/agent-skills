@@ -17,6 +17,13 @@ test('queue is mony-first and preserves ordered advancement',()=>{
   assert.equal(selectNext(state).id,'mony.pipeline');
 });
 
+test('phase selection cannot skip unfinished work in that phase',()=>{
+  const state={version:1,tasks:{},history:[]};
+  assert.equal(selectNext(state,'easy').id,'easy.inspect-blocker');
+  state.tasks['easy.inspect-blocker']={status:'VERIFIED'};
+  assert.equal(selectNext(state,'easy').id,'easy.creative-engine');
+});
+
 test('blocked or failed tasks stop advancement until verified',()=>{
   const state={version:1,tasks:{'mony.payment-billing':{status:'BLOCKED'}},history:[]};
   assert.equal(selectNext(state).id,'mony.payment-billing');
