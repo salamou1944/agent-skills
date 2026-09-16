@@ -3,7 +3,9 @@ import { assertProviderAdapter } from './provider-contract.mjs';
 
 const CATEGORIES = Object.freeze(['discovery', 'affiliate', 'publishing', 'billing', 'analytics']);
 const DEFAULT_RETRIES = 2;
+const DEFAULT_HEALTH_RETRIES = 2;
 const MAX_RETRY_DELAY_MS = 5000;
+const MAX_RATE_LIMIT_DELAY_MS = 60000;
 
 function env(name) { return String(process.env[name] || '').trim(); }
 function endpointFor(category) { return env(`REVENUE_${category.toUpperCase()}_URL`); }
@@ -16,13 +18,23 @@ function assertHttps(url, category) {
   return parsed.toString();
 }
 function retryDelayMs(response, attempt) {
-  const retryAfter = Number(response?.headers?.get?.('retry-after'));
-  if (Number.isFinite(retryAfter) && retryAfter >= 0) return Math.min(retryAfter * 1000, MAX_RETRY_DELAY_MS);
+  const retryAfter = String(response?.headers?.get?.('retry-after') || '').trim();
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0) return Math.min(seconds * 1000, MAX_RATE_LIMIT_DELAY_MS);
+    const dateMs = Date.parse(retryAfter);
+    if (Number.isFinite(dateMs)) return Math.min(Math.max(0, dateMs - Date.now()), MAX_RATE_LIMIT_DELAY_MS);
+  }
+  const reset = Number(response?.headers?.get?.('x-ratelimit-reset'));
+  if (Number.isFinite(reset) && reset > 0) {
+    const resetMs = reset > 1e12 ? reset : reset * 1000;
+    return Math.min(Math.max(0, resetMs - Date.now()), MAX_RATE_LIMIT_DELAY_MS);
+  }
   return Math.min(250 * (2 ** attempt), MAX_RETRY_DELAY_MS);
 }
 function retryableStatus(status) { return status === 408 || status === 425 || status === 429 || status >= 500; }
 
-export function createHttpProviderAdapter(category, { fetchImpl = globalThis.fetch, retries = DEFAULT_RETRIES, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}) {
+export function createHttpProviderAdapter(category, { fetchImpl = globalThis.fetch, retries = DEFAULT_RETRIES, healthRetries = DEFAULT_HEALTH_RETRIES, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}) {
   if (!CATEGORIES.includes(category)) throw new Error(`unsupported_provider_category:${category}`);
   const name = `http-${category}`;
   const capabilities = category === 'discovery' ? ['discover'] : category === 'affiliate' ? ['tracking_url'] : category === 'publishing' ? ['publish'] : category === 'billing' ? ['checkout', 'webhook'] : ['event_ingest'];
@@ -37,17 +49,29 @@ export function createHttpProviderAdapter(category, { fetchImpl = globalThis.fet
       let url;
       try { url = assertHttps(endpoint, category); } catch (error) { return { ok: false, status: 'provider-invalid', provider: name, reason: error.message }; }
       if (typeof fetchImpl !== 'function') return { ok: false, status: 'provider-unavailable', provider: name, reason: 'fetch_unavailable' };
-      try {
-        const response = await fetchImpl(url, { method: 'HEAD', headers: authHeaders(category) });
-        if (response.ok) return { ok: true, status: 'ready', provider: name, httpStatus: response.status };
-        if (response.status === 405) {
-          const fallback = await fetchImpl(url, { method: 'GET', headers: authHeaders(category) });
-          if (fallback.ok) return { ok: true, status: 'ready', provider: name, httpStatus: fallback.status, healthMethod: 'GET' };
-          return { ok: false, status: 'provider-http-error', provider: name, httpStatus: fallback.status, retryAfter: fallback.headers?.get?.('retry-after') || null };
+      const maxRetries = Math.max(0, Number(healthRetries) || 0);
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          const response = await fetchImpl(url, { method: 'HEAD', headers: authHeaders(category) });
+          if (response.ok) return { ok: true, status: 'ready', provider: name, httpStatus: response.status, attempts: attempt + 1 };
+          if (response.status === 405) {
+            const fallback = await fetchImpl(url, { method: 'GET', headers: authHeaders(category) });
+            if (fallback.ok) return { ok: true, status: 'ready', provider: name, httpStatus: fallback.status, healthMethod: 'GET', attempts: attempt + 1 };
+            if (retryableStatus(fallback.status) && attempt < maxRetries) {
+              await sleep(retryDelayMs(fallback, attempt));
+              continue;
+            }
+            return { ok: false, status: 'provider-http-error', provider: name, httpStatus: fallback.status, retryAfter: fallback.headers?.get?.('retry-after') || null, attempts: attempt + 1 };
+          }
+          if (retryableStatus(response.status) && attempt < maxRetries) {
+            await sleep(retryDelayMs(response, attempt));
+            continue;
+          }
+          return { ok: false, status: 'provider-http-error', provider: name, httpStatus: response.status, retryAfter: response.headers?.get?.('retry-after') || null, attempts: attempt + 1 };
+        } catch (error) {
+          if (attempt >= maxRetries) return { ok: false, status: 'provider-unreachable', provider: name, reason: error.message, attempts: attempt + 1 };
+          await sleep(Math.min(250 * (2 ** attempt), MAX_RETRY_DELAY_MS));
         }
-        return { ok: false, status: 'provider-http-error', provider: name, httpStatus: response.status, retryAfter: response.headers?.get?.('retry-after') || null };
-      } catch (error) {
-        return { ok: false, status: 'provider-unreachable', provider: name, reason: error.message };
       }
     },
     async execute(input = {}) {
