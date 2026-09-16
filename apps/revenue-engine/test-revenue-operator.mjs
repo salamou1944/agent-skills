@@ -6,6 +6,11 @@ const file = 'apps/revenue-engine/revenue-operator.mjs';
 const doctor = JSON.parse(execFileSync(process.execPath, [file, 'doctor'], { encoding: 'utf8' }));
 assert.equal(doctor.mode, 'dry-run');
 assert.equal(doctor.activation, 'dry-run-ready');
+assert.equal(doctor.activationReady, false);
+assert.ok(Array.isArray(doctor.missingProviders));
+assert.ok(Array.isArray(doctor.livePrerequisites));
+assert.equal(doctor.nextAction, 'use_dry_run_or_fixture_boundaries_until_live_evidence_exists');
+assert.match(doctor.rule, /provider variable alone never activates production/i);
 
 const demo = JSON.parse(execFileSync(process.execPath, [file, 'demo'], { encoding: 'utf8' }));
 assert.equal(demo.opportunity.status, 'approved_for_build');

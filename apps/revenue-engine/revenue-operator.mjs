@@ -18,6 +18,7 @@ const providerNames = {
 
 function print(value) { process.stdout.write(`${JSON.stringify(value, null, 2)}\n`); }
 function providerState() { return Object.fromEntries(Object.entries(providerNames).map(([key, env]) => [key, Boolean(process.env[env])])); }
+function missingProviders(providers) { return Object.entries(providers).filter(([, configured]) => !configured).map(([key]) => key); }
 function createProviders() {
   return {
     'elevenlabs-affiliate': createElevenLabsAffiliateAdapter(),
@@ -28,14 +29,22 @@ function createProviders() {
 
 function doctor() {
   const providers = providerState();
+  const missing = missingProviders(providers);
   const adapters = Object.values(createProviders());
+  const livePrerequisites = missing.length
+    ? [`configure_provider_categories:${missing.join(',')}`, 'implement_and_health-check_provider_adapters', 'collect_provider_integration_evidence']
+    : ['implement_and_health-check_provider_adapters', 'collect_provider_integration_evidence'];
   return {
     ok: requestedMode !== 'live',
     mode: requestedMode,
     providers,
+    missingProviders: missing,
     configuredProviders: Object.values(providers).filter(Boolean).length,
     affiliateAdapters: adapters.map((adapter) => ({ name: adapter.name, configured: adapter.name === 'elevenlabs-affiliate' ? Boolean(process.env.ELEVENLABS_AFFILIATE_LINK) : adapter.name === 'hostinger-affiliate' ? Boolean(process.env.HOSTINGER_AFFILIATE_LINK) : Boolean(process.env.PAYONEER_AFFILIATE_LINK) })),
     activation: requestedMode === 'live' ? 'blocked-until-provider-adapters-pass-health-and-integration' : 'dry-run-ready',
+    activationReady: false,
+    nextAction: requestedMode === 'live' ? livePrerequisites[0] : 'use_dry_run_or_fixture_boundaries_until_live_evidence_exists',
+    livePrerequisites,
     rule: 'A provider variable alone never activates production. Adapter contract, health check, and integration evidence are required.'
   };
 }
@@ -52,7 +61,7 @@ async function affiliateStatus() {
 
 function assertLiveActivation() {
   const providers = providerState();
-  const missing = Object.entries(providers).filter(([, configured]) => !configured).map(([key]) => key);
+  const missing = missingProviders(providers);
   if (missing.length) throw new Error(`live_activation_blocked:missing_providers:${missing.join(',')}`);
   throw new Error('live_activation_blocked:provider_adapters_and_health_registry_required');
 }
