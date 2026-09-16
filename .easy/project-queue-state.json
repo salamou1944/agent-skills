@@ -75,6 +75,19 @@
         }
       ],
       "updatedAt": "2026-09-16T23:02:41.386Z"
+    },
+    "mony.product-listing-sales": {
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:product-listing-sales",
+          "exitCode": 0,
+          "stdout": "\n> test:product-listing-sales\n> node apps/revenue-engine/test-product-listing-sales.mjs\n\nproduct-listing-sales: tests passed\n",
+          "stderr": ""
+        }
+      ],
+      "updatedAt": "2026-09-16T23:20:59.856Z"
     }
   },
   "history": [
@@ -563,6 +576,20 @@
         }
       ],
       "at": "2026-09-16T23:02:41.386Z"
+    },
+    {
+      "id": "mony.product-listing-sales",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "preflight-native-test",
+          "command": "npm run test:product-listing-sales",
+          "exitCode": 0,
+          "stdout": "\n> test:product-listing-sales\n> node apps/revenue-engine/test-product-listing-sales.mjs\n\nproduct-listing-sales: tests passed\n",
+          "stderr": ""
+        }
+      ],
+      "at": "2026-09-16T23:20:59.856Z"
     }
   ]
 }
