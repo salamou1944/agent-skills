@@ -6,10 +6,11 @@ const MAX_FILE_BYTES=120000;
 const MAX_CONTEXT_BYTES=900000;
 const MAX_CHANGES=12;
 const DEFAULT_PROVIDER_TIMEOUT_MS=45000;
+const DEFAULT_RATE_LIMIT_WAIT_MS=120000;
 const ALLOWED=/\.(mjs|js|cjs|json|md|yml|yaml)$/i;
 const FORBIDDEN=/(^|\/)(\.env(?:\..*)?|.*\.(?:pem|key|p12|pfx)|secrets?(?:\/|\.)|credentials?(?:\/\.))/i;
 
-function cfg(env=process.env){return {endpoint:env.EASY_OPERATOR_LLM_ENDPOINT||'https://api.openai.com/v1/chat/completions',model:env.EASY_OPERATOR_LLM_MODEL||'gpt-4o-mini',apiKey:env.EASY_OPERATOR_LLM_API_KEY||env.OPENAI_API_KEY||env.EASY_OPENAI_API_KEY||'',githubEndpoint:env.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT||'',githubModel:env.EASY_OPERATOR_GITHUB_MODELS_MODEL||'openai/gpt-4o-mini',githubToken:env.GITHUB_TOKEN||'',planFile:env.EASY_OPERATOR_PLAN_FILE||'',maxAttempts:Math.max(1,Number(env.EASY_OPERATOR_CODER_ATTEMPTS||2)),providerRetries:Math.max(1,Number(env.EASY_OPERATOR_PROVIDER_RETRIES||3)),providerTimeoutMs:Math.max(1000,Number(env.EASY_OPERATOR_PROVIDER_TIMEOUT_MS||DEFAULT_PROVIDER_TIMEOUT_MS)),workspace:resolve(env.EASY_OPERATOR_WORKSPACE||'.')}}
+function cfg(env=process.env){return {endpoint:env.EASY_OPERATOR_LLM_ENDPOINT||'https://api.openai.com/v1/chat/completions',model:env.EASY_OPERATOR_LLM_MODEL||'gpt-4o-mini',apiKey:env.EASY_OPERATOR_LLM_API_KEY||env.OPENAI_API_KEY||env.EASY_OPENAI_API_KEY||'',githubEndpoint:env.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT||'',githubModel:env.EASY_OPERATOR_GITHUB_MODELS_MODEL||'openai/gpt-4o-mini',githubToken:env.GITHUB_TOKEN||'',planFile:env.EASY_OPERATOR_PLAN_FILE||'',maxAttempts:Math.max(1,Number(env.EASY_OPERATOR_CODER_ATTEMPTS||2)),providerRetries:Math.max(1,Number(env.EASY_OPERATOR_PROVIDER_RETRIES||3)),providerTimeoutMs:Math.max(1000,Number(env.EASY_OPERATOR_PROVIDER_TIMEOUT_MS||DEFAULT_PROVIDER_TIMEOUT_MS)),rateLimitWaitMs:Math.max(0,Number(env.EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS||DEFAULT_RATE_LIMIT_WAIT_MS)),workspace:resolve(env.EASY_OPERATOR_WORKSPACE||'.')}}
 function run(command,args,cwd,timeout=30000){return new Promise(resolveResult=>{const child=spawn(command,args,{cwd,stdio:['ignore','pipe','pipe'],shell:false});let stdout='',stderr='';const timer=setTimeout(()=>{child.kill('SIGKILL');resolveResult({ok:false,error:'timeout',stdout,stderr})},timeout);child.stdout.on('data',d=>stdout+=d);child.stderr.on('data',d=>stderr+=d);child.on('error',e=>{clearTimeout(timer);resolveResult({ok:false,error:e.message,stdout,stderr})});child.on('close',(code,signal)=>{clearTimeout(timer);resolveResult({ok:code===0,code,signal,stdout,stderr})})})}
 async function walk(root,dir=root,out=[]){for(const entry of await (await import('node:fs/promises')).readdir(dir,{withFileTypes:true})){if(['.git','node_modules','.easy'].includes(entry.name))continue;const p=join(dir,entry.name);if(entry.isDirectory())await walk(root,p,out);else{const rel=relative(root,p);if(ALLOWED.test(rel)&&!FORBIDDEN.test(rel))out.push(rel)}}return out}
 function relevance(file,goal){const terms=String(goal).toLowerCase().split(/[^a-z0-9_-]+/).filter(x=>x.length>2);const lower=file.toLowerCase();let score=0;for(const term of terms)if(lower.includes(term))score+=3;if(/(^|\/)(skills\/|apps\/easy-developer-platform\/|apps\/revenue-engine\/)/i.test(file))score+=2;if(/(^|\/)(test|tests|README|package\.json)/i.test(file))score+=1;return score}
@@ -17,10 +18,11 @@ async function context(root,goal){const status=await run('git',['status','--shor
 function extractJson(text){const cleaned=String(text||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();try{return JSON.parse(cleaned)}catch{const start=cleaned.indexOf('{'),end=cleaned.lastIndexOf('}');if(start<0||end<=start)throw new Error('provider_non_json');return JSON.parse(cleaned.slice(start,end+1))}}
 function sleep(ms){return new Promise(resolveResult=>setTimeout(resolveResult,ms))}
 function shouldRetry(status){return status===408||status===429||status>=500}
-function retryDelay(attempt,retryAfter){const header=Number(retryAfter);if(Number.isFinite(header)&&header>0)return Math.min(header*1000,30000);const base=Math.min(1000*2**(attempt-1),15000);return Math.min(base+Math.floor(Math.random()*250),30000)}
+function parseRetryAfterMs(headers,now=Date.now()){const raw=headers?.get?.('retry-after');if(raw){const seconds=Number(raw);if(Number.isFinite(seconds)&&seconds>=0)return Math.round(seconds*1000);const date=Date.parse(raw);if(Number.isFinite(date))return Math.max(0,date-now)}for(const name of ['x-ratelimit-reset-requests','x-ratelimit-reset-tokens','x-ratelimit-reset']){const value=Number(headers?.get?.(name));if(!Number.isFinite(value)||value<0)continue;if(value>1e12)return Math.max(0,value-now);if(value>1e9)return Math.max(0,value*1000-now);return Math.max(0,value*1000)}return null}
+function retryDelay(attempt,retryAfter,maxWaitMs=DEFAULT_RATE_LIMIT_WAIT_MS){const header=Number(retryAfter);if(Number.isFinite(header)&&header>=0)return Math.min(header,maxWaitMs);const base=Math.min(1000*2**(attempt-1),15000);return Math.min(base+Math.floor(Math.random()*250),maxWaitMs)}
 function providerError(status){return `provider_http_${status}`}
 
-export async function requestInference(prompt,{endpoint,model,token,providerRetries=3,timeoutMs=DEFAULT_PROVIDER_TIMEOUT_MS,fetchImpl=fetch,sleepImpl=sleep,telemetry}={}){
+export async function requestInference(prompt,{endpoint,model,token,providerRetries=3,timeoutMs=DEFAULT_PROVIDER_TIMEOUT_MS,rateLimitWaitMs=DEFAULT_RATE_LIMIT_WAIT_MS,fetchImpl=fetch,sleepImpl=sleep,telemetry}={}){
   const started=Date.now();
   for(let attempt=1;attempt<=providerRetries;attempt++){
     const attemptStarted=Date.now();
@@ -33,8 +35,10 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
       if(response.status===429&&(rateLimitCode==='insufficient_quota'||rateLimitCode==='quota_exceeded'))throw new Error('provider_quota_exhausted');
       if(response.status===410||response.status===404){telemetry?.({endpoint,model,attempt,ok:false,status:response.status,latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});throw new Error(providerError(response.status))}
       if(!shouldRetry(response.status))throw new Error(providerError(response.status));
+      const retryAfterMs=response.status===429?parseRetryAfterMs(response.headers):null;
+      telemetry?.({endpoint,model,attempt,ok:false,status:response.status,retryAfterMs,latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});
       if(attempt===providerRetries)throw new Error(providerError(response.status));
-      await sleepImpl(retryDelay(attempt,response.headers?.get?.('retry-after')));
+      await sleepImpl(retryDelay(attempt,retryAfterMs,rateLimitWaitMs));
     }catch(error){
       const timedOut=error?.name==='AbortError';
       if(timedOut){telemetry?.({endpoint,model,attempt,ok:false,status:'timeout',latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});if(attempt===providerRetries)throw new Error('provider_timeout')}
@@ -49,8 +53,8 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
 export async function ask(prompt,c){
   const fetchImpl=c.fetchImpl||fetch;
   const telemetry=c.telemetry;
-  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries,timeoutMs:c.providerTimeoutMs,fetchImpl,telemetry})}catch(error){if(!['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted','provider_timeout'].includes(error.message)&&!/^provider_http_5\d\d$/.test(error.message))throw error;if(!c.githubToken||!c.githubEndpoint)throw error}}
-  if(c.githubToken&&c.githubEndpoint)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2,timeoutMs:c.providerTimeoutMs,fetchImpl,telemetry});
+  if(c.apiKey){try{return await requestInference(prompt,{endpoint:c.endpoint,model:c.model,token:c.apiKey,providerRetries:c.providerRetries,timeoutMs:c.providerTimeoutMs,rateLimitWaitMs:c.rateLimitWaitMs,fetchImpl,telemetry})}catch(error){if(!['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted','provider_timeout'].includes(error.message)&&!/^provider_http_5\d\d$/.test(error.message))throw error;if(!c.githubToken||!c.githubEndpoint)throw error}}
+  if(c.githubToken&&c.githubEndpoint)return requestInference(prompt,{endpoint:c.githubEndpoint,model:c.githubModel,token:c.githubToken,providerRetries:2,timeoutMs:c.providerTimeoutMs,rateLimitWaitMs:c.rateLimitWaitMs,fetchImpl,telemetry});
   if(c.apiKey)throw new Error('provider_unavailable');
   throw new Error('llm_provider_not_configured')
 }
