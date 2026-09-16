@@ -23,6 +23,19 @@ Paid implementation, pilot, repair, and integration support for businesses:
 
 **Full service details:** [SERVICES.md](SERVICES.md)
 
+## GitHub + Copilot Engineering Layer
+
+This repository now includes a version-controlled Copilot operating layer for reliable GitHub work:
+
+- `.github/copilot-instructions.md` — repository-wide rules and engineering contract
+- `.github/instructions/` — security and skill-specific path rules
+- `.github/agents/` — GitHub Operator, Repository Guardian, and Verification Supervisor
+- `.github/prompts/` — repeatable GitHub audit and verified-change workflows
+- `.agents/skills/github-capability-audit/` — capability/access audit skill
+- `docs/GITHUB-COPILOT-EXCELLENCE.md` — current capability map, architecture, security boundaries, and official references
+
+Start with the GitHub capability audit when access, Copilot readiness, or automation capability is unclear.
+
 ## Available Skills
 
 ### elite-code-engineer
@@ -60,28 +73,13 @@ Continuous engineering supervisor that tracks implementation progress, detects r
 
 Audits a Vercel project for cost, performance, reliability, caching, function usage, and billing opportunities. It collects Vercel metrics first, then investigates only the routes and files those metrics point to.
 
-**Use when:**
-
-- Optimizing a deployed Vercel project
-- Reducing Vercel costs or function usage
-- Investigating slow or expensive routes
-- Finding caching, ISR, middleware, image, or build-minute issues
-- Producing a ranked cost and performance report
-
 ### react-best-practices
 
-React and Next.js performance optimization guidelines from Vercel Engineering. Contains 40+ rules across 8 categories, prioritized by impact.
-
-**Use when:**
-
-- Writing new React components or Next.js pages
-- Implementing data fetching (client or server-side)
-- Reviewing code for performance issues
-- Optimizing bundle size or build output
+React and Next.js performance optimization guidelines from Vercel Engineering.
 
 ### web-design-guidelines
 
-Review UI code for compliance with web interface best practices. Audits accessibility, performance, and UX.
+Review UI code for compliance with web interface best practices.
 
 ### writing-guidelines
 
@@ -89,15 +87,15 @@ Review docs and prose for compliance with the Vercel writing handbook.
 
 ### react-native-guidelines
 
-React Native best practices optimized for AI agents, covering performance, architecture, animation, images, state management, and accessibility.
+React Native best practices optimized for AI agents.
 
 ### react-view-transitions
 
-Implement smooth, native-feeling animations using React's View Transition API, including Next.js App Router integration and accessibility considerations.
+Implement smooth, native-feeling animations using React's View Transition API.
 
 ### composition-patterns
 
-React composition patterns that scale, including compound components, state lifting, and avoiding prop drilling.
+React composition patterns that scale, including compound components and state lifting.
 
 ### vercel-deploy-claimable
 
