@@ -4,7 +4,7 @@ import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { runEliteTask } from './elite-harness.mjs';
 import { ask } from './autonomous-coder.mjs';
-import { inspectRepository, discoverTests, buildTaskContext, scanImports } from './elite-intelligence.mjs';
+import { inspectRepository, discoverTests, scanImports } from './elite-intelligence.mjs';
 import { independentReview, parallelChecks } from './elite-reviewer.mjs';
 import { analyzePatch } from './elite-patch.mjs';
 import { securityReview } from './elite-security.mjs';
@@ -32,8 +32,9 @@ function makeProvider(env) {
   };
 }
 
-function makeIndependentReviewer(env) {
+function makeIndependentReviewer(env, injectedProvider) {
   return async ({ goal, patch, changes }) => {
+    if (injectedProvider) return injectedProvider({ role: 'reviewer', goal, context: JSON.stringify({ patch, changes }), constraints: { independent: true } });
     const prompt = `You are Elite's independent verification reviewer. You did not author the implementation. Review the proposed change for correctness, regression risk, security, minimality, and whether it actually satisfies the goal. Goal: ${goal}\nPatch facts: ${JSON.stringify(patch)}\nChanges: ${JSON.stringify(changes).slice(0, 120000)}\nReturn JSON only: {"approved":true|false,"findings":["..."],"reason":"..."}. Approve only when evidence supports acceptance.`;
     return ask(prompt, env);
   };
@@ -46,21 +47,22 @@ async function test({ root, changes }) {
   if (!diff.ok) return { ok: false, reason: 'git_diff_check_failed', summary: diff.stderr };
   const tests = await discoverTests({ root, changedFiles: changes.map(c => c.path) });
   const executed = [];
-  for (const test of tests.slice(0, 8)) {
-    try { await execFileAsync('npm', ['run', test.name, '--if-present'], { cwd: root, timeout: 120_000, maxBuffer: 6_000_000 }); executed.push(test.name); }
-    catch (error) { return { ok: false, reason: `test_failed:${test.name}`, summary: trim(error.stderr || error.stdout || error.message), evidence: { executed, candidates: tests.map(t => t.name) } }; }
+  for (const candidate of tests.slice(0, 8)) {
+    try { await execFileAsync('npm', ['run', candidate.name, '--if-present'], { cwd: root, timeout: 120_000, maxBuffer: 6_000_000 }); executed.push(candidate.name); }
+    catch (error) { return { ok: false, reason: `test_failed:${candidate.name}`, summary: trim(error.stderr || error.stdout || error.message), evidence: { executed, candidates: tests.map(t => t.name) } }; }
   }
   return { ok: true, summary: executed.length ? `executed ${executed.length} relevant test(s)` : 'diff check passed; no relevant test script discovered', evidence: { executed, candidates: tests.map(t => t.name) } };
 }
 
-async function review({ root, goal, changes, env }) {
+async function review({ root, goal, changes, env, provider }) {
   const local = securityReview({ changes });
   if (!local.ok) return { ok: false, reason: 'security_gate', evidence: local.findings };
-  const independent = await independentReview({ root, goal, changes, reviewer: makeIndependentReviewer(env) });
+  if (!changes.length) return { ok: true, summary: 'no changes require independent review', evidence: { security: local } };
+  const independent = await independentReview({ root, goal, changes, reviewer: makeIndependentReviewer(env, provider) });
   return independent.ok ? { ok: true, summary: 'independent review passed', evidence: independent.evidence } : independent;
 }
 
-async function verify({ root, goal, changes }) {
+async function verify({ root, changes }) {
   const [diff, patch] = await Promise.all([git(root, ['diff', '--check']), analyzePatch(root)]);
   if (!diff.ok) return { ok: false, reason: 'git_diff_check_failed', evidence: diff.stderr };
   if (!patch.ok) return { ok: false, reason: 'patch_gate', evidence: patch.findings };
@@ -74,11 +76,7 @@ async function verify({ root, goal, changes }) {
 }
 
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
-  const result = await runEliteTask(goal, {
-    root, policy, journalPath,
-    provider: provider || makeProvider(env), inspect, execute, test,
-    review: args => review({ ...args, env }), verify
-  });
+  const result = await runEliteTask(goal, { root, policy, journalPath, provider: provider || makeProvider(env), inspect, execute, test, review: args => review({ ...args, env, provider }), verify });
   metrics.finish(result.status); await persistMetric(policy.metricsPath, metrics.metrics);
   if (policy.memoryPath) await remember(policy.memoryPath, { goal, status: result.status, taskId: result.taskId, steps: result.steps, repairs: result.repairs, evidence: result.evidence });
   return result;
@@ -95,7 +93,7 @@ export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, 
   });
 }
 
-export { buildTaskContext, parallelChecks };
+export { parallelChecks };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const goal = process.argv.slice(2).join(' ').trim();
