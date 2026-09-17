@@ -26,29 +26,43 @@ export const TASKS = [
 
 const TERMINAL = new Set(['VERIFIED','NOOP']);
 
+function blockedRetryable(taskState, now=Date.now()) {
+  if (taskState?.status !== 'BLOCKED') return true;
+  const updated = Date.parse(taskState.updatedAt || '');
+  if (!Number.isFinite(updated)) return true;
+  const cooldown = Math.max(0, Number(process.env.ELITE_QUEUE_BLOCKED_COOLDOWN_MS || 300000));
+  return now - updated >= cooldown;
+}
+
 export async function loadState(file='.easy/project-queue-state.json') {
   try { return JSON.parse(await readFile(file,'utf8')); }
   catch { return {version:2,tasks:{},history:[]}; }
 }
 
 export function selectNext(state, phase=null) {
+  const now=Date.now();
   for (const task of TASKS) {
     if (phase && task.phase!==phase) continue;
     const s=state.tasks?.[task.id];
-    if (!s || !TERMINAL.has(s.status)) return task;
+    if (TERMINAL.has(s?.status)) continue;
+    if (!blockedRetryable(s,now)) continue;
+    return task;
+  }
+  // If everything remaining is blocked inside the cooldown window, surface the
+  // oldest blocked task only when explicitly asked to force a retry.
+  if (process.env.ELITE_QUEUE_FORCE_BLOCKED_RETRY==='1') {
+    return TASKS.find(task => (!phase || task.phase===phase) && !TERMINAL.has(state.tasks?.[task.id]?.status)) || null;
   }
   return null;
 }
 
 export function selectParallelBatch(state, phase=null, limit=14) {
-  const batch=[];
-  const scopes=new Set();
+  const batch=[]; const scopes=new Set(); const now=Date.now();
   for (const task of TASKS) {
     if (phase && task.phase!==phase) continue;
     const status=state.tasks?.[task.id]?.status;
-    if (TERMINAL.has(status) || scopes.has(task.scope)) continue;
-    scopes.add(task.scope);
-    batch.push(task);
+    if (TERMINAL.has(status) || !blockedRetryable(state.tasks?.[task.id],now) || scopes.has(task.scope)) continue;
+    scopes.add(task.scope); batch.push(task);
     if (batch.length>=limit) break;
   }
   return batch;
@@ -57,36 +71,22 @@ export function selectParallelBatch(state, phase=null, limit=14) {
 export function classifyResult(result) {
   if (result==='VERIFIED' || result==='VERIFIED_CHANGE') return 'VERIFIED';
   if (result==='VERIFIED_NOOP' || result==='NOOP') return 'NOOP';
-  if (result==='BLOCKED_WITH_EVIDENCE') return 'BLOCKED';
+  if (result==='BLOCKED_WITH_EVIDENCE' || result==='BLOCKED') return 'BLOCKED';
   if (result==='FAILED') return 'FAILED';
   throw new Error('invalid_result_class:'+result);
 }
 
 export async function markTask(file,id,status,evidence=[]) {
-  const state=await loadState(file);
-  const task=TASKS.find(t=>t.id===id); if(!task) throw new Error('unknown_task:'+id);
-  status=classifyResult(status);
-  const soldierId = process.env.ARMY14_SOLDIER_ID || null;
-  const updatedAt = new Date().toISOString();
-  state.version=2;
-  state.tasks[id]={status,evidence,scope:task.scope,updatedAt,...(soldierId ? {assignedSoldier:soldierId} : {})};
+  const state=await loadState(file); const task=TASKS.find(t=>t.id===id); if(!task) throw new Error('unknown_task:'+id);
+  status=classifyResult(status); const soldierId=process.env.ARMY14_SOLDIER_ID||null; const updatedAt=new Date().toISOString();
+  state.version=2; state.tasks[id]={status,evidence,scope:task.scope,updatedAt,...(soldierId ? {assignedSoldier:soldierId} : {})};
   state.history.push({id,status,evidence,scope:task.scope,at:updatedAt,...(soldierId ? {soldierId} : {})});
-  await mkdir(dirname(file),{recursive:true}); await writeFile(file,JSON.stringify(state,null,2)+'\n');
-  return state;
+  await mkdir(dirname(file),{recursive:true}); await writeFile(file,JSON.stringify(state,null,2)+'\n'); return state;
 }
 
 if(import.meta.url===`file://${process.argv[1]}`){
-  const file=process.env.ELITE_QUEUE_STATE||'.easy/project-queue-state.json';
-  const command=process.argv[2]||'next';
-  const state=await loadState(file);
-  if(command==='mark'){
-    const id=process.argv[3], status=process.argv[4], evidence=process.argv[5]?JSON.parse(process.argv[5]):[];
-    console.log(JSON.stringify(await markTask(file,id,status,evidence),null,2));
-  } else if(command==='parallel') {
-    const phase=process.env.ELITE_QUEUE_PHASE||null;
-    console.log(JSON.stringify({stateFile:file,phase,batch:selectParallelBatch(state,phase,Number(process.env.ELITE_QUEUE_PARALLELISM||14))},null,2));
-  } else {
-    const phase=process.env.ELITE_QUEUE_PHASE||null; const task=selectNext(state,phase);
-    console.log(JSON.stringify({stateFile:file,phase,next:task,parallelBatch:selectParallelBatch(state,phase,14),completed:Object.entries(state.tasks||{}).filter(([,v])=>TERMINAL.has(v.status)).map(([id])=>id),monyComplete:TASKS.filter(t=>t.phase==='mony').every(t=>TERMINAL.has(state.tasks?.[t.id]?.status))},null,2));
-  }
+  const file=process.env.ELITE_QUEUE_STATE||'.easy/project-queue-state.json'; const command=process.argv[2]||'next'; const state=await loadState(file);
+  if(command==='mark'){const id=process.argv[3],status=process.argv[4],evidence=process.argv[5]?JSON.parse(process.argv[5]):[];console.log(JSON.stringify(await markTask(file,id,status,evidence),null,2));}
+  else if(command==='parallel'){const phase=process.env.ELITE_QUEUE_PHASE||null;console.log(JSON.stringify({stateFile:file,phase,batch:selectParallelBatch(state,phase,Number(process.env.ELITE_QUEUE_PARALLELISM||14))},null,2));}
+  else {const phase=process.env.ELITE_QUEUE_PHASE||null;const task=selectNext(state,phase);console.log(JSON.stringify({stateFile:file,phase,next:task,parallelBatch:selectParallelBatch(state,phase,14),completed:Object.entries(state.tasks||{}).filter(([,v])=>TERMINAL.has(v.status)).map(([id])=>id),monyComplete:TASKS.filter(t=>t.phase==='mony').every(t=>TERMINAL.has(state.tasks?.[t.id]?.status))},null,2));}
 }
