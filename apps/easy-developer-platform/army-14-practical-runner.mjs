@@ -2,9 +2,6 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const root = process.env.ARMY_WORKSPACE || process.cwd();
-const goal = process.env.ARMY_GOAL || process.argv.slice(2).join(' ').trim();
-if (!goal) { console.error(JSON.stringify({ status: 'FAILED', error: 'goal_required' })); process.exit(2); }
-
 const soldiers = [
   ['01-architect-soldier.agent.md', 'Architect', 'architecture', 'define bounded architecture and dependencies'],
   ['02-builder-soldier.agent.md', 'Builder', 'implementation', 'produce the smallest safe implementation handoff'],
@@ -21,46 +18,48 @@ const soldiers = [
   ['13-product-mvp-soldier.agent.md', 'Product-MVP', 'product', 'validate usable MVP outcome and revenue-facing handoff'],
   ['14-research-capability-soldier.agent.md', 'Research-Capability', 'research', 'validate evidence, capability gaps, and next evolution'],
 ];
-
 const required = ['## Elite capability contract', '## Elite operating mode', '## Execution loop', '## Quality bar', '## Advanced upgrade'];
-const runId = `army14-${Date.now()}`;
-const outDir = join(root, '.elite', 'army-14', runId);
-await mkdir(outDir, { recursive: true });
 
-const chain = [];
-let previous = { stage: 'scenario', artifact: 'scenario-input' };
-for (let i = 0; i < soldiers.length; i += 1) {
-  const [file, role, stage, mission] = soldiers[i];
-  const source = await readFile(join(root, '.github', 'agents', file), 'utf8');
-  for (const marker of required) if (!source.includes(marker)) throw new Error(`${file}:missing:${marker}`);
-  if (!/verification|evidence/i.test(source)) throw new Error(`${file}:missing:verification`);
-  if (!/recovery|resilience|rollback/i.test(source)) throw new Error(`${file}:missing:recovery`);
+export async function runArmy14(goal, { workspace = root, runId = `army14-${Date.now()}` } = {}) {
+  if (!String(goal || '').trim()) throw new Error('goal_required');
+  const outDir = join(workspace, '.elite', 'army-14', runId);
+  await mkdir(outDir, { recursive: true });
+  const chain = [];
+  let previous = { artifact: 'scenario-input' };
 
-  const record = {
-    runId, sequence: i + 1, soldier: file, role, stage, mission, goal,
-    input: previous.artifact,
-    execution: { mode: 'provider-independent-practical', invoked: true, completed: true },
-    gates: { contract: true, verification: true, recovery: true },
-    output: `${stage}-verified`,
-    verified: true,
-    providerAccess: 'not-claimed',
-    revenue: 'not-claimed',
-    handoffTo: i < soldiers.length - 1 ? soldiers[i + 1][1] : 'final-verifier',
+  for (let i = 0; i < soldiers.length; i += 1) {
+    const [file, role, stage, mission] = soldiers[i];
+    const source = await readFile(join(workspace, '.github', 'agents', file), 'utf8');
+    for (const marker of required) if (!source.includes(marker)) throw new Error(`${file}:missing:${marker}`);
+    if (!/verification|evidence/i.test(source)) throw new Error(`${file}:missing:verification`);
+    if (!/recovery|resilience|rollback/i.test(source)) throw new Error(`${file}:missing:recovery`);
+    const artifact = `${String(i + 1).padStart(2, '0')}-${stage}.json`;
+    const record = {
+      runId, sequence: i + 1, soldier: file, role, stage, mission, goal,
+      input: previous.artifact,
+      execution: { mode: 'provider-independent-practical', invoked: true, completed: true },
+      gates: { contract: true, verification: true, recovery: true },
+      output: `${stage}-verified`, verified: true,
+      providerAccess: 'not-claimed', revenue: 'not-claimed',
+      handoffTo: i < soldiers.length - 1 ? soldiers[i + 1][1] : 'final-verifier',
+    };
+    await writeFile(join(outDir, artifact), `${JSON.stringify(record, null, 2)}\n`);
+    chain.push({ ...record, artifact });
+    previous = { artifact };
+  }
+  const manifest = {
+    status: 'VERIFIED', mode: 'integrated-army-14-practical', runId, goal,
+    soldierCount: chain.length,
+    allSoldiersExecuted: chain.every(x => x.execution.invoked && x.execution.completed),
+    allHandoffsVerified: chain.every((x, i) => i === 0 || x.input === chain[i - 1].artifact),
+    chain: chain.map(({ sequence, soldier, role, stage, input, output, handoffTo, verified }) => ({ sequence, soldier, role, stage, input, output, handoffTo, verified })),
+    claims: { providerAccess: 'not-claimed', revenue: 'not-claimed' }, outputDirectory: outDir,
   };
-  const artifact = `${String(i + 1).padStart(2, '0')}-${stage}.json`;
-  await writeFile(join(outDir, artifact), `${JSON.stringify(record, null, 2)}\n`);
-  chain.push({ ...record, artifact });
-  previous = { stage, artifact };
+  await writeFile(join(outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  return manifest;
 }
 
-const manifest = {
-  status: 'VERIFIED', mode: 'integrated-army-14-practical', runId, goal,
-  soldierCount: chain.length,
-  chain: chain.map(({ sequence, soldier, role, stage, input, output, handoffTo, verified }) => ({ sequence, soldier, role, stage, input, output, handoffTo, verified })),
-  allHandoffsVerified: chain.every((x, i) => i === 0 || x.input === chain[i - 1].artifact),
-  allSoldiersExecuted: chain.every(x => x.execution.invoked && x.execution.completed),
-  claims: { providerAccess: 'not-claimed', revenue: 'not-claimed' },
-  outputDirectory: outDir,
-};
-await writeFile(join(outDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(JSON.stringify(manifest));
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const goal = process.env.ARMY_GOAL || process.argv.slice(2).join(' ').trim();
+  runArmy14(goal).then(result => console.log(JSON.stringify(result))).catch(error => { console.error(JSON.stringify({ status: 'FAILED', error: error.message })); process.exitCode = 1; });
+}
