@@ -1,1 +1,9 @@
-document.getElementById('access-form')?.addEventListener('submit',function(e){e.preventDefault();const note=document.getElementById('form-note');const email=this.email.value.trim();if(!email){note.textContent='Please enter a valid email.';return}note.textContent='Request captured locally for this demo. Production intake is not connected yet.';note.style.color='var(--accent)';this.querySelector('button').textContent='Request noted ✓';this.querySelector('button').disabled=true});
+function submitAccess(event) {
+  event.preventDefault();
+  const email = document.getElementById('email');
+  const status = document.getElementById('form-status');
+  if (!email || !status) return false;
+  status.textContent = 'Request captured locally for this demo. No email has been sent.';
+  email.value = '';
+  return false;
+}
