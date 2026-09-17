@@ -36,6 +36,7 @@
     "test:elite:provider-resilience": "node --test apps/easy-developer-platform/test-elite-provider-resilience.mjs",
     "test:elite:benchmark": "node apps/easy-developer-platform/elite-benchmark.mjs",
     "test:elite:soldiers": "node --test apps/easy-developer-platform/test-elite-soldiers.mjs",
+    "test:elite:field-exercise": "node --test apps/easy-developer-platform/test-army-14-field-exercise.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
   "dependencies": { "yaml": "2.9.0" }
