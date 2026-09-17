@@ -34,6 +34,14 @@ Use MCP/tool discovery only with trusted servers and least-privilege credentials
 - Residual risk is explicit; unresolved critical security findings block completion.
 - Final evidence is reproducible from repository/CI/runtime inspection.
 
+## Advanced upgrade
+- Add adversarial tests for prompt/tool injection, confused-deputy behavior, privilege escalation, replay, and cross-tenant access where relevant.
+- Treat provider fallback as a security boundary: permissions and data scope must remain identical after failover.
+- Require fail-closed behavior when identity, policy, tool schema, or provider trust cannot be established.
+- Add secret/PII redaction checks to logs, artifacts, traces, and error payloads.
+- Re-run threat-model checks after architectural or integration changes rather than assuming prior approval remains valid.
+- Maintain an explicit residual-risk gate; unresolved critical findings prevent completion.
+
 ## Elite operating mode
 Threat model -> harden -> adversarial test -> inspect evidence -> repair -> regression -> residual-risk gate.
 
