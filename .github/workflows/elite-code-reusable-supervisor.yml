@@ -18,7 +18,7 @@ permissions:
 jobs:
   supervise:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     if: github.actor != 'github-actions[bot]'
     steps:
       - name: Checkout target repository
@@ -100,8 +100,8 @@ jobs:
           EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_ENDPOINT || '' }}
           EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_MODEL || '' }}
           EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_OPERATOR_SECONDARY_LLM_API_KEY || '' }}
-          EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT || 'https://models.github.ai/inference' }}
-          EASY_OPERATOR_GITHUB_MODELS_MODEL: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_MODEL || 'openai/gpt-4o-mini' }}
+          EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ''
+          EASY_OPERATOR_GITHUB_MODELS_MODEL: ''
           GITHUB_TOKEN: ${{ github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           EASY_OPERATOR_CODER_ATTEMPTS: '2'
@@ -111,29 +111,36 @@ jobs:
         run: |
           node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$(cat /tmp/elite-goal.txt)"
 
-      - name: Verify worker result
-        if: steps.elite.conclusion == 'success'
+      - name: Verify Elite worker result
+        if: steps.elite.outcome == 'success'
         run: |
           git diff --check
           node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
 
-      - name: Run fallback planner
-        id: fallback
-        if: steps.elite.conclusion != 'success'
-        continue-on-error: true
-        uses: actions/ai-inference@v2.1.1
-        with:
-          prompt-file: .elite-code-tools/.github/prompts/elite-code-fallback.prompt.yml
-          file_input: |
-            context: /tmp/target-context.txt
-          token: ${{ github.token }}
+      - name: Install Copilot CLI fallback
+        if: steps.elite.outcome != 'success'
+        run: npm install -g @github/copilot
 
-      - name: Apply fallback plan
-        if: steps.elite.conclusion != 'success' && steps.fallback.conclusion == 'success'
+      - name: Run Copilot CLI fallback
+        id: fallback
+        if: steps.elite.outcome != 'success'
+        continue-on-error: true
         env:
-          EASY_OPERATOR_PLAN_FILE: ${{ steps.fallback.outputs.response-file }}
-          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
-        run: node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs 'Apply verified fallback plan'
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          copilot -p "$(cat /tmp/elite-goal.txt)\n\nYou are the fallback implementation engine. Work directly in the checked-out target repository. Read PROJECT-RULES.md and the repository's .github/copilot-instructions.md before editing. Implement the goal, run relevant tests, inspect the diff, and leave only verified safe changes. Never modify workflow files, secrets, credentials, authentication policy, or deployment configuration. Do not commit or push; the supervisor will persist verified changes." --no-ask-user --allow-tool='shell(git:*)' --allow-tool='shell(npm:*)' --allow-tool=write --max-ai-credits=60
+
+      - name: Verify fallback result
+        if: steps.elite.outcome != 'success' && steps.fallback.outcome == 'success'
+        run: |
+          set -euo pipefail
+          git diff --check
+          if [ -f package.json ]; then
+            node -e "const p=require('./package.json'); console.log('scripts:', Object.keys(p.scripts||{}).sort().join(', '))"
+            if node -e "const p=require('./package.json'); process.exit(p.scripts?.test ? 0 : 1)"; then npm test --if-present; fi
+            npm run test:elite:provider-resilience --if-present
+          fi
 
       - name: Run repository-native verification
         run: |
@@ -155,8 +162,8 @@ jobs:
             git push
           fi
 
-      - name: Fail closed if both coding paths failed
-        if: steps.elite.conclusion != 'success' && steps.fallback.conclusion != 'success'
+      - name: Fail closed if all coding paths failed
+        if: steps.elite.outcome != 'success' && steps.fallback.outcome != 'success'
         run: |
-          echo 'Elite Code worker and fallback planner both failed.'
+          echo 'Elite Code worker and Copilot CLI fallback both failed.'
           exit 1
