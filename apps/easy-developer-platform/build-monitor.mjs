@@ -44,10 +44,17 @@ const state = await loadState(stateFile);
 const mony = projectMetrics(projectTasks('mony'), state);
 const easy = projectMetrics(projectTasks('easy'), state);
 const all = projectMetrics(TASKS, state);
+const history = Array.isArray(state.history) ? state.history : [];
+const recentActivity = history.slice(-25).reverse().map((entry) => ({
+  at: entry.at, taskId: entry.id, status: entry.status, scope: entry.scope,
+  evidenceCount: Array.isArray(entry.evidence) ? entry.evidence.length : 0,
+}));
+const lastActivityAt = recentActivity[0]?.at || null;
 const report = {
   schema: 'build-monitor-v1', generatedAt: now,
   source: { queueState: stateFile, taskCount: TASKS.length, soldierCount: SOLDIER_SYSTEMS.length },
   overall: all, systems: { mony, easy }, soldiers: soldierReport(state),
+  activity: { lastActivityAt, recent: recentActivity },
   alerts: [
     ...(all.failed > 0 ? ['queue_contains_failed_tasks'] : []),
     ...(all.blocked > 0 ? ['queue_contains_blocked_tasks'] : []),
