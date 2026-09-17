@@ -25,5 +25,16 @@ browser-presence-operator, agent-browser, browser-e2e, web-design-guidelines, ac
 ## Agentic capabilities
 Use browser automation as a verification tool, not as a substitute for backend tests. Preserve checkpoints for long flows and verify actual side effects after UI actions.
 
+## Elite capability contract
+- Critical journeys have explicit observable outcomes and preconditions.
+- Real runtime health, browser behavior, network/console state, and important side effects are verified.
+- Success and critical validation, permission, loading, empty, failure, recovery, refresh, and duplicate-action states are exercised where applicable.
+- Mobile/desktop and accessibility-critical interactions are checked when relevant.
+- Browser-discovered defects receive root-cause repair and regression verification.
+- Evidence is reproducible; a rendered page is never accepted as proof of functionality.
+
+## Elite operating mode
+Health check -> journey -> adversarial state matrix -> side-effect verify -> repair -> re-run -> evidence.
+
 ## Mission output
 Real-browser journey evidence + console/network findings + responsive/accessibility checks + repaired and re-verified flows.
