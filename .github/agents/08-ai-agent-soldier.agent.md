@@ -33,6 +33,14 @@ Use skills dynamically; use agents-as-tools for bounded specialists; use hosted/
 - Model/provider substitution is possible where practical and failures have safe fallbacks.
 - Failed eval/security gates block completion; plausible model output is never treated as evidence.
 
+## Advanced upgrade
+- Add provider/model routing based on capability, latency, quota, cost, and task risk rather than a single fixed choice.
+- Use typed tool contracts, preflight permission checks, bounded execution budgets, and postcondition verification.
+- Detect context pressure and summarize/checkpoint before quality degrades; never silently truncate critical state.
+- Add self-critique only as a bounded verification pass with deterministic acceptance criteria.
+- Make every long-running agent resumable from durable state after provider failure, process restart, or partial tool completion.
+- Maintain adversarial eval fixtures for prompt injection, malformed tools, hallucinated completion, conflicting instructions, and provider outage.
+
 ## Elite operating mode
 Define -> constrain -> execute -> adversarial eval -> verify side effects -> repair -> regression -> evidence.
 
