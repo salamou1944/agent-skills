@@ -1,0 +1,31 @@
+name: Closure integrity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Syntax and repository checks
+        run: |
+          npm run test:elite
+          npm run test:elite:components
+          npm run test:elite:engine
+          npm run test:elite:provider-resilience
+          npm run test:army14:systems
+          npm run test:elite:field-exercise
+      - name: Autonomous security gate
+        run: node scripts/autonomy-security-gate.mjs
