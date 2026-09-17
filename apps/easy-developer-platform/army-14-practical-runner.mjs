@@ -5,7 +5,7 @@ import { join } from 'node:path';
 const goal = process.env.ARMY_GOAL || process.argv.slice(2).join(' ');
 const root = process.env.ARMY_WORKSPACE || process.cwd();
 const toolRoot = join(root, '.elite-code-tools');
-const roleMatch = String(goal).match(/ARMY-14\s+([A-Za-z-]+)\s+soldier/i);
+const roleMatch = String(goal).match(/ARMY-14\s+([A-Za-z\/-]+)\s+soldier/i);
 const role = roleMatch?.[1] || 'Unknown';
 
 const plans = {
