@@ -28,3 +28,7 @@ The fourteen soldiers are designed to compose: Research → Architect → Produc
 ## Definition of ready
 
 A new application request is ready for handoff only when the relevant soldiers have produced executable artifacts and evidence: source, tests, configuration boundaries, and—when deployment is requested—a verified running deployment. Blockers must remain explicit rather than being disguised as success.
+
+## Verification
+
+The roster is enforced by `.github/workflows/army-14-validation.yml`, which checks the exact 14 profiles, required operating sections, registry entries, and basic secret-like patterns.
