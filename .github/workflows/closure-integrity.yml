@@ -23,6 +23,7 @@ jobs:
       - run: npm ci
       - name: Syntax and repository checks
         run: |
+          npm run test:control-plane
           npm run test:elite
           npm run test:elite:components
           npm run test:elite:engine
