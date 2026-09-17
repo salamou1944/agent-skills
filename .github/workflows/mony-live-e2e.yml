@@ -1,0 +1,42 @@
+name: MONY Live E2E
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  mony-live-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live gateway and MONY health
+        run: |
+          set -euo pipefail
+          BASE="https://easy-platform-runtime-v3-production.up.railway.app"
+          curl --fail --silent --show-error "$BASE/api/gateway/status" | tee gateway.json
+          node -e 'const x=require("./gateway.json"); if(!x.platformOnline || !x.operatorOnline || !x.revenueOnline) process.exit(1)'
+          curl --fail --silent --show-error "$BASE/api/revenue/health" | tee revenue.json
+          node -e 'const x=require("./revenue.json"); if(x.ok!==true || x.ai?.configured!==true || x.postbackConfigured!==true) process.exit(1)'
+      - name: Check MONY customer workbench
+        run: |
+          set -euo pipefail
+          BASE="https://easy-platform-runtime-v3-production.up.railway.app"
+          curl --fail --silent --show-error "$BASE/api/revenue/mony/workbench" | tee workbench.html
+          grep -q "MONY — AI Workbench" workbench.html
+          grep -q "Product Content" workbench.html
+          grep -q "Voice Studio" workbench.html
+          grep -q "Client Offer" workbench.html
+      - name: Check affiliate bridge without redirecting the MONY interface
+        run: |
+          set -euo pipefail
+          BASE="https://easy-platform-runtime-v3-production.up.railway.app"
+          curl --fail --silent --show-error "$BASE/api/revenue/affiliate-link" | tee affiliate.json
+          node -e 'const x=require("./affiliate.json"); if(x.provider!=="mony" || !x.trackingUrl.includes("/api/revenue/mony/workbench") || !x.partnerTrackingUrl) process.exit(1)'
+      - name: Execute real MONY AI work
+        run: |
+          set -euo pipefail
+          BASE="https://easy-platform-runtime-v3-production.up.railway.app"
+          curl --fail --silent --show-error -X POST "$BASE/api/revenue/mony/work" \
+            -H 'content-type: application/json' \
+            --data '{"task":"product","source":"Wireless desk lamp. Matte black aluminum body, adjustable warm light, USB-C charging, designed for home offices. Verified claims only: adjustable brightness and rechargeable battery."}' | tee work.json
+          node -e 'const x=require("./work.json"); if(x.task!=="product" || !x.provider || !x.result?.title || !x.result?.description || !Array.isArray(x.result?.selling_points)) process.exit(1); console.log(JSON.stringify({task:x.task,provider:x.provider,title:x.result.title}))'
