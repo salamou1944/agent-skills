@@ -35,6 +35,7 @@
     "test:elite:queue": "node apps/easy-developer-platform/test-project-queue-orchestrator.mjs",
     "test:elite:provider-resilience": "node --test apps/easy-developer-platform/test-elite-provider-resilience.mjs",
     "test:elite:benchmark": "node apps/easy-developer-platform/elite-benchmark.mjs",
+    "test:elite:soldiers": "node --test apps/easy-developer-platform/test-elite-soldiers.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
   "dependencies": { "yaml": "2.9.0" }
