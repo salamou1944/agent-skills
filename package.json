@@ -41,6 +41,8 @@
     "test:army14:systems": "node --test apps/easy-developer-platform/test-army-14-soldier-systems.mjs",
     "test:army14:practical": "node apps/easy-developer-platform/army-14-practical-runner.mjs \"Verify all 14 soldier systems end-to-end\"",
     "test:autonomy-security": "node scripts/autonomy-security-gate.mjs",
+    "test:control-plane": "node --test apps/control-plane/test-control-plane.mjs",
+    "control-plane:health": "node apps/control-plane/control-plane.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
   "dependencies": { "yaml": "2.9.0" }
