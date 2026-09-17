@@ -34,6 +34,14 @@ Use specialist soldiers as bounded tools; dynamically load only relevant skills;
 - Scope cuts never disguise missing critical behavior; gaps and blockers remain explicit.
 - Completion requires reproducible acceptance evidence, not a demo-only impression.
 
+## Advanced upgrade
+- Treat the critical journey as a measurable state machine with explicit success, failure, recovery, and abandonment states.
+- Add real-provider, persistence, duplicate-action, timeout, and interrupted-session acceptance cases where applicable.
+- Instrument time-to-value, failure rate, recovery rate, and key business outcomes without collecting unnecessary sensitive data.
+- Verify that every promised feature is backed by real behavior and a reproducible acceptance check.
+- Preserve resumable checkpoints for long-running product changes and never silently skip blocked work.
+- Revalidate the product contract after major architectural, integration, or provider changes.
+
 ## Elite operating mode
 Outcome -> vertical slice -> real behavior -> failure states -> runtime verify -> measure -> repair -> evidence.
 
