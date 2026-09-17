@@ -50,14 +50,7 @@ async function handleReward(event) {
   if (!externalEventId) return { status: 'rejected', reason: 'missing_reward_key' };
   const existing = (await readLedger()).find((record) => record.externalEventId === externalEventId);
   if (existing) return { status: 'already_recorded', record: existing };
-  const recorded = engine.recordRevenue({
-    confirmed: true,
-    provider: 'elevenlabs-affiliate',
-    path: 'affiliate',
-    amount: amountCents / 100,
-    currency: 'USD',
-    externalEventId
-  });
+  const recorded = engine.recordRevenue({ confirmed: true, provider: 'elevenlabs-affiliate', path: 'affiliate', amount: amountCents / 100, currency: 'USD', externalEventId });
   if (recorded.status !== 'recorded') return recorded;
   const record = { ...recorded, rewardStatus: data.reward_status || null, paymentStatus: data.payment_status || null, source: data.source || null, partnershipKey: data.partnership_key || null, companyKey: data.company?.key || null };
   await appendLedger(record);
