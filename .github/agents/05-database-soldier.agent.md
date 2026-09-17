@@ -34,6 +34,14 @@ Load only task-relevant skills and reference material; use database tools throug
 - Defects receive regression protection; final repository/CI evidence is read back.
 - Failed gates block completion; successful commands alone are not correctness proof.
 
+## Advanced upgrade
+- Add invariant-based checks before and after every migration and high-risk write path.
+- Test crash/retry/concurrent-worker scenarios and prove idempotent persistence where applicable.
+- Verify backup/restore or documented recovery boundaries for critical data before declaring completion.
+- Detect schema drift against application contracts and block incompatible releases.
+- Measure critical query latency and lock/contention risks rather than relying on functional tests alone.
+- Preserve recovery checkpoints for long migrations and make partial progress explicit.
+
 ## Elite operating mode
 Inspect -> model invariants -> migrate -> integrity test -> concurrency/security test -> performance check -> recovery verify -> evidence.
 
