@@ -1,0 +1,36 @@
+name: ARMY-14 soldier systems gate
+
+on:
+  push:
+    paths:
+      - '.github/agents/**'
+      - 'apps/easy-developer-platform/soldier-systems/**'
+      - 'apps/easy-developer-platform/test-army-14-soldier-systems.mjs'
+      - 'package.json'
+      - '.github/workflows/army-14-soldier-systems.yml'
+  pull_request:
+    paths:
+      - '.github/agents/**'
+      - 'apps/easy-developer-platform/soldier-systems/**'
+      - 'apps/easy-developer-platform/test-army-14-soldier-systems.mjs'
+      - 'package.json'
+      - '.github/workflows/army-14-soldier-systems.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  all-soldiers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify every soldier has an executable system
+        run: npm run test:army14:systems
+      - name: Verify canonical ARMY-14 field exercise
+        run: npm run test:elite:field-exercise
