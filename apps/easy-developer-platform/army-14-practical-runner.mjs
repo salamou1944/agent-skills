@@ -1,7 +1,8 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const root = process.env.ARMY_WORKSPACE || process.cwd();
+const agentSource = resolve(process.env.ARMY_AGENT_SOURCE || join(root, '.github', 'agents'));
 const soldiers = [
   ['01-architect-soldier.agent.md', 'Architect', 'architecture', 'define bounded architecture and dependencies'],
   ['02-builder-soldier.agent.md', 'Builder', 'implementation', 'produce the smallest safe implementation handoff'],
@@ -29,7 +30,7 @@ export async function runArmy14(goal, { workspace = root, runId = `army14-${Date
 
   for (let i = 0; i < soldiers.length; i += 1) {
     const [file, role, stage, mission] = soldiers[i];
-    const source = await readFile(join(workspace, '.github', 'agents', file), 'utf8');
+    const source = await readFile(join(agentSource, file), 'utf8');
     for (const marker of required) if (!source.includes(marker)) throw new Error(`${file}:missing:${marker}`);
     if (!/verification|evidence/i.test(source)) throw new Error(`${file}:missing:verification`);
     if (!/recovery|resilience|rollback/i.test(source)) throw new Error(`${file}:missing:recovery`);
