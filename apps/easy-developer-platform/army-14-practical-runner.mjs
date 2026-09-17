@@ -19,7 +19,7 @@ const plans = {
   Integration: [['provider-resilience', 'npm', ['run', 'test:elite:provider-resilience']]],
   'AI-Agent': [['elite-supervisor', 'npm', ['run', 'test:elite']], ['elite-harness', 'npm', ['run', 'test:elite:harness']]],
   'Test-QA': [['soldier-contracts', 'npm', ['run', 'test:elite:soldiers']], ['elite-harness', 'npm', ['run', 'test:elite:harness']]],
-  'Browser-E2E': [['gateway-smoke', 'curl', ['-fsS', 'https://easy-platform-runtime-v3-production.up.railway.app/api/gateway/status']],
+  'Browser-E2E': [['gateway-smoke', 'curl', ['-fsS', 'https://easy-platform-runtime-v3-production.up.railway.app/api/gateway/status']]],
   'Debug-Repair': [['elite-supervisor', 'npm', ['run', 'test:elite']], ['provider-resilience', 'npm', ['run', 'test:elite:provider-resilience']]],
   'Deployment-Ops': [['gateway-smoke', 'curl', ['-fsS', 'https://easy-platform-runtime-v3-production.up.railway.app/api/gateway/status']], ['deployment-recovery', 'npm', ['run', 'test:elite:deployment-recovery']]],
   'Product-MVP': [['elite-components', 'npm', ['run', 'test:elite:components']], ['elite-dna', 'npm', ['run', 'test:elite:dna']]],
