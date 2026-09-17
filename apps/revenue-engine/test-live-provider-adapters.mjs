@@ -100,7 +100,8 @@ test('provider health honors rate-limit reset when Retry-After is absent', async
   const health = await adapter.healthCheck();
   assert.equal(health.ok, true);
   assert.equal(attempts, 2);
-  assert.ok(sleeps[0] >= 0 && sleeps[0] <= 4000);
+  // Reset timestamps are second-granularity, so allow clock quantization around the four-second window.
+  assert.ok(sleeps[0] >= 0 && sleeps[0] <= 5000);
   delete process.env.REVENUE_ANALYTICS_URL;
 });
 
