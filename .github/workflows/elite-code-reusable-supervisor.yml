@@ -128,10 +128,9 @@ jobs:
             const token = await core.getIDToken(audience);
             core.setOutput('token', token);
 
-      - name: Request verified plan through Railway OpenAI bridge
+      - name: Request and apply verified plan through Railway OpenAI bridge
         id: fallback
         if: steps.elite.outcome != 'success'
-        continue-on-error: true
         env:
           OIDC_URL: https://easy-platform-runtime-v3-production.up.railway.app/api/operator/oidc-plan
           OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
@@ -145,7 +144,7 @@ jobs:
           EASY_OPERATOR_PLAN_FILE=/tmp/oidc-plan.json EASY_OPERATOR_WORKSPACE="$GITHUB_WORKSPACE" node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs 'Apply the authenticated Railway-generated plan'
 
       - name: Verify fallback result
-        if: steps.elite.outcome != 'success' && steps.fallback.outcome == 'success'
+        if: steps.elite.outcome != 'success'
         run: |
           set -euo pipefail
           git diff --check
@@ -174,9 +173,3 @@ jobs:
             git commit -m 'chore(supervisor): continue project engineering'
             git push
           fi
-
-      - name: Fail closed if all coding paths failed
-        if: steps.elite.outcome != 'success' && steps.fallback.outcome != 'success'
-        run: |
-          echo 'Elite Code worker and authenticated Railway plan bridge both failed.'
-          exit 1
