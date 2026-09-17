@@ -13,7 +13,6 @@ concurrency:
 
 permissions:
   contents: write
-  models: read
   copilot-requests: write
 
 jobs:
@@ -72,8 +71,6 @@ jobs:
           EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_OPERATOR_SECONDARY_LLM_API_KEY || secrets.EASY_SECONDARY_LLM_API_KEY || '' }}
           EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_ENDPOINT || vars.EASY_SECONDARY_LLM_ENDPOINT || '' }}
           EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_MODEL || vars.EASY_SECONDARY_LLM_MODEL || '' }}
-          EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT || 'https://models.github.ai/inference' }}
-          EASY_OPERATOR_GITHUB_MODELS_MODEL: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_MODEL || 'openai/gpt-4o-mini' }}
           EASY_OPERATOR_PROVIDER_TIMEOUT_MS: "45000"
           EASY_OPERATOR_PROVIDER_RETRIES: "2"
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "15000"
