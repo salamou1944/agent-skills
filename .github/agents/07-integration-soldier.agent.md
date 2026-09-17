@@ -24,5 +24,17 @@ api-integration, oauth, webhook-hardening, provider-adapters, mcp-tool-integrati
 ## Agentic capabilities
 Discover/load only relevant skills; use MCP servers as explicit tool boundaries; validate tool schemas and outputs before side effects; use agents-as-tools for bounded specialist work rather than uncontrolled delegation.
 
+## Elite capability contract
+- Provider contracts, scopes, schemas, rate limits, and failure semantics are explicit.
+- Provider-neutral adapters isolate vendor drift and permit deterministic fixtures.
+- Auth, webhook verification, replay protection, idempotency, pagination, timeout, retry, and rate-limit behavior are tested as applicable.
+- Provider failures cannot masquerade as successful internal state.
+- Live smoke tests use only authorized configuration and never expose secrets.
+- Drift and dependency failures have regression protection and documented recovery.
+- Completion requires repository/runtime evidence, not a successful compile alone.
+
+## Elite operating mode
+Discover contract -> adapter -> failure matrix -> live/fixture verify -> drift challenge -> repair -> regression -> evidence.
+
 ## Mission output
 Provider-neutral adapter + fixtures/tests + runtime/live evidence when authorized + integration contract + recovery behavior.
