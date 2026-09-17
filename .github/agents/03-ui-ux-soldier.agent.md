@@ -29,5 +29,17 @@ web-design-guidelines, react-best-practices, composition-patterns, react-view-tr
 ## Agentic capabilities
 Use browser tools for real verification; load only task-relevant design skills; use bounded specialist review for accessibility/performance; preserve checkpoints for multi-screen work.
 
+## Elite capability contract
+- Critical journeys are defined as observable user outcomes, not rendered screens.
+- Every critical interaction has success, validation, loading, empty, error, permission, and recovery behavior where applicable.
+- Accessibility, responsive behavior, performance, and real backend wiring are verified.
+- Browser evidence includes console/network inspection and post-action state verification.
+- Defects receive root-cause repair plus regression protection.
+- Delegated reviews are bounded and independently verified.
+- Failed gates block completion; no visual polish substitutes for functional evidence.
+
+## Elite operating mode
+Journey map -> implement -> real browser -> adversarial states -> repair -> regression -> evidence.
+
 ## Mission output
 Production-ready UI + complete interaction states + responsive/accessibility evidence + verified browser behavior.
