@@ -1,0 +1,75 @@
+name: autonomous-project-loop
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+concurrency:
+  group: autonomous-project-loop
+  cancel-in-progress: false
+permissions:
+  contents: write
+  copilot-requests: write
+jobs:
+  loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Run bounded autonomous queue loop
+        id: loop
+        continue-on-error: true
+        env:
+          ELITE_QUEUE_MAX_CYCLES: "6"
+          ELITE_QUEUE_BLOCKED_COOLDOWN_MS: "300000"
+          ELITE_QUEUE_PHASE: mony
+          EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          EASY_OPERATOR_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
+          EASY_OPERATOR_LLM_MODEL: ${{ vars.EASY_OPERATOR_LLM_MODEL || 'gpt-4o-mini' }}
+          EASY_OPERATOR_LLM_FALLBACK_MODEL: ${{ vars.EASY_OPERATOR_LLM_FALLBACK_MODEL || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_OPERATOR_SECONDARY_LLM_API_KEY || secrets.EASY_SECONDARY_LLM_API_KEY || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_ENDPOINT || vars.EASY_SECONDARY_LLM_ENDPOINT || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_MODEL || vars.EASY_SECONDARY_LLM_MODEL || '' }}
+          EASY_OPERATOR_PROVIDER_TIMEOUT_MS: "45000"
+          EASY_OPERATOR_PROVIDER_RETRIES: "2"
+          EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "15000"
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node apps/easy-developer-platform/autonomous-project-loop.mjs --max-cycles=6 | tee /tmp/project-loop.json
+      - name: Verify queue and monitor contracts
+        run: |
+          node --check apps/easy-developer-platform/autonomous-project-loop.mjs
+          node --check apps/easy-developer-platform/project-queue-orchestrator.mjs
+          npm run test:elite:queue
+          npm run test:build-monitor
+          node apps/easy-developer-platform/build-monitor.mjs
+      - name: Persist verified queue progress
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .easy/project-queue-state.json
+            git diff --cached --check
+            git commit -m "chore(queue): persist autonomous project progress"
+            git fetch origin main
+            git rebase origin/main
+            git push origin HEAD:main
+          fi
+      - name: Publish loop evidence
+        if: always()
+        run: |
+          echo '## Autonomous Project Loop' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/project-loop.json ]; then cat /tmp/project-loop.json >> "$GITHUB_STEP_SUMMARY"; else echo 'No loop output was produced.' >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: Fail only on a real execution failure
+        if: steps.loop.outcome == 'failure'
+        run: exit 1
