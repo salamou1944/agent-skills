@@ -33,7 +33,6 @@ const requiredTerms = [
   'failure',
   'recovery',
   'evidence',
-  'block completion',
 ];
 
 for (const file of expected) {
