@@ -25,6 +25,12 @@ A soldier must inspect the real target state before acting. A plan is not an imp
 
 The fourteen soldiers are designed to compose: Research → Architect → Product/MVP → Builder → UI/Backend/Database/Integrations/AI → Security → Test/QA → Browser/E2E → Debug/Repair → Deployment/Ops. The commander decides sequencing and parallelism.
 
+## Elite capability stage
+
+All fourteen profiles now carry a role-specific **Elite capability contract** and **Elite operating mode**. Elite stage means the soldier must execute a complete inspect → act → test → adversarial review → repair → verify → evidence loop appropriate to its mission. A soldier is not considered complete merely because its profile exists or a commit succeeds.
+
+The benchmark gates are role-aware rather than a generic score: each soldier must satisfy its mission-specific quality bar, explicit Elite contract, evidence requirements, and the repository-wide safety rules. Failed gates block completion.
+
 ## Definition of ready
 
 A new application request is ready for handoff only when the relevant soldiers have produced executable artifacts and evidence: source, tests, configuration boundaries, and—when deployment is requested—a verified running deployment. Blockers must remain explicit rather than being disguised as success.
@@ -32,3 +38,5 @@ A new application request is ready for handoff only when the relevant soldiers h
 ## Verification
 
 The roster is enforced by `.github/workflows/army-14-validation.yml`, which checks the exact 14 profiles, required operating sections, registry entries, and basic secret-like patterns.
+
+The Elite stage is enforced by `.github/workflows/army-14-elite-gate.yml`, which checks all 14 profiles for the Elite capability contract, Elite operating mode, quality/verification sections, exact roster count, and basic secret-like patterns.
