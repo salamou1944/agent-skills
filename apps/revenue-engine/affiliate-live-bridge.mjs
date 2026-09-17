@@ -68,7 +68,8 @@ const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     if (req.method === 'GET' && url.pathname === '/api/revenue/health') {
-      const affiliate = await engine.providers.includes('elevenlabs-affiliate') ? createElevenLabsAffiliateAdapter().healthCheck() : { ok: false };
+      const adapter = createElevenLabsAffiliateAdapter();
+      const affiliate = await adapter.healthCheck();
       return json(res, 200, { ok: true, mode: 'live', affiliate, postbackConfigured: Boolean(postbackSecret), ledgerPath, rule: 'Only PartnerStack reward events that are cash-eligible are recorded as revenue.' });
     }
     if (req.method === 'GET' && url.pathname === '/api/revenue/affiliate-link') {
