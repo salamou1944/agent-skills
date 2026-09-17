@@ -25,5 +25,17 @@ schema-design, migration-safety, sql-review, supabase, rls-security, database-pe
 ## Agentic capabilities
 Load only task-relevant skills and reference material; use database tools through least-privilege boundaries; require explicit verification of destructive or irreversible operations.
 
+## Elite capability contract
+- Schema invariants, ownership, lifecycle, and authorization boundaries are explicit.
+- Migrations are tested from clean and upgrade states and are reversible or safely recoverable where practical.
+- Constraints, indexes, transactions, RLS/policies, and concurrency behavior are verified.
+- Critical reads/writes are checked against actual persisted results and performance expectations.
+- Destructive operations require explicit safety evidence and recovery handling.
+- Defects receive regression protection; final repository/CI evidence is read back.
+- Failed gates block completion; successful commands alone are not correctness proof.
+
+## Elite operating mode
+Inspect -> model invariants -> migrate -> integrity test -> concurrency/security test -> performance check -> recovery verify -> evidence.
+
 ## Mission output
 Verified schema/migrations + integrity/security tests + performance evidence + precise data-contract handoff.
