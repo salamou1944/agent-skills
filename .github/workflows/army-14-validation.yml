@@ -38,8 +38,8 @@ jobs:
             10-browser-e2e-soldier.agent.md
             11-debug-repair-soldier.agent.md
             12-deployment-ops-soldier.agent.md
-            13-project-memory-soldier.agent.md
-            14-orchestrator-soldier.agent.md
+            13-product-mvp-soldier.agent.md
+            14-research-capability-soldier.agent.md
           )
           required=(
             '## Mission'
@@ -51,7 +51,7 @@ jobs:
             '## Mission output'
           )
           test -f docs/ARMY-14.md
-          test "$(printf '%s\n' .github/agents/*-soldier.agent.md | wc -l)" -eq 14
+          test "$(find .github/agents -maxdepth 1 -type f -name '*-soldier.agent.md' | wc -l)" -eq 14
           for file in "${files[@]}"; do
             path=".github/agents/$file"
             test -f "$path"
@@ -60,6 +60,6 @@ jobs:
             done
             ! grep -Eiq '(api[_-]?key|access[_-]?token|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|password\s*[:=])' "$path"
           done
-          grep -Fq '14. Research/Capability' docs/ARMY-14.md
-          grep -Fq '13. Product/MVP' docs/ARMY-14.md
+          grep -Fq '13 | Product/MVP' docs/ARMY-14.md
+          grep -Fq '14 | Research/Capability' docs/ARMY-14.md
           echo 'ARMY-14 roster, contract headings, and basic secret-pattern checks passed.'
