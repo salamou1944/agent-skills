@@ -1,108 +1,99 @@
 # AGENTS.md
 
-This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, etc.) when working with code in this repository.
+This repository is the engineering core for the Elite autonomous coding system, ARMY-14 soldier contracts, Revenue Engine/MONY automation, and reusable agent skills. It is no longer limited to a Vercel skill collection.
 
-## Repository Overview
+## Operating contract
 
-A collection of skills for AI coding agents working with Vercel projects. Skills are packaged instructions and scripts that extend agent capabilities.
+- Inspect repository rules, current state, and relevant code before changing anything.
+- Execute the requested capability before claiming completion.
+- Evidence must distinguish **task completion** from **pipeline/repository verification**.
+- Never report a practical gate, health check, provider reachability check, or successful workflow as proof that the requested business/code task was completed.
+- Never expose or commit secrets, credentials, tokens, private keys, or sensitive environment values.
+- Do not bypass authentication, quotas, rate limits, CAPTCHA/MFA, or service protections.
+- Preserve repository boundaries and avoid copying `.elite-code-tools` into a target repository's persisted changes.
+- Prefer minimal, reversible changes and fail closed when verification is ambiguous.
 
-## Creating a New Skill
+## Elite result semantics
+
+Elite automation must use explicit result states:
+
+- `VERIFIED` / `TASK_VERIFIED`: the requested task was implemented and its task-specific acceptance checks passed.
+- `VERIFIED_NOOP` / `NOOP_VERIFIED`: the task was already satisfied and evidence proves that state.
+- `PIPELINE_VERIFIED`: repository/agent infrastructure passed its practical checks, but the requested task was not proven complete.
+- `FAILED`: execution or verification failed.
+
+`PIPELINE_VERIFIED` must never be treated as `TASK_VERIFIED` by a supervisor, workflow, or persistence step.
+
+## Repository architecture
+
+- `skills/` contains reusable agent skills.
+- `apps/easy-developer-platform/` contains Elite runtime, autonomous coding, ARMY-14 practical verification, and related orchestration.
+- `apps/revenue-engine/` contains MONY/Revenue Engine orchestration and provider adapters.
+- `.github/agents/` contains the canonical 14 soldier profiles.
+- `.github/workflows/` contains CI and orchestration workflows. Workflow changes require explicit review and must preserve fail-closed verification.
+
+## Creating a new skill
 
 ### Directory Structure
 
 ```
 skills/
-  {skill-name}/           # kebab-case directory name
-    SKILL.md              # Required: skill definition
-    scripts/              # Optional: executable scripts
-      {script-name}.sh    # Bash scripts
-      {script-name}.mjs   # Node scripts
-    references/           # Optional: supporting docs loaded on demand
-    lib/                  # Optional: shared code for scripts
+  {skill-name}/
+    SKILL.md
+    scripts/
+    references/
+    lib/
 ```
 
-### Naming Conventions
+### Naming conventions
 
-- **Skill directory**: `kebab-case` (e.g., `vercel-deploy`, `log-monitor`)
-- **SKILL.md**: Always uppercase, always this exact filename
-- **Scripts**: `kebab-case.sh` or `kebab-case.mjs` (e.g., `deploy.sh`, `collect-signals.mjs`)
+- Skill directories use `kebab-case`.
+- `SKILL.md` is uppercase and exact.
+- Scripts use `kebab-case.sh` or `kebab-case.mjs`.
 
-### SKILL.md Format
+### Skill format
 
 ```markdown
 ---
 name: {skill-name}
-description: {One sentence describing when to use this skill. Include trigger phrases like "Deploy my app", "Check logs", etc.}
+description: {One sentence describing when to use this skill.}
 ---
 
 # {Skill Title}
 
-{Brief description of what the skill does.}
+{Brief description.}
 
 ## How It Works
 
-{Numbered list explaining the skill's workflow}
+{Numbered workflow}
 
 ## Usage
 
-```bash
-bash /mnt/skills/user/{skill-name}/scripts/{script}.sh [args]
-```
-
-**Arguments:**
-- `arg1` - Description (defaults to X)
-
-**Examples:**
-{Show 2-3 common usage patterns}
+{Usage}
 
 ## Output
 
-{Show example output users will see}
-
-## Present Results to User
-
-{Template for how Claude should format results when presenting to users}
-
-## Troubleshooting
-
-{Common issues and solutions, especially network/permissions errors}
+{Machine-readable and user-facing output}
 ```
 
-### Best Practices for Context Efficiency
+## Script requirements
 
-Skills are loaded on-demand — only the skill name and description are loaded at startup. The full `SKILL.md` loads into context only when the agent decides the skill is relevant. To minimize context usage:
+- Bash scripts: `#!/bin/bash` and `set -e`/`set -euo pipefail` where appropriate.
+- Node scripts: `#!/usr/bin/env node` and `.mjs`.
+- Human-readable status belongs on stderr; machine-readable JSON belongs on stdout.
+- Temporary files require cleanup traps where practical.
+- Scripts must fail closed when required evidence is missing.
 
-- **Keep SKILL.md under 500 lines** — put detailed reference material in separate files
-- **Write specific descriptions** — helps the agent know exactly when to activate the skill
-- **Use progressive disclosure** — reference supporting files that get read only when needed
-- **Prefer scripts over inline code** — script execution doesn't consume context (only output does)
-- **File references work one level deep** — link directly from SKILL.md to supporting files
+## Context efficiency
 
-### Script Requirements
+Skills are loaded on demand. Keep `SKILL.md` concise, use progressive disclosure, and move detailed references into dedicated files.
 
-- Bash scripts: use `#!/bin/bash` and `set -e`
-- Node scripts: use `#!/usr/bin/env node` and `.mjs`
-- Write status messages to stderr
-- Write machine-readable output (JSON) to stdout
-- Include a cleanup trap for temp files when scripts create them
-- Reference scripts by relative path, for example `node scripts/{script}.mjs`
+## Verification before response
 
-### End-User Installation
+Before claiming a change is complete:
 
-Document skills.sh installation for public skills:
-
-```bash
-npx skills add vercel-labs/agent-skills --skill {skill-name}
-```
-
-For manual installs, document the native path when the skill needs one.
-
-**Claude Code:**
-```bash
-cp -r skills/{skill-name} ~/.claude/skills/
-```
-
-**claude.ai:**
-Add the skill to project knowledge or paste SKILL.md contents into the conversation.
-
-If the skill requires network access, instruct users to add required domains at `claude.ai/settings/capabilities`.
+1. Re-read the applicable repository rules.
+2. Inspect the changed files and resulting diff.
+3. Run syntax/tests or the strongest repository-native checks available.
+4. Confirm task-specific acceptance evidence.
+5. Report remaining limitations instead of converting infrastructure success into a completion claim.
