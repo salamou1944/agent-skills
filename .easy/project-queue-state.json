@@ -161,7 +161,7 @@
         }
       ],
       "scope": "apps/easy-developer-platform/defects",
-      "updatedAt": "2026-09-17T18:32:52.486Z"
+      "updatedAt": "2026-09-17T18:38:39.043Z"
     },
     "elite.ci-contract-closure": {
       "status": "BLOCKED",
@@ -924,6 +924,21 @@
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
       "at": "2026-09-17T18:35:35.194Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.defect-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/defects",
+      "at": "2026-09-17T18:38:39.043Z"
     }
   ]
 }
