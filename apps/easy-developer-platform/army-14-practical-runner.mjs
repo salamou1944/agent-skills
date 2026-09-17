@@ -38,10 +38,9 @@ async function verifyRole(role,files){
     case 'Security':{
       const detector='apps/easy-developer-platform/army-14-practical-runner.mjs';
       const tracked=files.filter(f=>f!==detector&&/\.(mjs|js|cjs|json|yml|yaml|ts|tsx|md|html)$/i.test(f)).slice(0,300);
-      const content=(await Promise.all(tracked.map(text))).join('\n');
       const secretPattern=new RegExp('s'+'k-'+'[A-Za-z0-9]{20,}');
       const ghPattern=new RegExp('gh'+'p_'+'[A-Za-z0-9]{30,}');
-      if(secretPattern.test(content)||ghPattern.test(content)||/-----BEGIN (?:RSA|EC|OPENSSH|PRIVATE) KEY-----/.test(content)) failures.push('possible_literal_secret');
+      for(const path of tracked){const content=await text(path);if(secretPattern.test(content)||ghPattern.test(content)||/-----BEGIN (?:RSA|EC|OPENSSH|PRIVATE) KEY-----/.test(content)){failures.push(`possible_literal_secret:${path}`);break;}}
       break;
     }
     case 'Integration':if(!any(files,[/commerce-connector\/adapters\//i,/commerce-connector\/core\//i])) failures.push('no_adapter_boundary');break;
