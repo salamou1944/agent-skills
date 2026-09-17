@@ -10,7 +10,7 @@ export const TASKS = [
   { id:'mony.reusable-services', phase:'mony', scope:'apps/revenue-engine/services', goal:'Make existing Revenue Engine service/API capabilities directly reusable for paid client work with provider-neutral boundaries and production-readiness checks.', verify:'npm run test:paid-client-readiness' },
   { id:'mony.affiliate', phase:'mony', scope:'apps/revenue-engine/affiliate', goal:'Complete and verify existing affiliate/income integrations without storing secrets.', verify:'npm run revenue:affiliate:test' },
   { id:'mony.market-testing', phase:'mony', scope:'apps/revenue-engine/market', goal:'Build and verify market-testing and client-hunting automation that produces actionable opportunities without falsely claiming leads, replies, or revenue.', verify:'npm run test:service-market' },
-  { id:'mony.first-revenue-blocker', phase:'mony', scope:'apps/revenue-engine/revenue-readiness', goal:'Identify and implement the smallest safe verified step that removes the next concrete blocker to first verified Revenue Engine revenue. If an LLM provider returns 429/404/410/408/5xx, use the repository fallback/recovery mechanisms where available, add deterministic coverage for the failure mode, and never mark the task complete without execution evidence.', verify:'npm run test:revenue:all' },
+  { id:'mony.first-revenue-blocker', phase:'mony', scope:'apps/revenue-engine/revenue-readiness', goal:'Identify and implement the smallest safe verified step that removes the next concrete blocker to first verified Revenue Engine revenue. If an LLM provider returns 429/404/410/408/5xx, use the repository fallback/recovery mechanisms where available, add deterministic coverage for the failure mode, and never mark task complete without execution evidence.', verify:'npm run test:revenue:all' },
   { id:'elite.repository-repair', phase:'mony', scope:'apps/easy-developer-platform/repair', goal:'Perform a repository-wide defect pass after the Revenue Engine blocker: inspect tracked source, workflows, tests, fixtures, and generated state; repair concrete syntax/runtime/contract/CI defects; remove malformed fixtures or stale endpoint assumptions; and add regression tests for every defect actually found. Do not convert failures into NOOP merely because a preflight test passes.', verify:'npm run test:elite' },
   { id:'elite.defect-closure', phase:'mony', scope:'apps/easy-developer-platform/defects', goal:'Resolve every currently documented unresolved engineering defect/gap, including DEF-005 and DEF-006 if they are still present in repository state. Locate the authoritative defect records, implement the missing behavior rather than only documenting it, and add or repair deterministic acceptance tests. Preserve fail-closed behavior where live infrastructure is unavailable.', verify:'npm run test:elite' },
   { id:'elite.ci-contract-closure', phase:'mony', scope:'apps/easy-developer-platform/ci-contracts', goal:'Audit and repair the Elite, engineering-update, tool-intelligence, and tool-capability CI contracts and their self-tests. Reproduce failures, fix root causes, and ensure workflows cannot report success from skipped, simulated, stale, or mismatched checks. Verify the complete local contract suite before completion.', verify:'npm run test:elite:queue' },
@@ -40,8 +40,6 @@ export function selectNext(state, phase=null) {
   return null;
 }
 
-// Return the maximal safe parallel batch. Tasks with the same scope are never
-// placed in the same batch; integration/merge must run after the batch completes.
 export function selectParallelBatch(state, phase=null, limit=14) {
   const batch=[];
   const scopes=new Set();
@@ -68,9 +66,11 @@ export async function markTask(file,id,status,evidence=[]) {
   const state=await loadState(file);
   const task=TASKS.find(t=>t.id===id); if(!task) throw new Error('unknown_task:'+id);
   status=classifyResult(status);
+  const soldierId = process.env.ARMY14_SOLDIER_ID || null;
+  const updatedAt = new Date().toISOString();
   state.version=2;
-  state.tasks[id]={status,evidence,scope:task.scope,updatedAt:new Date().toISOString()};
-  state.history.push({id,status,evidence,scope:task.scope,at:new Date().toISOString()});
+  state.tasks[id]={status,evidence,scope:task.scope,updatedAt,...(soldierId ? {assignedSoldier:soldierId} : {})};
+  state.history.push({id,status,evidence,scope:task.scope,at:updatedAt,...(soldierId ? {soldierId} : {})});
   await mkdir(dirname(file),{recursive:true}); await writeFile(file,JSON.stringify(state,null,2)+'\n');
   return state;
 }
