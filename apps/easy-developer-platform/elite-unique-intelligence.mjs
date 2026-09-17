@@ -23,11 +23,16 @@ export function immuneSignature({ failureCode = '', failureMessage = '', changed
 export function immuneGate({ knownFailures = [], failureCode = '', failureMessage = '', changedFiles = [], strategy = '' }) {
   const signature = immuneSignature({ failureCode, failureMessage, changedFiles, strategy });
   const normalizedFiles = [...new Set(changedFiles.map(clean))].sort();
+  const currentCode = String(failureCode || ''), currentStrategy = String(strategy || ''), currentMessageHash = hash(failureMessage || '');
   const known = (knownFailures || []).some(item => {
     if (typeof item === 'string') return item === signature;
     if (item?.signature === signature) return true;
     const files = [...new Set((item?.changedFiles || []).map(clean))].sort();
-    return item?.failureCode === String(failureCode || '') || (item?.failureHash === hash(failureMessage || '') && JSON.stringify(files) === JSON.stringify(normalizedFiles) && item?.strategy === String(strategy));
+    const sameCode = item?.failureCode === currentCode;
+    const sameStrategy = item?.strategy === currentStrategy;
+    const sameMessage = item?.failureHash === currentMessageHash;
+    const sameFiles = JSON.stringify(files) === JSON.stringify(normalizedFiles);
+    return sameCode && sameStrategy && sameFiles && (sameMessage || !item?.failureHash);
   });
   return known ? { ok: false, reason: 'known_failure_signature', signature } : { ok: true, signature };
 }
@@ -37,6 +42,7 @@ export async function recordAttempt(path, attempt = {}) {
     signature: immuneSignature(attempt),
     goalHash: hash(attempt.goal || ''),
     failureCode: String(attempt.failureCode || ''),
+    failureHash: hash(attempt.failureMessage || ''),
     failureMessage: String(attempt.failureMessage || ''),
     strategy: String(attempt.strategy || ''),
     changedFiles: [...new Set((attempt.changedFiles || []).map(clean))].sort(),
