@@ -22,3 +22,4 @@ jobs:
       - run: npm run test:elite:dna
       - run: npm run test:elite:harness
       - run: npm run test:elite:engine
+      - run: npm run test:elite
