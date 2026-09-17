@@ -5,6 +5,7 @@
   "packageManager": "npm@11.5.2",
   "scripts": {
     "start": "node apps/easy-developer-platform/runtime.mjs",
+    "start:army14:railway": "node apps/easy-developer-platform/army-14-railway-worker.mjs",
     "test:creative": "node apps/easy-developer-platform/test-creative-core.mjs",
     "test:creative-stage": "node apps/easy-developer-platform/test-creative-stage.mjs",
     "test:creative-provider": "node apps/easy-developer-platform/test-openai-creative-provider.mjs",
@@ -28,7 +29,7 @@
     "test:elite:harness": "node --test apps/easy-developer-platform/test-elite-harness.mjs",
     "test:elite:engine": "node --test apps/easy-developer-platform/test-elite-engine.mjs",
     "test:elite:components": "node --test apps/easy-developer-platform/test-elite-components.mjs",
-    "test:elite:planner": "node --test apps/easy-developer-platform/test-elite-planner.mjs",
+    "test:elite:planner": "node apps/easy-developer-platform/test-elite-planner.mjs",
     "test:elite:dna": "node apps/easy-developer-platform/test-elite-dna.mjs",
     "test:elite:unique": "node apps/easy-developer-platform/test-elite-unique-intelligence.mjs",
     "test:elite:deployment-recovery": "node --test apps/easy-developer-platform/test-elite-deployment-recovery.mjs",
