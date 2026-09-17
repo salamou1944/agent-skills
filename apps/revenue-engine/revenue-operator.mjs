@@ -29,6 +29,21 @@ function createAffiliateProviders() {
 }
 function createProviders() { return { ...createLiveProviderRegistry(), ...createAffiliateProviders() }; }
 
+function affiliateEvidence(adapter, health) {
+  const configured = Boolean(health?.ok);
+  return {
+    configured,
+    reachable: configured,
+    clickObserved: false,
+    signupObserved: false,
+    conversionObserved: false,
+    commissionConfirmed: false,
+    payoutConfirmed: false,
+    level: configured ? 'reachable' : 'unconfigured',
+    proof: configured ? 'adapter health and tracking URL only' : 'no provider evidence'
+  };
+}
+
 function doctor() {
   const providers = providerState();
   const missing = missingProviders(providers);
@@ -48,7 +63,7 @@ function doctor() {
     activationReady: false,
     nextAction: requestedMode === 'live' ? livePrerequisites[0] : 'use_dry_run_or_fixture_boundaries_until_live_evidence_exists',
     livePrerequisites,
-    rule: 'A provider variable alone never activates production. Adapter contract, health check, integration evidence, and a confirmed provider event are required.'
+    rule: 'Provider configuration and reachability are not revenue evidence. Confirmed provider events are required before claiming attribution, commission, or payout.'
   };
 }
 
@@ -82,9 +97,16 @@ async function affiliateStatus() {
   const status = [];
   for (const adapter of adapters) {
     const health = await adapter.healthCheck();
-    status.push({ provider: adapter.name, health, trackingUrlPresent: health.ok });
+    const evidence = affiliateEvidence(adapter, health);
+    status.push({ provider: adapter.name, health, trackingUrlPresent: evidence.reachable, evidence });
   }
-  return { ok: status.some((item) => item.health.ok), affiliates: status };
+  return {
+    ok: status.some((item) => item.evidence.reachable),
+    revenueConfirmed: false,
+    attributionConfirmed: false,
+    affiliates: status,
+    rule: 'Configured/reachable affiliate links do not prove clicks, signups, conversions, commissions, or payouts.'
+  };
 }
 
 async function assertLiveActivation() {
