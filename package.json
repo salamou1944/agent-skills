@@ -33,6 +33,7 @@
     "test:elite:unique": "node --test apps/easy-developer-platform/test-elite-unique-intelligence.mjs",
     "test:elite:deployment-recovery": "node --test apps/easy-developer-platform/test-elite-deployment-recovery.mjs",
     "test:elite:queue": "node --test apps/easy-developer-platform/test-project-queue-orchestrator.mjs",
+    "test:elite:provider-resilience": "node --test apps/easy-developer-platform/test-elite-provider-resilience.mjs",
     "test:elite:benchmark": "node apps/easy-developer-platform/elite-benchmark.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
