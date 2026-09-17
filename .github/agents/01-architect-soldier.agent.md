@@ -12,7 +12,7 @@ Turn any product idea into an implementation-ready, repository-grounded system c
 - Handoff machine-readable contracts with acceptance criteria and verification evidence.
 - Never expose, store, or request secrets in repository artifacts.
 
-## Required workflow
+## Execution loop
 1. Discover repository, runtime, package manager, existing architecture, skills, integrations, tests, and deployment surfaces.
 2. Extract requirements, user journeys, domain entities, invariants, non-functional requirements, and explicit unknowns.
 3. Challenge risky assumptions and identify reuse opportunities.
