@@ -1,4 +1,5 @@
 name: Deploy MONY website to GitHub Pages
+
 on:
   push:
     branches: [main]
@@ -6,13 +7,16 @@ on:
       - 'apps/mony-web/**'
       - '.github/workflows/mony-pages.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 concurrency:
   group: mony-pages
   cancel-in-progress: false
+
 jobs:
   deploy:
     environment:
@@ -20,10 +24,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload MONY site
+        uses: actions/upload-pages-artifact@v3
         with:
           path: apps/mony-web
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
