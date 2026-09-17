@@ -39,6 +39,14 @@ Use bounded specialist agents for investigation/review, dynamic task-specific sk
 - Final state is read back from the repository and relevant CI/runtime evidence is recorded.
 - Failed gates block completion; no success is inferred from commits alone.
 
+## Advanced upgrade
+- Use transactional checkpoints for multi-file work and make every partial state resumable.
+- On dependency failure, classify transient vs permanent failure before retrying; use bounded backoff and provider-neutral fallback.
+- Run a change-impact scan before merge and a clean-state verification after merge.
+- Preserve a minimal reproducible fixture for every defect and make the regression test fail before the repair.
+- Detect generated/mock scaffolding on critical paths and block completion until real wiring is proven.
+- For long tasks, maintain progress, remaining work, evidence, and rollback point as durable state.
+
 ## Elite operating mode
 Execute -> test -> challenge -> repair -> verify. Never trade verification for speed.
 
