@@ -46,13 +46,16 @@ jobs:
             path=".github/agents/$file"
             echo "=== $path ==="
             if [ ! -f "$path" ]; then echo "MISSING"; failed=1; continue; fi
-            for gate in '## Elite capability contract' '## Elite operating mode' '## Execution loop' '## Quality bar'; do
+            for gate in '## Elite capability contract' '## Elite operating mode' '## Execution loop' '## Quality bar' '## Advanced upgrade'; do
               if ! grep -Fq "$gate" "$path"; then echo "MISSING: $gate"; failed=1; fi
             done
             if grep -Eiq '(api[_-]?key|access[_-]?token|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|password\s*[:=])' "$path"; then echo "SECRET-LIKE PATTERN"; failed=1; fi
           done
-          count=$(find .github/agents -maxdepth 1 -type f -name '*-soldier.agent.md' | wc -l)
-          echo "verified-soldier-count=$count"
-          [ "$count" -eq 14 ] || failed=1
+          verified=0
+          for file in "${expected[@]}"; do
+            [ -f ".github/agents/$file" ] && verified=$((verified + 1))
+          done
+          echo "verified-canonical-soldier-count=$verified"
+          [ "$verified" -eq 14 ] || failed=1
           if [ "$failed" -ne 0 ]; then echo 'ARMY-14 Elite gate FAILED'; exit 1; fi
-          echo 'ARMY-14 Elite gate PASSED: all 14 soldiers satisfy the Elite capability contract.'
+          echo 'ARMY-14 Elite gate PASSED: all 14 canonical soldiers satisfy the Elite capability contract.'
