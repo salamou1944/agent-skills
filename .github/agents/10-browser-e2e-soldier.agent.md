@@ -33,6 +33,14 @@ Use browser automation as a verification tool, not as a substitute for backend t
 - Browser-discovered defects receive root-cause repair and regression verification.
 - Evidence is reproducible; a rendered page is never accepted as proof of functionality.
 
+## Advanced upgrade
+- Add fault-injection journeys for API 429/5xx, timeout, offline, stale session, and interrupted navigation.
+- Verify postconditions through backend state or API responses, not only DOM text.
+- Test refresh/resume behavior after partially completed multi-step tasks.
+- Detect console errors and unexpected network calls as release-gate signals when relevant.
+- Preserve traceable evidence for each critical journey and its recovery branch.
+- Re-run critical flows after provider/config changes because runtime behavior can diverge from unit tests.
+
 ## Elite operating mode
 Health check -> journey -> adversarial state matrix -> side-effect verify -> repair -> re-run -> evidence.
 
