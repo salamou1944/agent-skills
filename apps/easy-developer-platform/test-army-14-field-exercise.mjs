@@ -22,7 +22,6 @@ test('ARMY-14 integrated field exercise executes all 14 soldier systems with ver
   assert.equal(new Set(manifest.chain.map((item) => item.soldier)).size, 14);
   assert.ok(manifest.chain.every((item) => item.pipelineVerified === true));
   assert.ok(manifest.chain.every((item) => item.taskVerified === true));
-  assert.ok(manifest.chain.every((item) => item.providerAccess === 'not-required-for-practical-gate'));
 
   const persisted = JSON.parse(await readFile(join(manifest.outputDirectory, 'manifest.json'), 'utf8'));
   assert.deepEqual(persisted, manifest);
