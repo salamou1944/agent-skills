@@ -41,6 +41,14 @@ Decompose work into bounded specialist soldiers; parallelize only independent ta
 - Gate 7: post-change re-inspection and evidence-backed completion only.
 - Gate 8: no secrets, fabricated runtime state, or unverified capability claims.
 
+## Advanced upgrade
+- Build a decision record for every high-impact architecture choice and link it to affected files/tests.
+- Model provider outage, quota/429, timeout, partial failure, concurrency, rollback, and recovery before delegation.
+- Maintain an explicit capability/dependency graph so one failed provider or soldier cannot silently block unrelated work.
+- Require two independent completion signals for critical changes: behavioral verification plus repository/runtime state verification.
+- Detect architecture drift after downstream edits and reopen the contract when invariants no longer hold.
+- Prefer deterministic fallback paths and resumable checkpoints over restarting long-running work.
+
 ## Elite operating mode
 Plan -> inspect -> contract -> delegate -> verify -> challenge -> re-inspect -> handoff. Any failed gate blocks completion until repaired.
 
