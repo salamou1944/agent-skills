@@ -7,17 +7,27 @@ import { loadState } from './operator-state.mjs';
 import { intelligenceStatus } from './operator-intelligence.mjs';
 import { executeGithubChange } from './github-operator-executor.mjs';
 import { providerReadiness } from './provider-readiness.mjs';
+import { requestInference } from './autonomous-coder.mjs';
 
 const port=Number(process.env.EASY_OPERATOR_PORT||8792);
 const bind=process.env.EASY_OPERATOR_BIND||'127.0.0.1';
 const stateFile=resolve(process.env.EASY_OPERATOR_STATE||'.easy/operator-state.json');
 const workspaceRoot=resolve(process.env.EASY_OPERATOR_WORKSPACE||'.');
 const apiKey=process.env.EASY_OPERATOR_API_KEY||'';
+const oidcAudience=String(process.env.EASY_GITHUB_OIDC_AUDIENCE||'https://easy-platform-runtime-v3-production.up.railway.app');
+const oidcRepository=String(process.env.EASY_GITHUB_OIDC_REPOSITORY||'salamou1944/Easy-');
+const oidcWorkflow=String(process.env.EASY_GITHUB_OIDC_WORKFLOW||'salamou1944/Easy-/.github/workflows/army-14-practical-easy-gate.yml@refs/heads/main');
+let oidcJwksCache={expiresAt:0,keys:[]};
 
 const send=(res,status,data)=>{res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'});res.end(JSON.stringify(data));};
 const authorized=req=>{if(!apiKey)return true;const presented=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');const a=Buffer.from(presented),b=Buffer.from(apiKey);return a.length===b.length&&crypto.timingSafeEqual(a,b)};
 async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(raw.length>100_000)throw Object.assign(new Error('body_too_large'),{status:413})}if(!raw)return{};try{return JSON.parse(raw)}catch{throw Object.assign(new Error('invalid_json'),{status:400})}}
 function projectWorkspace(project){if(typeof project!=='string'||!project.trim())return workspaceRoot;const target=resolve(workspaceRoot,project);const prefix=workspaceRoot.endsWith('/')?workspaceRoot:workspaceRoot+'/';if(target!==workspaceRoot&&!target.startsWith(prefix))return null;return target}
+function b64url(value){return Buffer.from(value).toString('base64url')}
+function decodePart(value){return JSON.parse(Buffer.from(value,'base64url').toString('utf8'))}
+async function githubJwks(){if(Date.now()<oidcJwksCache.expiresAt&&oidcJwksCache.keys.length)return oidcJwksCache.keys;const r=await fetch('https://token.actions.githubusercontent.com/.well-known/jwks');if(!r.ok)throw new Error('oidc_jwks_unavailable');const data=await r.json();if(!Array.isArray(data.keys)||!data.keys.length)throw new Error('oidc_jwks_empty');oidcJwksCache={keys:data.keys,expiresAt:Date.now()+10*60*1000};return data.keys}
+async function verifyGitHubOidc(token){const parts=String(token||'').split('.');if(parts.length!==3)throw new Error('oidc_token_invalid');let header,payload;try{header=decodePart(parts[0]);payload=decodePart(parts[1])}catch{throw new Error('oidc_token_invalid')}if(header.alg!=='RS256'||!header.kid)throw new Error('oidc_token_algorithm_invalid');const keys=await githubJwks();const jwk=keys.find(k=>k.kid===header.kid&&k.kty==='RSA');if(!jwk)throw new Error('oidc_signing_key_unknown');const key=crypto.createPublicKey({key:jwk,format:'jwk'});const signature=Buffer.from(parts[2],'base64url');const valid=crypto.verify('RSA-SHA256',Buffer.from(`${parts[0]}.${parts[1]}`),key,signature);if(!valid)throw new Error('oidc_signature_invalid');const now=Math.floor(Date.now()/1000);if(payload.iss!=='https://token.actions.githubusercontent.com')throw new Error('oidc_issuer_invalid');if(payload.aud!==oidcAudience)throw new Error('oidc_audience_invalid');if(payload.repository!==oidcRepository)throw new Error('oidc_repository_invalid');if(payload.ref!=='refs/heads/main')throw new Error('oidc_ref_invalid');if(payload.repository_visibility!=='public')throw new Error('oidc_visibility_invalid');if(payload.workflow_ref!==oidcWorkflow)throw new Error('oidc_workflow_invalid');if(!Number.isFinite(payload.exp)||payload.exp<=now)throw new Error('oidc_expired');if(Number.isFinite(payload.nbf)&&payload.nbf>now+30)throw new Error('oidc_not_yet_valid');return payload}
+async function createOidcPlan(x,req){const presented=String(req.headers.authorization||'').replace(/^Bearer\s+/i,'');if(!presented)throw Object.assign(new Error('oidc_authorization_required'),{status:401});const claims=await verifyGitHubOidc(presented);if(typeof x.goal!=='string'||!x.goal.trim())throw Object.assign(new Error('goal_required'),{status:400});const context=typeof x.context==='string'?x.context.slice(0,800000):'';const prompt=`Generate a verified autonomous coding plan for the EASY repository. The caller has already inspected repository rules. Goal: ${x.goal.slice(0,4000)}\n\nRepository context:\n${context}\n\nReturn JSON only with exactly this shape: {"summary":"...","changes":[{"path":"relative/path.ext","content":"complete file content"}]}. Keep changes minimal and evidence-driven. Allowed paths are source/test/docs files only; never modify CI workflows, secrets, credentials, deployment configuration, authentication policy, or .env files. If no safe change is justified, return an empty changes array. The plan will be syntax-checked and applied by a separate fail-closed executor.\n\nAuthenticated GitHub OIDC claims: repository=${claims.repository}; workflow_ref=${claims.workflow_ref}; ref=${claims.ref}`;const plan=await requestInference(prompt,{endpoint:process.env.EASY_OPERATOR_LLM_ENDPOINT||'https://api.openai.com/v1/chat/completions',model:process.env.EASY_OPERATOR_LLM_MODEL||'gpt-4o-mini',token:process.env.EASY_OPENAI_API_KEY||process.env.OPENAI_API_KEY||'',providerRetries:2,timeoutMs:45000,rateLimitWaitMs:15000});return {status:'PLAN_READY',plan,claims:{repository:claims.repository,workflow_ref:claims.workflow_ref,ref:claims.ref,run_id:claims.run_id}}}
 
 export async function handle(req,res){
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
@@ -31,6 +41,9 @@ export async function handle(req,res){
     }
     if(req.method==='GET'&&url.pathname==='/api/operator/tasks'){
       const state=await loadState(stateFile);return send(res,200,{tasks:(state.tasks||[]).slice(0,100)});
+    }
+    if(req.method==='POST'&&url.pathname==='/api/operator/oidc-plan'){
+      const x=await body(req);return send(res,200,await createOidcPlan(x,req));
     }
     if(req.method==='POST'&&url.pathname==='/api/operator/tasks'){
       const x=await body(req);if(typeof x.goal!=='string'||!x.goal.trim())return send(res,400,{error:'goal_required'});const workspace=projectWorkspace(x.project);if(!workspace)return send(res,400,{error:'invalid_project'});await mkdir(workspace,{recursive:true});const task=await submit(x.goal.slice(0,4000),{project:x.project||null},{stateFile,workspace});return send(res,202,task);
@@ -49,5 +62,5 @@ export async function handle(req,res){
 
 if(import.meta.url===`file://${process.argv[1]}`){
   const server=http.createServer(handle);
-  server.listen(port,bind,()=>console.log(JSON.stringify({service:'easy-ai-operator',bind,port,stateFile,workspaceRoot})));
+  server.listen(port,bind,()=>console.log(JSON.stringify({service:'easy-ai-operator',bind,port,stateFile,workspaceRoot,oidcAudience,oidcRepository,oidcWorkflow})));
 }
