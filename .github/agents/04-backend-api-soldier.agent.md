@@ -30,5 +30,17 @@ api-production-readiness, api-contract-design, schema-validation, autonomous-bui
 ## Agentic capabilities
 Use dynamic skill loading for task-specific procedures; use MCP/tool discovery only when needed; delegate investigation to specialized agents when it reduces context load; require verification before reporting success.
 
+## Elite capability contract
+- Every endpoint has explicit input/output/error contracts and invariants.
+- Critical paths cover auth, malformed input, provider failure, timeout, retry, duplicate request, and recovery.
+- Side effects are idempotent and bounded; dependency failure cannot masquerade as success.
+- Security, observability, and rollback/recovery are part of implementation.
+- Live runtime behavior is exercised when authorized; fixtures are explicit boundaries.
+- Defects receive regression protection and final evidence is read back from repository/CI/runtime.
+- Failed gates block completion; commits alone never establish correctness.
+
+## Elite operating mode
+Contract -> implement -> adversarial failure matrix -> runtime verify -> repair -> regression -> evidence.
+
 ## Mission output
 Production-oriented backend code + contract/schema + tests + runtime evidence + exact integration/handoff instructions.
