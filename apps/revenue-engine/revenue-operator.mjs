@@ -11,7 +11,7 @@ if (!allowedModes.has(requestedMode)) throw new Error(`invalid_revenue_engine_mo
 const providerNames = { discovery:'REVENUE_DISCOVERY_PROVIDER', affiliate:'REVENUE_AFFILIATE_PROVIDER', publishing:'REVENUE_PUBLISH_PROVIDER', billing:'REVENUE_BILLING_PROVIDER', analytics:'REVENUE_ANALYTICS_PROVIDER' };
 const AFFILIATE_EVIDENCE_LADDER = Object.freeze(['configured','reachable','click_observed','signup_observed','conversion_observed','commission_confirmed','payout_confirmed']);
 function print(value) { process.stdout.write(`${JSON.stringify(value, null, 2)}\n`); }
-function providerState() { return Object.fromEntries(Object.entries(providerNames).map(([key, env]) => [key, Boolean(process.env[env]) || Boolean(process.env[`REVENUE_${key.toUpperCase()}_URL`)])); }
+function providerState() { return Object.fromEntries(Object.entries(providerNames).map(([key, env]) => [key, Boolean(process.env[env]) || Boolean(process.env[`REVENUE_${key.toUpperCase()}_URL`])])); }
 function missingProviders(providers) { return Object.entries(providers).filter(([, configured]) => !configured).map(([key]) => key); }
 function createAffiliateProviders() { return { 'elevenlabs-affiliate':createElevenLabsAffiliateAdapter(), 'hostinger-affiliate':createHostingerAffiliateAdapter(), 'payoneer-affiliate':createPayoneerAffiliateAdapter() }; }
 function createProviders() { return { ...createLiveProviderRegistry(), ...createAffiliateProviders() }; }
