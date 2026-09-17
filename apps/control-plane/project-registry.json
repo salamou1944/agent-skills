@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "controlPlane": "chatgpt",
+  "orchestratorRepository": "salamou1944/agent-skills",
+  "projects": {
+    "agent-skills": {
+      "repository": "salamou1944/agent-skills",
+      "role": "orchestrator",
+      "allowed": ["read", "propose", "test", "verify"],
+      "writePolicy": "pull-request-only"
+    },
+    "Salamou-31": {
+      "repository": "salamou1944/Salamou-31",
+      "role": "ai-product-content-api",
+      "allowed": ["read", "propose", "test", "verify"],
+      "writePolicy": "pull-request-only"
+    },
+    "Easy-": {
+      "repository": "salamou1944/Easy-",
+      "role": "ecommerce-product",
+      "allowed": ["read", "propose", "test", "verify"],
+      "writePolicy": "pull-request-only"
+    },
+    "AI_operating_memory": {
+      "repository": "salamou1944/AI_operating_memory",
+      "role": "canonical-memory",
+      "allowed": ["read", "propose", "test", "verify"],
+      "writePolicy": "pull-request-only"
+    }
+  },
+  "externalSystems": {
+    "github": {"connector": "github", "required": true},
+    "railway": {"connector": "railway", "required": false},
+    "vercel": {"connector": "vercel", "required": false},
+    "supabase": {"connector": "supabase", "required": false}
+  },
+  "invariants": [
+    "projects_remain_separate",
+    "no_secret_values_in_evidence",
+    "no_completion_without_evidence",
+    "high_risk_actions_require_explicit_approval",
+    "autonomous_writes_use_pull_requests",
+    "external_connector_absence_is_fail_closed"
+  ]
+}
