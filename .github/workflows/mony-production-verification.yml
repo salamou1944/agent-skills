@@ -1,0 +1,55 @@
+name: MONY Production Verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/revenue-engine/**'
+      - 'apps/easy-developer-platform/gateway.mjs'
+      - '.github/workflows/mony-production-verification.yml'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify production gateway and MONY revenue bridge
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://easy-platform-runtime-v3-production.up.railway.app"
+
+          curl --fail --silent --show-error "$BASE/api/gateway/status" | tee gateway.json
+          node - <<'NODE'
+          const x=require('./gateway.json');
+          for (const k of ['platformOnline','operatorOnline','revenueOnline']) {
+            if (x[k] !== true) throw new Error(`gateway_${k}_not_true`);
+          }
+          NODE
+
+          curl --fail --silent --show-error "$BASE/api/revenue/health" | tee revenue-health.json
+          node - <<'NODE'
+          const x=require('./revenue-health.json');
+          if (x.ok !== true) throw new Error('revenue_health_not_ok');
+          if (x.mode !== 'live') throw new Error('revenue_mode_not_live');
+          if (x.postbackConfigured !== true) throw new Error('partnerstack_postback_not_configured');
+          if (!x.affiliate || x.affiliate.ok !== true) throw new Error('affiliate_provider_not_healthy');
+          if (!/^https:\/\//.test(String(x.affiliate.trackingUrl || x.affiliate.url || ''))) throw new Error('affiliate_link_not_https');
+          NODE
+
+          curl --fail --silent --show-error "$BASE/api/revenue/affiliate-link" | tee affiliate-link.json
+          node - <<'NODE'
+          const x=require('./affiliate-link.json');
+          if (!x.provider) throw new Error('affiliate_provider_missing');
+          if (!/^https:\/\//.test(String(x.trackingUrl || ''))) throw new Error('tracking_url_not_https');
+          NODE
+
+          curl --fail --silent --show-error "$BASE/api/revenue/ledger" | tee ledger.json
+          node - <<'NODE'
+          const x=require('./ledger.json');
+          if (!Number.isInteger(x.count) || x.count < 0) throw new Error('ledger_invalid');
+          if (x.currency !== 'USD') throw new Error('ledger_currency_invalid');
+          if (!Array.isArray(x.records)) throw new Error('ledger_records_invalid');
+          NODE
+
+          echo 'MONY_PRODUCTION_VERIFICATION=PASS'
