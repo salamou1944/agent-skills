@@ -1,9 +1,9 @@
 # System self-audit
 
-Purpose: keep a human-readable marker for cross-layer reliability work. The authoritative implementation remains in the workflows, skills, and tests.
+Cross-layer reliability contract for autonomous engineering.
 
-## Required properties
 - Provider failure must degrade safely without fabricating progress.
-- Autonomous workers must verify before persisting changes.
-- Concurrent work must be serialized when it touches the same monorepo state.
-- Product and revenue claims require end-to-end evidence, not structural presence alone.
+- Autonomous workers verify before persisting changes.
+- Concurrent work must be isolated by path scope or serialized.
+- Product and revenue claims require end-to-end evidence.
+- Progress records identify task, worker, verification, result class, blocker, and timestamp.
