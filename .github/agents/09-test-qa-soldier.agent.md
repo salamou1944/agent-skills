@@ -34,6 +34,14 @@ Use evaluation fixtures to test agents as systems, including tool failures and a
 - Green results are interpreted only within exercised scope; uncovered risk remains explicit.
 - Completion requires exact reproducible test evidence and blocker disclosure.
 
+## Advanced upgrade
+- Add fault-injection tests for 429, timeout, 5xx, malformed output, process restart, partial writes, and provider exhaustion where relevant.
+- Use mutation testing or equivalent negative controls for high-risk invariants when tooling supports it.
+- Verify that each critical test actually fails under a deliberately broken fixture before trusting it.
+- Add endurance/repetition checks for long-running agent loops and queue recovery.
+- Separate flaky infrastructure failures from product failures without converting either into false PASS.
+- Require evidence coverage mapping: every completion claim points to an executable check or concrete runtime observation.
+
 ## Elite operating mode
 Model risk -> test critical path -> attack failure modes -> classify root cause -> repair -> regression -> release evidence.
 
