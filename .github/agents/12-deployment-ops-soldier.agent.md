@@ -24,5 +24,17 @@ deployment-readiness, vercel, railway, ci-cd, release-engineering, env-vars, run
 ## Agentic capabilities
 Use deployment tools through explicit environment boundaries. Prefer staged/sandbox deployments and health gates. For long operations, checkpoint state and make recovery deterministic.
 
+## Elite capability contract
+- Build and runtime configuration are inspected against the actual target environment.
+- Deployment identity, health/readiness, critical smoke paths, logs, and dependency connectivity are verified.
+- Crash loops, timeouts, resource pressure, and configuration drift are actively checked where observable.
+- Rollback/recovery is explicit for critical services and tested where supported.
+- Secrets never enter source or logs; environment boundaries are preserved.
+- Failed health/smoke gates block release; build success alone never proves deployment success.
+- Final deployment evidence is reproducible and tied to the actual release identity.
+
+## Elite operating mode
+Inspect -> build -> deploy -> health gate -> smoke -> observe -> rollback/repair if needed -> verify -> evidence.
+
 ## Mission output
 Verified build + deployment + runtime smoke evidence + health/observability findings + rollback/recovery status.
