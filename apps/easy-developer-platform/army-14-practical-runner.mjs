@@ -1,16 +1,15 @@
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 const goal = process.env.ARMY_GOAL || process.argv.slice(2).join(' ');
 const root = process.env.ARMY_WORKSPACE || process.cwd();
+const toolRoot = join(root, '.elite-code-tools');
 const roleMatch = String(goal).match(/ARMY-14\s+([A-Za-z-]+)\s+soldier/i);
 const role = roleMatch?.[1] || 'Unknown';
 
 const plans = {
-  Architect: [
-    ['elite-engine', 'npm', ['run', 'test:elite:engine']],
-    ['elite-planner', 'npm', ['run', 'test:elite:planner']],
-  ],
+  Architect: [['elite-engine', 'npm', ['run', 'test:elite:engine']], ['elite-planner', 'npm', ['run', 'test:elite:planner']]],
   Builder: [['elite-harness', 'npm', ['run', 'test:elite:harness']]],
   'UI/UX': [['elite-components', 'npm', ['run', 'test:elite:components']]],
   'Backend/API': [['elite-components', 'npm', ['run', 'test:elite:components']], ['provider-resilience', 'npm', ['run', 'test:elite:provider-resilience']]],
@@ -33,9 +32,9 @@ const expectedProfiles = [
   '13-product-mvp-soldier.agent.md','14-research-capability-soldier.agent.md'
 ];
 
-function run(command, args) {
+function run(command, args, cwd) {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: false });
+    const child = spawn(command, args, { cwd, stdio: ['ignore', 'pipe', 'pipe'], shell: false });
     let stdout = '', stderr = '';
     child.stdout.on('data', (d) => stdout += d);
     child.stderr.on('data', (d) => stderr += d);
@@ -52,7 +51,7 @@ if (!plan) {
 }
 
 for (const [name, command, args] of plan) {
-  const result = await run(command, args);
+  const result = await run(command, args, command === 'npm' || command === 'node' ? toolRoot : root);
   console.log(`=== ${role}: ${name} ===`);
   process.stdout.write(result.stdout);
   process.stderr.write(result.stderr);
@@ -60,7 +59,7 @@ for (const [name, command, args] of plan) {
 }
 
 for (const profile of expectedProfiles) {
-  const path = `${root}/.github/agents/${profile}`;
+  const path = join(toolRoot, '.github', 'agents', profile);
   try {
     const text = await readFile(path, 'utf8');
     for (const marker of ['## Elite capability contract', '## Elite operating mode', '## Execution loop', '## Quality bar', '## Advanced upgrade']) {
