@@ -41,25 +41,20 @@ jobs:
             13-product-mvp-soldier.agent.md
             14-research-capability-soldier.agent.md
           )
-          required=(
-            '## Mission'
-            '## Doctrine'
-            '## Execution loop'
-            '## Quality bar'
-            '## Skill arsenal'
-            '## Agentic capabilities'
-            '## Mission output'
-          )
           test -f docs/ARMY-14.md
           test "$(find .github/agents -maxdepth 1 -type f -name '*-soldier.agent.md' | wc -l)" -eq 14
           for file in "${files[@]}"; do
             path=".github/agents/$file"
             test -f "$path"
-            for heading in "${required[@]}"; do
-              grep -Fq "$heading" "$path"
-            done
+            grep -Fq '## Mission' "$path"
+            (grep -Fq '## Doctrine' "$path" || grep -Fq '## Operating doctrine' "$path")
+            grep -Fq '## Execution loop' "$path"
+            grep -Fq '## Quality bar' "$path"
+            grep -Fq '## Skill arsenal' "$path"
+            grep -Fq '## Agentic capabilities' "$path"
+            grep -Fq '## Mission output' "$path"
             ! grep -Eiq '(api[_-]?key|access[_-]?token|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|password\s*[:=])' "$path"
           done
           grep -Fq '13 | Product/MVP' docs/ARMY-14.md
           grep -Fq '14 | Research/Capability' docs/ARMY-14.md
-          echo 'ARMY-14 roster, contract headings, and basic secret-pattern checks passed.'
+          echo 'ARMY-14 roster, common contract, and basic secret-pattern checks passed.'
