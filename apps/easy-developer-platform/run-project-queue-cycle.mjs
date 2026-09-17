@@ -11,10 +11,11 @@ if(!task){
   process.exit(0);
 }
 
-if(task.phase!=='mony'){
-  console.log(JSON.stringify({status:'HANDOFF_EASY',task},null,2));
-  process.exit(0);
-}
+// The queue is an execution queue, not a test-reporting queue. A passing native
+// test may prove an already-existing capability, but it is not permission to
+// mark a task NOOP unless the task's acceptance boundary explicitly says so.
+// This prevents the most dangerous failure mode in autonomous engineering:
+// converting "the old tests pass" into "the requested feature was built".
 
 function run(command,args){return new Promise(resolve=>{
   const child=spawn(command,args,{stdio:['ignore','pipe','pipe'],shell:false}); let stdout='',stderr='';
@@ -25,29 +26,14 @@ function run(command,args){return new Promise(resolve=>{
 function providerBlocker(error){
   const message=String(error?.message||error||'');
   if(message.startsWith('all_providers_exhausted:'))return {code:'all_providers_exhausted',message};
-  const match=message.match(/^provider_(?:http_(408|429|404|410|5\d{2})|timeout|quota_exhausted|unavailable|llm_provider_not_configured)$/);
+  const match=message.match(/^provider_(?:http_(408|429|404|410|5\\d{2})|timeout|quota_exhausted|unavailable|llm_provider_not_configured)$/);
   if(!match)return null;
   const code=match[1] ? `http_${match[1]}` : message.slice('provider_'.length);
   return {code,message};
 }
 
-// A task-specific passing native test is sufficient for a verified no-op only where
-// the test directly exercises that task's acceptance boundary and emits no errors.
-// This keeps the loop fail-closed when a chained command masks a sub-check failure.
-const preflightSafeNoop=new Set(['mony.product-listing-sales','mony.payment-billing','mony.pipeline','mony.reusable-services','mony.affiliate','mony.market-testing']);
-if(preflightSafeNoop.has(task.id)){
-  const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
-  if(verification.code===0&&verification.stderr.trim()===''){
-    const evidence=[{kind:'preflight-native-test',command:task.verify,exitCode:0,stdout:verification.stdout.slice(-4000),stderr:''}];
-    await markTask(stateFile,task.id,'NOOP',evidence);
-    console.log(JSON.stringify({status:'NOOP',task,verification:'passed',evidence},null,2));
-    process.exit(0);
-  }
-}
-
-// Defect closure is provider-independent when the complete Elite suite passes and
-// the repository contains no authoritative unresolved DEF-005/DEF-006 records.
-// The identifiers are assembled to keep this implementation from matching itself.
+// These two closures are genuinely provider-independent because they verify the
+// complete acceptance contract, not merely a pre-existing task test.
 if(task.id==='elite.defect-closure'){
   const verification=await run('npm',['run','test:elite']);
   const defect005=['DEF','005'].join('-');
@@ -65,10 +51,6 @@ if(task.id==='elite.defect-closure'){
   }
 }
 
-// The sixth MONY core task exists specifically to remove the provider blocker that
-// stopped Elite itself. Once the provider-recovery contract and the complete Revenue
-// Engine regression suite pass, this is a verified engineering resolution of that
-// blocker; it does not claim live revenue or fabricate provider access.
 if(task.id==='mony.first-revenue-blocker'){
   const ladder=await run(process.execPath,['--test','apps/easy-developer-platform/test-elite-provider-ladder.mjs']);
   const revenue=await run('npm',['run','test:revenue:all']);
@@ -102,7 +84,7 @@ if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
   process.exit(1);
 }
 
-const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\s+/)]);
+const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
 const evidence=[
   {kind:'autonomous-coder',status:coding.status,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
   {kind:'verification-command',command:task.verify,exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}
