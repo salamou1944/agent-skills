@@ -118,24 +118,29 @@ jobs:
           git diff --check
           node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
 
+      - name: Request GitHub OIDC token for Railway bridge
+        id: oidc
+        if: steps.elite.outcome != 'success'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const audience = 'https://easy-platform-runtime-v3-production.up.railway.app';
+            const token = await core.getIDToken(audience);
+            core.setOutput('token', token);
+
       - name: Request verified plan through Railway OpenAI bridge
         id: fallback
         if: steps.elite.outcome != 'success'
         continue-on-error: true
         env:
-          OIDC_URL: ${{ secrets.EASY_OIDC_BRIDGE_URL || 'https://easy-platform-runtime-v3-production.up.railway.app/api/operator/oidc-plan' }}
-          OIDC_AUDIENCE: ${{ secrets.EASY_GITHUB_OIDC_AUDIENCE || 'https://easy-platform-runtime-v3-production.up.railway.app' }}
-          ACTIONS_ID_TOKEN_REQUEST_URL: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }}
-          ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN }}
+          OIDC_URL: https://easy-platform-runtime-v3-production.up.railway.app/api/operator/oidc-plan
+          OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
           GOAL: ${{ inputs.goal }}
         run: |
           set -euo pipefail
-          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
-          test -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}"
-          TOKEN="$(curl -fsS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${OIDC_AUDIENCE}" | node -pe "JSON.parse(fs.readFileSync(0,'utf8')).value")"
-          test -n "$TOKEN"
+          test -n "${OIDC_TOKEN:-}"
           node -e 'const fs=require("fs"); fs.writeFileSync("/tmp/oidc-request.json", JSON.stringify({goal:process.env.GOAL,context:fs.readFileSync("/tmp/target-context.txt","utf8")},null,2))'
-          curl -fsS "$OIDC_URL" -H "Authorization: Bearer ${TOKEN}" -H 'content-type: application/json' --data-binary @/tmp/oidc-request.json > /tmp/oidc-plan-response.json
+          curl -fsS "$OIDC_URL" -H "Authorization: Bearer ${OIDC_TOKEN}" -H 'content-type: application/json' --data-binary @/tmp/oidc-request.json > /tmp/oidc-plan-response.json
           node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync("/tmp/oidc-plan-response.json","utf8")); if(r.status!=="PLAN_READY"||!r.plan) throw new Error("invalid_oidc_plan_response"); fs.writeFileSync("/tmp/oidc-plan.json",JSON.stringify(r.plan,null,2));'
           EASY_OPERATOR_PLAN_FILE=/tmp/oidc-plan.json EASY_OPERATOR_WORKSPACE="$GITHUB_WORKSPACE" node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs 'Apply the authenticated Railway-generated plan'
 
