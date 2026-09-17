@@ -1,0 +1,65 @@
+name: ARMY-14 validation
+
+on:
+  push:
+    paths:
+      - '.github/agents/**'
+      - 'docs/ARMY-14.md'
+      - '.github/workflows/army-14-validation.yml'
+  pull_request:
+    paths:
+      - '.github/agents/**'
+      - 'docs/ARMY-14.md'
+      - '.github/workflows/army-14-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-roster:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate ARMY-14 roster
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            01-architect-soldier.agent.md
+            02-builder-soldier.agent.md
+            03-ui-ux-soldier.agent.md
+            04-backend-api-soldier.agent.md
+            05-database-soldier.agent.md
+            06-security-soldier.agent.md
+            07-integration-soldier.agent.md
+            08-ai-agent-soldier.agent.md
+            09-test-qa-soldier.agent.md
+            10-browser-e2e-soldier.agent.md
+            11-debug-repair-soldier.agent.md
+            12-deployment-ops-soldier.agent.md
+            13-project-memory-soldier.agent.md
+            14-orchestrator-soldier.agent.md
+          )
+          required=(
+            '## Mission'
+            '## Doctrine'
+            '## Execution loop'
+            '## Quality bar'
+            '## Skill arsenal'
+            '## Agentic capabilities'
+            '## Mission output'
+          )
+          test -f docs/ARMY-14.md
+          test "$(printf '%s\n' .github/agents/*-soldier.agent.md | wc -l)" -eq 14
+          for file in "${files[@]}"; do
+            path=".github/agents/$file"
+            test -f "$path"
+            for heading in "${required[@]}"; do
+              grep -Fq "$heading" "$path"
+            done
+            ! grep -Eiq '(api[_-]?key|access[_-]?token|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|password\s*[:=])' "$path"
+          done
+          grep -Fq '14. Research/Capability' docs/ARMY-14.md
+          grep -Fq '13. Product/MVP' docs/ARMY-14.md
+          echo 'ARMY-14 roster, contract headings, and basic secret-pattern checks passed.'
