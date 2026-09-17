@@ -28,7 +28,10 @@ for (const soldier of SOLDIER_SYSTEMS) {
 
   assert.throws(() => transitionSoldierRun(run, 'completed'), /soldier_transition_invalid/);
   assert.throws(() => transitionSoldierRun(run, 'executing', { bad: true }), /soldier_evidence_invalid/);
-  assert.throws(() => transitionSoldierRun(verifying, 'completed', { kind: 'verification', ok: false }), /soldier_completion_verification_missing/);
+  const failedRun = createSoldierRun({ soldierId: soldier.id, taskId: `negative-${soldier.id}`, input: { fixture: true } });
+  const failedExecuting = transitionSoldierRun(failedRun, 'executing', { kind: 'action', ok: true });
+  const failedVerifying = transitionSoldierRun(failedExecuting, 'verifying', { kind: 'verification', ok: false });
+  assert.throws(() => transitionSoldierRun(failedVerifying, 'completed'), /soldier_completion_verification_missing/);
 }
 
 const snapshot = army14SystemSnapshot();
