@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node apps/easy-developer-platform/runtime.mjs",
     "start:army14:railway": "node apps/easy-developer-platform/army-14-railway-worker.mjs",
+    "monitor:build": "node apps/easy-developer-platform/build-monitor.mjs",
+    "test:build-monitor": "node --test apps/easy-developer-platform/test-build-monitor.mjs",
     "test:creative": "node apps/easy-developer-platform/test-creative-core.mjs",
     "test:creative-stage": "node apps/easy-developer-platform/test-creative-stage.mjs",
     "test:creative-provider": "node apps/easy-developer-platform/test-openai-creative-provider.mjs",
