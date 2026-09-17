@@ -129,7 +129,7 @@
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
-      "updatedAt": "2026-09-17T00:36:27.471Z"
+      "updatedAt": "2026-09-17T00:44:23.982Z"
     }
   },
   "history": [
@@ -230,6 +230,20 @@
         }
       ],
       "at": "2026-09-17T00:36:27.471Z"
+    },
+    {
+      "id": "elite.repository-repair",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.repository-repair",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "at": "2026-09-17T00:44:23.982Z"
     }
   ]
 }
