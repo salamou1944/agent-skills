@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://salamou1944.github.io/agent-skills/mony/sitemap.xml
