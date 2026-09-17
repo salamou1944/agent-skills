@@ -35,7 +35,8 @@ async function openai(path, init = {}) {
   try { body = text ? JSON.parse(text) : {}; } catch { body = { raw: text }; }
   if (!response.ok) {
     const message = body?.error?.message || `openai_http_${response.status}`;
-    throw new CreativeProviderError(message, `provider_http_${response.status}`);
+    const code = body?.error?.code || null;
+    throw new CreativeProviderError(code ? `${message} [${code}]` : message, `provider_http_${response.status}`);
   }
   return body;
 }
@@ -95,7 +96,8 @@ export function openAICreativeProvider() {
       const form=new FormData();
       form.append('model',IMAGE_MODEL);
       form.append('prompt',prompt);
-      form.append('image[]',dataUrlToBlob(dataUrl,asset.mimeType||'image/png'),asset.fileName||'product.png');
+      form.append('image',dataUrlToBlob(dataUrl,asset.mimeType||'image/png'),asset.fileName||'product.png');
+      form.append('output_format','png');
       const body=await openai('/images/edits',{method:'POST',body:form});
       const item=body?.data?.[0];
       if(!item?.b64_json) throw new CreativeProviderError('provider_returned_no_image','provider_invalid_output');
