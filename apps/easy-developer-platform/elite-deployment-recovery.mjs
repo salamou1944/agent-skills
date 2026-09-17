@@ -26,7 +26,7 @@ export function classifyDeploymentFailure(logText) {
     ['dependency', /(npm err|eresolve|peer dep|module not found|cannot find package|package-lock)/],
     ['build', /(build failed|failed to build|exit code [1-9]|syntaxerror|typeerror)/],
     ['startup', /(application failed to respond|healthcheck|health check|listen|eaddrinuse|crashed|start command)/],
-    ['configuration', /(missing.*(env|variable)|environment variable|invalid.*config|unauthorized|forbidden)/),
+    ['configuration', /(missing.*(env|variable)|environment variable|invalid.*config|unauthorized|forbidden)/],
     ['network', /(enotfound|econnrefused|etimedout|network|dns)/]
   ];
   return rules.find(([, pattern]) => pattern.test(text))?.[0] || 'unknown';
