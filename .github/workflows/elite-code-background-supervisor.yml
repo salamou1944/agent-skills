@@ -25,21 +25,17 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version: 22
-
       - name: Install existing dependencies
         run: npm ci --ignore-scripts
-
       - name: Run supervisor evidence check
         continue-on-error: true
         env:
           SUPERVISOR_REPORT_PATH: /tmp/supervisor-progress.json
         run: node skills/code-progress-supervisor/scripts/check-progress.mjs
-
       - name: Upload supervisor evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,7 +44,6 @@ jobs:
           path: /tmp/supervisor-progress.json
           if-no-files-found: error
           retention-days: 14
-
       - name: Build safe fallback context
         run: |
           : > /tmp/elite-code-context.txt
@@ -66,7 +61,6 @@ jobs:
               sed -n '1,320p' "$file" >> /tmp/elite-code-context.txt
             fi
           done
-
       - name: Run primary Elite Code engineering cycle
         id: primary
         continue-on-error: true
@@ -86,12 +80,10 @@ jobs:
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           GITHUB_TOKEN: ${{ github.token }}
         run: node apps/easy-developer-platform/autonomous-coder.mjs "Improve Elite Code autonomous engineering reliability using the verified repository state, tests, and rules. Do not edit workflows, secrets, deployment configuration, authentication policy, or protected paths. Make the smallest safe verified change; return VERIFIED_NOOP when no justified change exists."
-
       - name: Install Copilot CLI recovery
         if: steps.primary.outcome != 'success'
         continue-on-error: true
         run: npm install -g @github/copilot
-
       - name: Run independent Elite Code recovery
         id: recovery
         if: steps.primary.outcome != 'success'
@@ -103,16 +95,12 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const raw = fs.readFileSync('/tmp/elite-code-recovery-plan.raw', 'utf8').replace(/^\uFEFF/, '').trim();
-          const tryParse = (value) => {
-            try { return JSON.parse(value); } catch { return null; }
-          };
+          const tryParse = (value) => { try { return JSON.parse(value); } catch { return null; } };
           let parsed = tryParse(raw);
           if (!parsed) {
             for (let start = 0; start < raw.length && !parsed; start += 1) {
               if (raw[start] !== '{') continue;
-              let depth = 0;
-              let inString = false;
-              let escaped = false;
+              let depth = 0, inString = false, escaped = false;
               for (let i = start; i < raw.length; i += 1) {
                 const ch = raw[i];
                 if (inString) {
@@ -125,10 +113,7 @@ jobs:
                 if (ch === '{') depth += 1;
                 else if (ch === '}') {
                   depth -= 1;
-                  if (depth === 0) {
-                    parsed = tryParse(raw.slice(start, i + 1));
-                    break;
-                  }
+                  if (depth === 0) { parsed = tryParse(raw.slice(start, i + 1)); break; }
                 }
               }
             }
@@ -140,7 +125,6 @@ jobs:
           fs.writeFileSync('/tmp/elite-code-recovery-plan.json', JSON.stringify(parsed, null, 2) + '\n');
           NODE
           echo 'response-file=/tmp/elite-code-recovery-plan.json' >> "$GITHUB_OUTPUT"
-
       - name: Apply verified recovery plan
         if: steps.primary.outcome != 'success' && steps.recovery.outcome == 'success'
         env:
@@ -150,13 +134,11 @@ jobs:
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "120000"
           GITHUB_TOKEN: ${{ github.token }}
         run: node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified recovery plan for the Elite Code engineering cycle."
-
       - name: Run Elite Code contract tests
         if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
           npm run test:elite
           node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs
-
       - name: Verify repository after autonomous cycle
         if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
@@ -165,7 +147,6 @@ jobs:
           node --check apps/easy-developer-platform/operator-worker.mjs
           node --test apps/easy-developer-platform/test-elite-provider-ladder.mjs
           npm run test:elite
-
       - name: Verify provider-independent safe no-op
         id: noop
         if: steps.primary.outcome != 'success' && steps.recovery.outcome != 'success'
@@ -178,7 +159,6 @@ jobs:
           npm run test:elite
           test -z "$(git status --porcelain)"
           echo "VERIFIED_NOOP: provider-unavailable state is safe and regression-free."
-
       - name: Persist verified Elite Code progress
         if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
@@ -192,8 +172,7 @@ jobs:
             git rebase origin/main
             git push origin HEAD:main
           fi
-
-      - name: Fail if no verified provider or safe no-op completed
+      - name: Fail if no verified provider completed or safe no-op completed
         if: steps.primary.outcome != 'success' && steps.recovery.outcome != 'success' && steps.noop.outcome != 'success'
         run: |
           echo "Elite Code did not obtain a verified engineering plan and could not establish a safe no-op."
