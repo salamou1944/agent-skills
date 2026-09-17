@@ -96,11 +96,18 @@ jobs:
           EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
           EASY_OPERATOR_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
           EASY_OPERATOR_LLM_MODEL: ${{ vars.EASY_OPERATOR_LLM_MODEL || 'gpt-4o-mini' }}
+          EASY_OPERATOR_LLM_FALLBACK_MODEL: ${{ vars.EASY_OPERATOR_LLM_FALLBACK_MODEL || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_ENDPOINT || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_MODEL || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_OPERATOR_SECONDARY_LLM_API_KEY || '' }}
           EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_ENDPOINT || 'https://models.github.ai/inference' }}
           EASY_OPERATOR_GITHUB_MODELS_MODEL: ${{ vars.EASY_OPERATOR_GITHUB_MODELS_MODEL || 'openai/gpt-4o-mini' }}
           GITHUB_TOKEN: ${{ github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           EASY_OPERATOR_CODER_ATTEMPTS: '2'
+          EASY_OPERATOR_PROVIDER_RETRIES: '2'
+          EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: '15000'
+          EASY_OPERATOR_PROVIDER_TIMEOUT_MS: '45000'
         run: |
           node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$(cat /tmp/elite-goal.txt)"
 
@@ -134,6 +141,7 @@ jobs:
           if [ -f package.json ]; then
             node -e "const p=require('./package.json'); console.log('scripts:', Object.keys(p.scripts||{}).sort().join(', '))"
             if node -e "const p=require('./package.json'); process.exit(p.scripts?.test ? 0 : 1)"; then npm test --if-present; fi
+            npm run test:elite:provider-resilience --if-present
           fi
 
       - name: Persist verified changes
