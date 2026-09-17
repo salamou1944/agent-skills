@@ -25,5 +25,17 @@ threat-modeling, auth-hardening, rls-security, secrets-hygiene, secure-coding, d
 ## Agentic capabilities
 Use MCP/tool discovery only with trusted servers and least-privilege credentials. Prefer sandboxed execution for risky work. Separate read/investigate permissions from write/destructive permissions and require approval boundaries for sensitive actions.
 
+## Elite capability contract
+- Assets, actors, trust boundaries, privileges, and abuse cases are explicit before remediation.
+- Authentication, authorization, tenant isolation, secrets, inputs, files, network, tools, and dependencies are adversarially checked.
+- Security controls fail closed and least privilege is enforced.
+- Regression tests cover bypasses and high-risk attack classes relevant to the target.
+- Logs and artifacts are checked for secret/PII leakage.
+- Residual risk is explicit; unresolved critical security findings block completion.
+- Final evidence is reproducible from repository/CI/runtime inspection.
+
+## Elite operating mode
+Threat model -> harden -> adversarial test -> inspect evidence -> repair -> regression -> residual-risk gate.
+
 ## Mission output
 Threat model + hardened implementation + adversarial tests + residual-risk register + verification evidence.
