@@ -1,105 +1,104 @@
-# Agent Skills
+# Agent Skills / Elite Engineering Core
 
-A collection of skills for AI coding agents. Skills are packaged instructions and scripts that extend agent capabilities.
+This repository is the engineering core for reusable AI-agent skills, **Elite autonomous coding**, **ARMY-14 verification**, and **MONY / Revenue Engine** automation.
 
-[![skills.sh](https://skills.sh/b/vercel-labs/agent-skills)](https://skills.sh/vercel-labs/agent-skills)
+It started as a skills collection and has evolved into a broader, evidence-driven agent engineering platform.
+
+## What lives here
+
+| Layer | Location | Purpose |
+|---|---|---|
+| Reusable skills | `skills/` | Canonical agent skills and progressive-disclosure instructions |
+| Agent-local catalog | `.agents/` | Agent skill metadata and capability discovery |
+| Elite runtime | `apps/easy-developer-platform/` | Autonomous coding, supervision, repair, and verification |
+| MONY / Revenue Engine | `apps/revenue-engine/` | Revenue discovery, routing, provider adapters, evidence and measurement |
+| ARMY-14 | `.github/agents/` | Canonical 14-soldier profiles and ownership contracts |
+| GitHub automation | `.github/` | CI, agents, prompts, instructions, and orchestration workflows |
+| Shared libraries | `packages/` | Reusable implementation modules |
+| Verification | `eval/` | Evaluation and verification assets |
+| Registry | `registry/` | Capability/skill registry and discovery data |
+| Tooling | `scripts/`, `tools/` | Maintenance, validation, and operator utilities |
+| Documentation | `docs/` | Architecture and operational checkpoints |
+
+See [`docs/REPOSITORY-STRUCTURE.md`](docs/REPOSITORY-STRUCTURE.md) for the canonical layout and source-of-truth boundaries.
+
+## Engineering contract
+
+The repository is designed around evidence-backed completion:
+
+`requirements → inspect → design → implement → test → adversarial review → repair → verify → evidence`
+
+Elite distinguishes task completion from infrastructure health. In particular, `PIPELINE_VERIFIED` must never be promoted to `TASK_VERIFIED` without task-specific acceptance evidence.
+
+The same fail-closed principle applies to provider reachability, health checks, revenue evidence, and deployment verification.
+
+## GitHub + Copilot engineering layer
+
+- `.github/copilot-instructions.md` — repository-wide Copilot rules
+- `.github/instructions/` — security and path-specific rules
+- `.github/agents/` — operator, guardian, verification, and ARMY-14 agent definitions
+- `.github/prompts/` — repeatable audit and verified-change workflows
+- `.agents/skills/github-capability-audit/` — GitHub capability/access audit skill
+- `docs/GITHUB-COPILOT-EXCELLENCE.md` — capability map and engineering guidance
+
+## MONY / Revenue Engine
+
+MONY uses the architecture:
+
+`discover → verify → score → route → package → publish → measure → learn`
+
+Only provider-confirmed commission events count as revenue. A configured or reachable affiliate URL is not proof of a click, signup, conversion, commission, or payout.
+
+The canonical machine-readable MONY state lives in the separate `AI_operating_memory` repository. The local checkpoint in `docs/PROJECT-STATE-MONY.md` is an engineering snapshot, not a competing state store.
 
 ## AI Automation & API Engineering Services
 
 **From manual process to working automation.**
 
-Paid implementation, pilot, repair, and integration support for businesses:
+The repository supports implementation, repair, and integration work for:
 
 - n8n workflow automation
 - AI agents and business-process automation
-- WhatsApp lead qualification, follow-up, and human handoff
+- WhatsApp lead qualification and human handoff
 - CRM integrations and synchronization
 - REST API and webhook integrations
 - Document and data automation
-- Workflow debugging, reliability hardening, and monitoring
+- Reliability hardening and monitoring
 - Rapid MVP and production implementation
 
 **Contact:** easy@agentmail.to
 
-**Full service details:** [SERVICES.md](SERVICES.md)
+**Service details:** [`SERVICES.md`](SERVICES.md)
 
-## GitHub + Copilot Engineering Layer
+## Skill development standard
 
-This repository now includes a version-controlled Copilot operating layer for reliable GitHub work:
+Each reusable skill follows a predictable structure:
 
-- `.github/copilot-instructions.md` — repository-wide rules and engineering contract
-- `.github/instructions/` — security and skill-specific path rules
-- `.github/agents/` — GitHub Operator, Repository Guardian, and Verification Supervisor
-- `.github/prompts/` — repeatable GitHub audit and verified-change workflows
-- `.agents/skills/github-capability-audit/` — capability/access audit skill
-- `docs/GITHUB-COPILOT-EXCELLENCE.md` — current capability map, architecture, security boundaries, and official references
+```text
+skills/
+└── <skill-name>/
+    ├── SKILL.md
+    ├── scripts/       # optional
+    ├── references/    # optional
+    └── lib/           # optional
+```
 
-Start with the GitHub capability audit when access, Copilot readiness, or automation capability is unclear.
+Conventions:
 
-## Available Skills
+- Skill directories use `kebab-case`.
+- The entry file is exactly `SKILL.md`.
+- Load detailed references progressively instead of bloating `SKILL.md`.
+- Scripts fail closed when required evidence is missing.
+- Human-readable status belongs on stderr; machine-readable JSON belongs on stdout.
 
-### elite-code-engineer
+## Discovery index
 
-High-rigor coding workflow for turning requirements into production-quality software. It combines repository archaeology, architecture selection, implementation discipline, failure-path testing, adversarial review, repair loops, integration verification, and evidence-backed completion.
+Changes to skills on `main` publish an immutable GitHub release with an Agent Skills discovery index and one artifact per skill. Build locally with:
 
-**Use when:**
-
-- Building a feature or application from a requirement
-- Repairing non-trivial bugs
-- Refactoring code without breaking existing behavior
-- Working on security-sensitive or integration-heavy code
-- Requiring real validation instead of plausible generated code
-
-**Core loop:**
-
-`requirements -> inspect -> design -> implement -> test -> adversarial review -> repair -> verify -> evidence`
-
-### code-progress-supervisor
-
-Continuous engineering supervisor that tracks implementation progress, detects regressions and CI failures, drives evidence-based root-cause repair through the coding agent, and repeats validation until acceptance criteria are verified or a real external blocker remains.
-
-**Use when:**
-
-- A coding agent must continue working without manual monitoring
-- Builds/tests/CI can fail during implementation
-- Regressions need to be caught and repaired immediately
-- Completion must be evidence-backed rather than assumed
-
-**Core loop:**
-
-`inspect state -> measure progress -> detect failure -> diagnose -> repair -> validate -> record evidence -> continue`
-
-### vercel-optimize
-
-Audits a Vercel project for cost, performance, reliability, caching, function usage, and billing opportunities. It collects Vercel metrics first, then investigates only the routes and files those metrics point to.
-
-### react-best-practices
-
-React and Next.js performance optimization guidelines from Vercel Engineering.
-
-### web-design-guidelines
-
-Review UI code for compliance with web interface best practices.
-
-### writing-guidelines
-
-Review docs and prose for compliance with the Vercel writing handbook.
-
-### react-native-guidelines
-
-React Native best practices optimized for AI agents.
-
-### react-view-transitions
-
-Implement smooth, native-feeling animations using React's View Transition API.
-
-### composition-patterns
-
-React composition patterns that scale, including compound components and state lifting.
-
-### vercel-deploy-claimable
-
-Deploy applications and websites to Vercel with claimable preview deployments.
+```bash
+npm ci --ignore-scripts
+node scripts/build-discovery-index.mjs https://example.com/skills
+```
 
 ## Installation
 
@@ -107,40 +106,21 @@ Deploy applications and websites to Vercel with claimable preview deployments.
 npx skills add vercel-labs/agent-skills
 ```
 
-## Usage
+## Verification before completion
 
-Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
+Before claiming a change is complete:
 
-**Examples:**
+1. Re-read the applicable repository rules.
+2. Inspect changed files and the resulting diff.
+3. Run syntax/tests or the strongest repository-native checks available.
+4. Confirm task-specific acceptance evidence.
+5. Record unresolved limitations instead of converting infrastructure success into a completion claim.
 
-```
-Build this feature and verify it end-to-end
-```
+## Security
 
-```
-Keep implementing this project, monitor every validation failure, repair regressions, and continue until the acceptance criteria are verified
-```
+Never commit secrets, credentials, tokens, private keys, or live affiliate URLs. Do not bypass authentication, quotas, rate limits, CAPTCHA/MFA, or provider protections.
 
-```
-Review this React component for performance issues
-```
-
-## Discovery index
-
-Every change to a skill on `main` publishes an immutable GitHub release with an Agent Skills discovery index and one artifact per skill. Build the same artifacts locally with:
-
-```bash
-npm ci --ignore-scripts
-node scripts/build-discovery-index.mjs https://example.com/skills
-```
-
-## Skill Structure
-
-Each skill contains:
-
-- `SKILL.md` - Instructions for the agent
-- `scripts/` - Helper scripts for automation (optional)
-- `references/` - Supporting documentation (optional)
+See [`SECURITY.md`](SECURITY.md) for the security policy.
 
 ## License
 
