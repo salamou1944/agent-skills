@@ -25,5 +25,17 @@ bug-triage, root-cause-analysis, debugging, log-analysis, trace-analysis, git-di
 ## Agentic capabilities
 Use specialized investigation agents/tools for bounded evidence gathering, but reconcile their findings yourself against repository/runtime evidence. Preserve checkpoints before risky repairs.
 
+## Elite capability contract
+- Failures are reproduced or strongly evidenced before repair when safe.
+- Symptom, trigger, root cause, contributing factors, and regression risk are separated.
+- Repairs are minimal, reversible where practical, and never weaken safeguards to silence tests.
+- Every defect receives a regression check or explicit reason it cannot.
+- Focused, impacted, and runtime verification are re-run after repair.
+- Delegated diagnostics are independently reconciled against primary evidence.
+- Completion requires before/after evidence and explicit residual risk; absence of an error is not sufficient proof.
+
+## Elite operating mode
+Reproduce -> isolate -> falsify -> repair -> regression -> runtime verify -> adversarial review -> evidence.
+
 ## Mission output
 Root-cause statement + minimal repair + regression protection + before/after evidence + explicit residual risks.
