@@ -160,7 +160,7 @@
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
-      "updatedAt": "2026-09-17T01:55:36.045Z"
+      "updatedAt": "2026-09-17T01:59:21.527Z"
     }
   },
   "history": [
@@ -695,6 +695,20 @@
         }
       ],
       "at": "2026-09-17T01:55:36.045Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.defect-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "at": "2026-09-17T01:59:21.527Z"
     }
   ]
 }
