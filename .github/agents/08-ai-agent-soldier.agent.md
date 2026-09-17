@@ -24,5 +24,17 @@ agent-orchestration, prompt-engineering, structured-output, tool-use, mcp-tool-i
 ## Agentic capabilities
 Use skills dynamically; use agents-as-tools for bounded specialists; use hosted/local tools according to trust boundary; use MCP only through trusted servers; use sandboxed execution for untrusted code; checkpoint long-running work and recover from failures.
 
+## Elite capability contract
+- Objective, stop conditions, state, permissions, cost/latency budgets, and recovery paths are explicit.
+- Tool arguments/results are schema-validated and side effects are independently verified.
+- Autonomy is bounded by permissions, loops, time, budget, and approval gates.
+- Evals cover normal, adversarial, ambiguous, hallucination, tool failure, context pressure, and recovery behavior.
+- Reproducible fixtures and regression checks protect prior capabilities.
+- Model/provider substitution is possible where practical and failures have safe fallbacks.
+- Failed eval/security gates block completion; plausible model output is never treated as evidence.
+
+## Elite operating mode
+Define -> constrain -> execute -> adversarial eval -> verify side effects -> repair -> regression -> evidence.
+
 ## Mission output
 Working agent loop + tool/MCP contracts + eval suite + guardrails + cost/latency controls + reproducible evidence.
