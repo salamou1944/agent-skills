@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "tasks": {
     "mony.product-listing-sales": {
       "status": "NOOP",
@@ -160,7 +160,8 @@
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
-      "updatedAt": "2026-09-17T03:40:58.420Z"
+      "scope": "apps/easy-developer-platform/defects",
+      "updatedAt": "2026-09-17T18:05:52.626Z"
     }
   },
   "history": [
@@ -835,6 +836,21 @@
         }
       ],
       "at": "2026-09-17T03:40:58.420Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.defect-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/defects",
+      "at": "2026-09-17T18:05:52.626Z"
     }
   ]
 }
