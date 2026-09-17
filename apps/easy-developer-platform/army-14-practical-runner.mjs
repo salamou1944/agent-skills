@@ -20,8 +20,7 @@ async function text(path) { try{return await readFile(join(root,path),'utf8');}c
 function any(files,patterns){return files.some(f=>patterns.some(p=>p.test(f)));}
 function contains(value,patterns){return patterns.some(p=>p.test(value));}
 async function verifyRepository(files){
-  const failures=[];
-  const gitCheck=await run('git',['rev-parse','--is-inside-work-tree']);
+  const failures=[]; const gitCheck=await run('git',['rev-parse','--is-inside-work-tree']);
   if(gitCheck.ok){const diff=await run('git',['diff','--check']);if(!diff.ok) failures.push(`git_diff_check:${diff.stderr||diff.stdout||diff.error}`);}
   const pkg=await text('package.json');if(pkg){try{JSON.parse(pkg);}catch{failures.push('package_json_invalid');}}
   const js=files.filter(f=>/\.(mjs|js|cjs)$/i.test(f)).slice(0,80);
@@ -37,7 +36,8 @@ async function verifyRole(role,files){
     case 'Backend/API':if(!contains(source,[/\/api\//i,/api-registry/i,/commerce-connector/i,/fetch\(|http\.|router|server/i])) failures.push('no_api_boundary');break;
     case 'Database':if(!any(files,[/(schema|migration|supabase|prisma|drizzle|database|db)/i,/commerce-data-provider\.md$/i])) failures.push('no_data_contract_surface');break;
     case 'Security':{
-      const tracked=files.filter(f=>/\.(mjs|js|cjs|json|yml|yaml|ts|tsx|md|html)$/i.test(f)).slice(0,300);
+      const detector='apps/easy-developer-platform/army-14-practical-runner.mjs';
+      const tracked=files.filter(f=>f!==detector&&/\.(mjs|js|cjs|json|yml|yaml|ts|tsx|md|html)$/i.test(f)).slice(0,300);
       const content=(await Promise.all(tracked.map(text))).join('\n');
       const secretPattern=new RegExp('s'+'k-'+'[A-Za-z0-9]{20,}');
       const ghPattern=new RegExp('gh'+'p_'+'[A-Za-z0-9]{30,}');
