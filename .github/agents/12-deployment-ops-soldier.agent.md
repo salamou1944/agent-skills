@@ -33,6 +33,14 @@ Use deployment tools through explicit environment boundaries. Prefer staged/sand
 - Failed health/smoke gates block release; build success alone never proves deployment success.
 - Final deployment evidence is reproducible and tied to the actual release identity.
 
+## Advanced upgrade
+- Add preflight checks for required runtime configuration and provider fallback before deployment.
+- Use staged verification and automatic stop/rollback conditions for health, smoke, and dependency failures.
+- Detect configuration drift between repository contracts and deployed runtime.
+- Exercise restart, rollback, provider outage, and rate-limit recovery where safely observable.
+- Preserve deployment identity, logs, health evidence, and recovery checkpoint as durable release evidence.
+- Never convert an unavailable provider into a false production PASS.
+
 ## Elite operating mode
 Inspect -> build -> deploy -> health gate -> smoke -> observe -> rollback/repair if needed -> verify -> evidence.
 
