@@ -1,0 +1,70 @@
+name: Elite Legacy Railway Recovery
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+  push:
+    branches: [main]
+    paths:
+      - "apps/easy-developer-platform/elite-deployment-recovery.mjs"
+      - "apps/easy-developer-platform/elite-engine.mjs"
+      - "apps/easy-developer-platform/elite-harness.mjs"
+      - "apps/easy-developer-platform/elite-dna.mjs"
+      - "apps/easy-developer-platform/test-elite-deployment-recovery.mjs"
+      - ".github/workflows/elite-legacy-recovery.yml"
+
+concurrency:
+  group: elite-legacy-railway-recovery
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Verify recovery module
+        run: |
+          node --check apps/easy-developer-platform/elite-deployment-recovery.mjs
+          node --check apps/easy-developer-platform/elite-engine.mjs
+          if [ -f apps/easy-developer-platform/test-elite-deployment-recovery.mjs ]; then
+            node --test apps/easy-developer-platform/test-elite-deployment-recovery.mjs
+          fi
+
+      - name: Run Elite root-cause recovery and deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID || '778678c6-dd6e-40fe-a33e-63d0953ab7d4' }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID || 'ae3d2189-2aa5-4c5e-8ee8-9bfdc45dc2a4' }}
+          EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          EASY_OPERATOR_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
+          EASY_OPERATOR_LLM_MODEL: ${{ vars.EASY_OPERATOR_LLM_MODEL || 'gpt-4o-mini' }}
+          EASY_OPERATOR_LLM_FALLBACK_MODEL: ${{ vars.EASY_OPERATOR_LLM_FALLBACK_MODEL || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_SECONDARY_LLM_API_KEY || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_SECONDARY_LLM_ENDPOINT || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_SECONDARY_LLM_MODEL || '' }}
+          EASY_OPERATOR_PROVIDER_TIMEOUT_MS: "45000"
+          EASY_OPERATOR_PROVIDER_RETRIES: "3"
+          EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "120000"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node apps/easy-developer-platform/elite-deployment-recovery.mjs --deploy
+
+      - name: Verify clean repository state
+        run: git diff --check
