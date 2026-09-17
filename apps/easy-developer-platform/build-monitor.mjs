@@ -26,16 +26,16 @@ function projectMetrics(tasks, state) {
 }
 
 function soldierReport(state) {
-  return SOLDIER_SYSTEMS.map((soldier, index) => {
-    const task = TASKS[index] || null;
-    const taskState = task ? (state.tasks?.[task.id]?.status || 'PENDING') : 'IDLE';
+  return SOLDIER_SYSTEMS.map((soldier) => {
+    const assignments = Object.entries(state.tasks || {}).filter(([, value]) => value?.assignedSoldier === soldier.id);
+    assignments.sort((a, b) => String(b[1]?.updatedAt || '').localeCompare(String(a[1]?.updatedAt || '')));
+    const [taskId, taskState] = assignments[0] || [null, null];
     return {
-      id: soldier.id, name: soldier.name, domain: soldier.domain,
-      contract: soldier.contract, assignedTask: task?.id || null,
-      taskPhase: task?.phase || null, taskState,
-      state: taskState === 'VERIFIED' ? 'COMPLETED' : taskState === 'NOOP' ? 'VERIFIED_NOOP' : taskState === 'BLOCKED' ? 'BLOCKED' : taskState === 'FAILED' ? 'FAILED' : 'READY_OR_WAITING',
-      evidenceCount: task ? (state.tasks?.[task.id]?.evidence?.length || 0) : 0,
-      updatedAt: task ? (state.tasks?.[task.id]?.updatedAt || null) : null,
+      id: soldier.id, name: soldier.name, domain: soldier.domain, contract: soldier.contract,
+      assignedTask: taskId, taskState: taskState?.status || 'UNASSIGNED',
+      state: taskState?.status === 'VERIFIED' ? 'COMPLETED' : taskState?.status === 'NOOP' ? 'VERIFIED_NOOP' : taskState?.status === 'BLOCKED' ? 'BLOCKED' : taskState?.status === 'FAILED' ? 'FAILED' : 'NO_LIVE_ASSIGNMENT_RECORDED',
+      evidenceCount: Array.isArray(taskState?.evidence) ? taskState.evidence.length : 0,
+      updatedAt: taskState?.updatedAt || null,
     };
   });
 }
@@ -47,22 +47,23 @@ const all = projectMetrics(TASKS, state);
 const history = Array.isArray(state.history) ? state.history : [];
 const recentActivity = history.slice(-25).reverse().map((entry) => ({
   at: entry.at, taskId: entry.id, status: entry.status, scope: entry.scope,
-  evidenceCount: Array.isArray(entry.evidence) ? entry.evidence.length : 0,
+  soldierId: entry.soldierId || null, evidenceCount: Array.isArray(entry.evidence) ? entry.evidence.length : 0,
 }));
-const lastActivityAt = recentActivity[0]?.at || null;
 const report = {
   schema: 'build-monitor-v1', generatedAt: now,
   source: { queueState: stateFile, taskCount: TASKS.length, soldierCount: SOLDIER_SYSTEMS.length },
   overall: all, systems: { mony, easy }, soldiers: soldierReport(state),
-  activity: { lastActivityAt, recent: recentActivity },
+  activity: { lastActivityAt: recentActivity[0]?.at || null, recent: recentActivity },
   alerts: [
     ...(all.failed > 0 ? ['queue_contains_failed_tasks'] : []),
     ...(all.blocked > 0 ? ['queue_contains_blocked_tasks'] : []),
     ...(all.pending > 0 ? [`${all.pending}_tasks_not_terminal`] : []),
+    ...(!history.some((entry) => entry.soldierId) ? ['no_live_soldier_assignment_records_found'] : []),
   ],
   rules: {
     completionPercent: 'VERIFIED tasks / total queued tasks',
     terminalPercent: '(VERIFIED + NOOP) / total queued tasks',
+    soldierStatusRequiresRecordedAssignment: true,
     noFalseCompletion: true,
     historicalEvidenceDoesNotCountAsCurrentCompletion: true,
   },
