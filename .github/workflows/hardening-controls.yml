@@ -1,0 +1,44 @@
+name: hardening-controls
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/easy-developer-platform/evidence-ledger.mjs'
+      - 'apps/easy-developer-platform/provider-resilience.mjs'
+      - 'apps/easy-developer-platform/supervisor-state-machine.mjs'
+      - 'apps/easy-developer-platform/army-14-ownership.mjs'
+      - 'apps/easy-developer-platform/canonical-state.mjs'
+      - 'apps/easy-developer-platform/test-hardening-controls.mjs'
+      - 'apps/easy-developer-platform/provider-contract.mjs'
+      - 'apps/revenue-engine/revenue-operator.mjs'
+  pull_request:
+    paths:
+      - 'apps/easy-developer-platform/**'
+      - 'apps/revenue-engine/**'
+      - '.github/workflows/hardening-controls.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Syntax check hardening modules
+        run: |
+          node --check apps/easy-developer-platform/evidence-ledger.mjs
+          node --check apps/easy-developer-platform/provider-resilience.mjs
+          node --check apps/easy-developer-platform/supervisor-state-machine.mjs
+          node --check apps/easy-developer-platform/army-14-ownership.mjs
+          node --check apps/easy-developer-platform/canonical-state.mjs
+          node --check apps/easy-developer-platform/provider-contract.mjs
+          node --check apps/revenue-engine/revenue-operator.mjs
+      - name: Run hardening tests
+        run: node apps/easy-developer-platform/test-hardening-controls.mjs
+      - name: Verify repository whitespace
+        run: git diff --check
