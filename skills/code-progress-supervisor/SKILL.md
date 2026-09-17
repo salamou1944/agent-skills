@@ -4,7 +4,7 @@ description: "Continuous engineering supervisor that tracks repository and CI pr
 license: MIT
 metadata:
   author: salamou1944
-  version: '1.0.3'
+  version: '1.0.4'
 ---
 
 # Code Progress Supervisor
