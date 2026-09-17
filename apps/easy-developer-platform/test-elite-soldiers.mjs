@@ -26,21 +26,15 @@ for (const file of expected) {
 assert.equal(expected.length, 14, 'canonical roster must contain 14 soldiers');
 assert.equal(new Set(expected).size, 14, 'canonical soldier roster must be unique');
 
-const requiredTerms = [
-  'Elite capability contract',
-  'Advanced upgrade',
-  'verification',
-  'failure',
-  'recovery',
-  'evidence',
-];
-
 for (const file of expected) {
   const text = await readFile(`${dir}/${file}`, 'utf8');
-  const lower = text.toLowerCase();
-  for (const term of requiredTerms) {
-    assert.ok(lower.includes(term.toLowerCase()), `${file} missing required capability term: ${term}`);
-  }
+  assert.match(text, /## Elite capability contract/i, `${file} missing Elite capability contract`);
+  assert.match(text, /## Elite operating mode/i, `${file} missing Elite operating mode`);
+  assert.match(text, /## Execution loop/i, `${file} missing execution loop`);
+  assert.match(text, /## Quality bar/i, `${file} missing quality bar`);
+  assert.match(text, /## Advanced upgrade/i, `${file} missing advanced upgrade`);
+  assert.match(text, /verification|evidence/i, `${file} missing verification/evidence discipline`);
+  assert.match(text, /recovery|resilience|rollback/i, `${file} missing recovery/resilience discipline`);
 }
 
 console.log(JSON.stringify({ ok: true, canonicalSoldierCount: expected.length, canonicalSoldiers: expected, additionalSoldierFiles: available.filter((name) => !expected.includes(name)) }));
