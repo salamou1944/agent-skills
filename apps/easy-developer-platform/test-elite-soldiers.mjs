@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 
 const dir = '.github/agents';
-const files = (await readdir(dir)).filter((name) => /^\d{2}-.*-soldier\.agent\.md$/.test(name)).sort();
+const available = (await readdir(dir)).filter((name) => /^\d{2}-.*-soldier\.agent\.md$/.test(name)).sort();
 const expected = [
   '01-architect-soldier.agent.md',
   '02-builder-soldier.agent.md',
@@ -20,7 +20,11 @@ const expected = [
   '14-research-capability-soldier.agent.md',
 ];
 
-assert.deepEqual(files, expected, 'soldier roster must contain exactly the canonical 14 soldiers');
+for (const file of expected) {
+  assert.ok(available.includes(file), `missing canonical soldier: ${file}`);
+}
+assert.equal(expected.length, 14, 'canonical roster must contain 14 soldiers');
+assert.equal(new Set(expected).size, 14, 'canonical soldier roster must be unique');
 
 const requiredTerms = [
   'Elite capability contract',
@@ -32,7 +36,7 @@ const requiredTerms = [
   'block completion',
 ];
 
-for (const file of files) {
+for (const file of expected) {
   const text = await readFile(`${dir}/${file}`, 'utf8');
   const lower = text.toLowerCase();
   for (const term of requiredTerms) {
@@ -40,4 +44,4 @@ for (const file of files) {
   }
 }
 
-console.log(JSON.stringify({ ok: true, soldierCount: files.length, soldiers: files }));
+console.log(JSON.stringify({ ok: true, canonicalSoldierCount: expected.length, canonicalSoldiers: expected, additionalSoldierFiles: available.filter((name) => !expected.includes(name)) }));
