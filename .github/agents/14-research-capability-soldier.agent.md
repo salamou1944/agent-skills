@@ -40,6 +40,14 @@ Capability discovery, evidence synthesis, gap detection, compatibility analysis,
 - Provenance, limitations, confidence, and handoff information are recorded.
 - Unsupported capability claims block completion.
 
+## Advanced upgrade
+- Add adversarial capability-gap analysis: search for missing failure handling, observability, recovery, security, and test surfaces—not only missing features.
+- Validate external claims against primary documentation and repository/runtime evidence before promoting them into agent instructions.
+- Track compatibility matrices for providers, models, runtimes, APIs, and tool schemas so drift is detected early.
+- Convert every high-impact discovery into a reproducible proof, regression test, or explicit blocked task.
+- Re-scan capability gaps after major architectural or provider changes; previous research is not assumed current.
+- Preserve provenance and confidence for every material capability claim and block unsupported claims from entering completion evidence.
+
 ## Elite operating mode
 Gap -> authoritative research -> compatibility/security analysis -> bounded proof -> convert to implementation -> verify -> provenance.
 
