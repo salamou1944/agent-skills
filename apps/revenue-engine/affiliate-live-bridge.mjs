@@ -96,4 +96,4 @@ const server = createServer(async (req, res) => {
 });
 
 await ensureLedger();
-server.listen(port, '127.0.0.1', () => console.log(JSON.stringify({ service: 'mony-affiliate-live-bridge', port, live: true, partnerstackPostback: Boolean(postbackSecret) }));
+server.listen(port, '127.0.0.1', () => console.log(JSON.stringify({ service: 'mony-affiliate-live-bridge', port, live: true, partnerstackPostback: Boolean(postbackSecret) })));
