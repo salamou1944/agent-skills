@@ -1,0 +1,58 @@
+name: ARMY-14 Elite capability gate
+
+on:
+  push:
+    paths:
+      - '.github/agents/**'
+      - 'docs/ARMY-14.md'
+      - '.github/workflows/army-14-elite-gate.yml'
+  pull_request:
+    paths:
+      - '.github/agents/**'
+      - 'docs/ARMY-14.md'
+      - '.github/workflows/army-14-elite-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  elite-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Elite capability contract for every soldier
+        shell: bash
+        run: |
+          set -u
+          failed=0
+          expected=(
+            01-architect-soldier.agent.md
+            02-builder-soldier.agent.md
+            03-ui-ux-soldier.agent.md
+            04-backend-api-soldier.agent.md
+            05-database-soldier.agent.md
+            06-security-soldier.agent.md
+            07-integration-soldier.agent.md
+            08-ai-agent-soldier.agent.md
+            09-test-qa-soldier.agent.md
+            10-browser-e2e-soldier.agent.md
+            11-debug-repair-soldier.agent.md
+            12-deployment-ops-soldier.agent.md
+            13-product-mvp-soldier.agent.md
+            14-research-capability-soldier.agent.md
+          )
+          for file in "${expected[@]}"; do
+            path=".github/agents/$file"
+            echo "=== $path ==="
+            if [ ! -f "$path" ]; then echo "MISSING"; failed=1; continue; fi
+            for gate in '## Elite capability contract' '## Elite operating mode' '## Execution loop' '## Quality bar'; do
+              if ! grep -Fq "$gate" "$path"; then echo "MISSING: $gate"; failed=1; fi
+            done
+            if grep -Eiq '(api[_-]?key|access[_-]?token|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|password\s*[:=])' "$path"; then echo "SECRET-LIKE PATTERN"; failed=1; fi
+          done
+          count=$(find .github/agents -maxdepth 1 -type f -name '*-soldier.agent.md' | wc -l)
+          echo "verified-soldier-count=$count"
+          [ "$count" -eq 14 ] || failed=1
+          if [ "$failed" -ne 0 ]; then echo 'ARMY-14 Elite gate FAILED'; exit 1; fi
+          echo 'ARMY-14 Elite gate PASSED: all 14 soldiers satisfy the Elite capability contract.'
