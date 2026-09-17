@@ -1,4 +1,15 @@
-export const ARMY_14_SYSTEM_CONTRACT = 'army-14-soldier-system-v1';
+export const ARMY_14_SYSTEM_CONTRACT = 'army-14-soldier-system-v2';
+
+const STATES = Object.freeze(['ready', 'claimed', 'executing', 'verifying', 'recovering', 'completed', 'blocked']);
+const TRANSITIONS = Object.freeze({
+  ready: new Set(['claimed', 'blocked']),
+  claimed: new Set(['executing', 'blocked']),
+  executing: new Set(['verifying', 'recovering', 'blocked']),
+  verifying: new Set(['completed', 'recovering', 'blocked']),
+  recovering: new Set(['claimed', 'executing', 'blocked']),
+  completed: new Set([]),
+  blocked: new Set(['claimed', 'recovering']),
+});
 
 const roster = [
   ['01', 'architect', 'architecture', 'requirements -> architecture -> decision-record -> handoff'],
@@ -17,14 +28,33 @@ const roster = [
   ['14', 'research-capability', 'research', 'question -> evidence -> synthesis -> capability-handoff'],
 ].map(([id, name, domain, loop]) => ({ id, name, domain, loop }));
 
+const profiles = Object.freeze({
+  '01': ['architecture-valid', 'decision-record', 'handoff-integrity'],
+  '02': ['build-valid', 'tests-pass', 'artifact-integrity'],
+  '03': ['journey-valid', 'accessibility-check', 'browser-evidence'],
+  '04': ['contract-valid', 'runtime-health', 'failure-safe'],
+  '05': ['schema-integrity', 'migration-safe', 'recovery-point'],
+  '06': ['threat-model', 'control-enforcement', 'fail-closed'],
+  '07': ['adapter-boundary', 'provider-neutral', 'rollback-safe'],
+  '08': ['bounded-tools', 'policy-gate', 'execution-evidence'],
+  '09': ['acceptance-criteria', 'negative-tests', 'regression-evidence'],
+  '10': ['browser-journey', 'assertions', 'artifact-capture'],
+  '11': ['root-cause', 'minimal-patch', 'regression-proof'],
+  '12': ['release-gate', 'health-check', 'rollback-ready'],
+  '13': ['user-outcome', 'vertical-slice', 'runtime-verify'],
+  '14': ['source-quality', 'evidence-chain', 'capability-handoff'],
+});
+
 export const SOLDIER_SYSTEMS = Object.freeze(
   roster.map((soldier) => Object.freeze({
     contract: ARMY_14_SYSTEM_CONTRACT,
     ...soldier,
-    states: Object.freeze(['ready', 'claimed', 'executing', 'verifying', 'recovering', 'completed', 'blocked']),
+    controls: Object.freeze(profiles[soldier.id]),
+    states: STATES,
     requiredEvidence: Object.freeze(['input', 'action', 'verification']),
     recovery: Object.freeze(['retry-safe', 'checkpoint', 'rollback-or-safe-stop']),
     handoff: Object.freeze(['artifact', 'status', 'evidence', 'next_action']),
+    invariants: Object.freeze(['bounded-scope', 'fail-closed', 'no-silent-skip', 'reproducible-verification']),
   })),
 );
 
@@ -32,9 +62,15 @@ export function getSoldierSystem(id) {
   return SOLDIER_SYSTEMS.find((soldier) => soldier.id === String(id)) ?? null;
 }
 
+function assertEvidence(evidence) {
+  if (!evidence || typeof evidence !== 'object' || typeof evidence.kind !== 'string' || evidence.kind.length === 0) {
+    throw new Error('soldier_evidence_invalid');
+  }
+}
+
 export function createSoldierRun({ soldierId, taskId, input }) {
   const soldier = getSoldierSystem(soldierId);
-  if (!soldier || !taskId || input === undefined) throw new Error('soldier_run_invalid');
+  if (!soldier || typeof taskId !== 'string' || taskId.length === 0 || input === undefined) throw new Error('soldier_run_invalid');
   return {
     contract: ARMY_14_SYSTEM_CONTRACT,
     runId: `${soldier.id}:${taskId}`,
@@ -43,17 +79,21 @@ export function createSoldierRun({ soldierId, taskId, input }) {
     state: 'claimed',
     checkpoint: 'claimed',
     input,
-    evidence: [],
+    evidence: [{ kind: 'input', ok: true }],
     nextAction: 'execute',
   };
 }
 
 export function transitionSoldierRun(run, state, evidence = null) {
   if (!run || !SOLDIER_SYSTEMS.some((soldier) => soldier.id === run.soldierId)) throw new Error('soldier_run_unknown');
-  const allowed = new Set(['ready', 'claimed', 'executing', 'verifying', 'recovering', 'completed', 'blocked']);
-  if (!allowed.has(state)) throw new Error('soldier_state_invalid');
-  const next = { ...run, state, checkpoint: state, evidence: evidence ? [...run.evidence, evidence] : run.evidence };
-  if (state === 'completed' && next.evidence.length < 2) throw new Error('soldier_completion_evidence_insufficient');
+  if (!STATES.includes(state)) throw new Error('soldier_state_invalid');
+  if (!TRANSITIONS[run.state]?.has(state)) throw new Error('soldier_transition_invalid');
+  if (evidence !== null) assertEvidence(evidence);
+  const evidenceList = evidence ? [...run.evidence, evidence] : run.evidence;
+  if (state === 'completed' && !evidenceList.some((item) => item.kind === 'verification' && item.ok === true)) {
+    throw new Error('soldier_completion_verification_missing');
+  }
+  const next = { ...run, state, checkpoint: state, evidence: evidenceList };
   next.nextAction = state === 'completed' ? null : state === 'recovering' ? 'repair-or-retry' : state === 'verifying' ? 'verify' : 'execute';
   return next;
 }
@@ -63,11 +103,13 @@ export function verifySoldierSystem(run) {
   return Boolean(
     soldier &&
     run.contract === ARMY_14_SYSTEM_CONTRACT &&
-    run.taskId &&
+    typeof run.taskId === 'string' &&
     run.state === 'completed' &&
+    run.checkpoint === 'completed' &&
     Array.isArray(run.evidence) &&
-    run.evidence.length >= 2 &&
-    run.evidence.some((item) => item?.kind === 'verification'),
+    run.evidence.some((item) => item?.kind === 'input' && item?.ok === true) &&
+    run.evidence.some((item) => item?.kind === 'action' && item?.ok === true) &&
+    run.evidence.some((item) => item?.kind === 'verification' && item?.ok === true),
   );
 }
 
@@ -75,11 +117,13 @@ export function army14SystemSnapshot() {
   return {
     contract: ARMY_14_SYSTEM_CONTRACT,
     count: SOLDIER_SYSTEMS.length,
-    soldiers: SOLDIER_SYSTEMS.map(({ id, name, domain, loop }) => ({ id, name, domain, loop })),
+    soldiers: SOLDIER_SYSTEMS.map(({ id, name, domain, loop, controls }) => ({ id, name, domain, loop, controls })),
     invariants: [
       'every soldier has an isolated bounded system contract',
+      'every run follows an explicit state machine',
       'every run is checkpointed and resumable',
-      'completion requires verification evidence',
+      'completion requires input + action + successful verification evidence',
+      'invalid transitions and malformed evidence fail closed',
       'recovery is retry-safe and supports rollback-or-safe-stop',
       'handoffs are explicit artifacts rather than implicit state',
     ],
