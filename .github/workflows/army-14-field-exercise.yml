@@ -1,0 +1,32 @@
+name: ARMY-14 integrated field exercise
+
+on:
+  push:
+    paths:
+      - '.github/agents/**'
+      - 'apps/easy-developer-platform/test-army-14-field-exercise.mjs'
+      - 'package.json'
+      - '.github/workflows/army-14-field-exercise.yml'
+  pull_request:
+    paths:
+      - '.github/agents/**'
+      - 'apps/easy-developer-platform/test-army-14-field-exercise.mjs'
+      - 'package.json'
+      - '.github/workflows/army-14-field-exercise.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  field-exercise:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run integrated ARMY-14 field exercise
+        run: npm run test:elite:field-exercise
