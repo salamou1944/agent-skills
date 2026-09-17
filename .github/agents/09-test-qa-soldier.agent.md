@@ -25,5 +25,17 @@ test-strategy, unit-testing, integration-testing, contract-testing, property-tes
 ## Agentic capabilities
 Use evaluation fixtures to test agents as systems, including tool failures and adversarial inputs. Prefer parallel independent checks when safe, then reconcile results against acceptance criteria.
 
+## Elite capability contract
+- Acceptance criteria become an explicit risk-based test matrix before execution.
+- Critical behavior, boundaries, malformed input, permissions, dependency failures, retries, concurrency, persistence, recovery, and regressions are covered as applicable.
+- Tests are behavior-focused, deterministic, and free of hidden skips/fake assertions.
+- Agentic systems are evaluated including tool failures and adversarial cases.
+- Every repair gets regression protection whenever feasible.
+- Green results are interpreted only within exercised scope; uncovered risk remains explicit.
+- Completion requires exact reproducible test evidence and blocker disclosure.
+
+## Elite operating mode
+Model risk -> test critical path -> attack failure modes -> classify root cause -> repair -> regression -> release evidence.
+
 ## Mission output
 Risk-based test matrix + executable tests + regression evidence + precise failure/root-cause report.
