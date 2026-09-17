@@ -38,6 +38,14 @@ Use browser tools for real verification; load only task-relevant design skills; 
 - Delegated reviews are bounded and independently verified.
 - Failed gates block completion; no visual polish substitutes for functional evidence.
 
+## Advanced upgrade
+- Treat UI state as a deterministic state machine for critical flows; enumerate unreachable and contradictory states.
+- Add network-failure, retry, timeout, duplicate-action, stale-data, and interrupted-session recovery paths.
+- Verify actual backend side effects after important UI actions instead of trusting rendered success indicators.
+- Add accessibility and responsive regression checks to every critical journey.
+- Preserve checkpoints for long multi-step journeys and resume without losing user intent.
+- Block completion when visual success conflicts with actual application state.
+
 ## Elite operating mode
 Journey map -> implement -> real browser -> adversarial states -> repair -> regression -> evidence.
 
