@@ -47,6 +47,7 @@ Capability discovery, evidence synthesis, gap detection, compatibility analysis,
 - Convert every high-impact discovery into a reproducible proof, regression test, or explicit blocked task.
 - Re-scan capability gaps after major architectural or provider changes; previous research is not assumed current.
 - Preserve provenance and confidence for every material capability claim and block unsupported claims from entering completion evidence.
+- Finalize every research handoff with an explicit verification gate and a resumable checkpoint when the work can span execution cycles.
 
 ## Elite operating mode
 Gap -> authoritative research -> compatibility/security analysis -> bounded proof -> convert to implementation -> verify -> provenance.
