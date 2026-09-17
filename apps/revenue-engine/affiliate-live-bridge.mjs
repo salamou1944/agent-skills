@@ -7,7 +7,10 @@ import { createElevenLabsAffiliateAdapter } from './elevenlabs-affiliate-adapter
 const port = Number(process.env.MONY_REVENUE_PORT || 8796);
 const ledgerPath = process.env.MONY_REVENUE_LEDGER_PATH || '.easy/mony/revenue-ledger.jsonl';
 const postbackSecret = String(process.env.MONY_PARTNERSTACK_POSTBACK_SECRET || '').trim();
+const apiKey = String(process.env.EASY_OPENAI_API_KEY || '').trim();
+const textModel = String(process.env.MONY_TEXT_MODEL || 'gpt-4.1-mini').trim();
 const engine = createEngine({ mode: 'live', providers: { 'elevenlabs-affiliate': createElevenLabsAffiliateAdapter() } });
+const requestWindow = new Map();
 
 async function ensureLedger() { await mkdir(dirname(ledgerPath), { recursive: true }); }
 async function appendLedger(record) { await ensureLedger(); await appendFile(ledgerPath, `${JSON.stringify(record)}\n`, 'utf8'); }
@@ -28,9 +31,13 @@ async function body(req) {
   }
   return raw ? JSON.parse(raw) : {};
 }
-function json(res, status, value) {
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+function json(res, status, value, extraHeaders = {}) {
+  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', ...extraHeaders });
   res.end(JSON.stringify(value));
+}
+function html(res, status, value) {
+  res.writeHead(status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
+  res.end(value);
 }
 function authorizedPostback(pathname) {
   return Boolean(postbackSecret) && pathname === `/api/revenue/partnerstack/${encodeURIComponent(postbackSecret)}`;
@@ -57,20 +64,87 @@ async function handleReward(event) {
   return record;
 }
 
+function rateLimitKey(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || String(req.socket.remoteAddress || 'local');
+}
+function checkRateLimit(req) {
+  const key = rateLimitKey(req);
+  const now = Date.now();
+  const windowMs = 60_000;
+  const current = requestWindow.get(key) || { started: now, count: 0 };
+  if (now - current.started >= windowMs) { current.started = now; current.count = 0; }
+  current.count += 1;
+  requestWindow.set(key, current);
+  if (current.count > 12) return Math.ceil((windowMs - (now - current.started)) / 1000);
+  return 0;
+}
+
+async function openAIJson(system, user, schema) {
+  if (!apiKey) throw Object.assign(new Error('mony_ai_provider_not_configured'), { code: 'provider_credentials_missing', status: 503 });
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      model: textModel,
+      store: false,
+      input: [{ role: 'system', content: [{ type: 'input_text', text: system }] }, { role: 'user', content: [{ type: 'input_text', text: user }] }],
+      text: { format: { type: 'json_schema', name: 'mony_work_result', strict: true, schema } }
+    })
+  });
+  const retryAfter = response.headers.get('retry-after');
+  const raw = await response.text();
+  let parsed = {};
+  try { parsed = raw ? JSON.parse(raw) : {}; } catch { parsed = { raw }; }
+  if (!response.ok) {
+    const error = Object.assign(new Error(parsed?.error?.message || `openai_http_${response.status}`), { status: response.status, code: `provider_http_${response.status}` });
+    if (retryAfter) error.retryAfter = retryAfter;
+    throw error;
+  }
+  const text = parsed?.output_text || parsed?.output?.flatMap((item) => item?.content || []).find((part) => part?.type === 'output_text')?.text;
+  if (!text) throw Object.assign(new Error('provider_invalid_output'), { status: 502, code: 'provider_invalid_output' });
+  try { return JSON.parse(text); } catch { throw Object.assign(new Error('provider_invalid_json'), { status: 502, code: 'provider_invalid_output' }); }
+}
+
+const schemas = {
+  product: { type: 'object', additionalProperties: false, properties: { title:{type:'string'}, short_description:{type:'string'}, description:{type:'string'}, selling_points:{type:'array',items:{type:'string'}}, ad_copy:{type:'string'}, cta:{type:'string'}, audience:{type:'string'}, cautions:{type:'array',items:{type:'string'}} }, required:['title','short_description','description','selling_points','ad_copy','cta','audience','cautions'] },
+  voice: { type: 'object', additionalProperties: false, properties: { title:{type:'string'}, cleaned_script:{type:'string'}, delivery_notes:{type:'string'}, hook:{type:'string'}, cta:{type:'string'} }, required:['title','cleaned_script','delivery_notes','hook','cta'] },
+  offer: { type: 'object', additionalProperties: false, properties: { offer_name:{type:'string'}, promise:{type:'string'}, deliverables:{type:'array',items:{type:'string'}}, turnaround:{type:'string'}, price_positioning:{type:'string'}, outreach_message:{type:'string'}, qualification_questions:{type:'array',items:{type:'string'}} }, required:['offer_name','promise','deliverables','turnaround','price_positioning','outreach_message','qualification_questions'] }
+};
+
+async function runWork(input = {}) {
+  const task = String(input.task || '').trim();
+  const source = String(input.source || '').trim();
+  if (!['product','voice','offer'].includes(task)) throw Object.assign(new Error('unsupported_mony_task'), { status: 422 });
+  if (source.length < 12 || source.length > 20_000) throw Object.assign(new Error('source_must_be_12_to_20000_characters'), { status: 422 });
+  if (task === 'product') return { task, provider: `openai:${textModel}`, result: await openAIJson('You are MONY Product Content. Produce commercially useful copy from only the supplied product facts. Never invent prices, certifications, ingredients, guarantees, medical claims, or product capabilities.', `Create a complete product-content package from these facts:\n${source}`, schemas.product) };
+  if (task === 'voice') return { task, provider: `openai:${textModel}`, result: await openAIJson('You are MONY Voice Studio. Turn supplied material into a natural voiceover script. Preserve factual meaning and do not invent claims. Optimize pacing for spoken delivery.', `Prepare this material for professional voiceover:\n${source}`, schemas.voice) };
+  return { task, provider: `openai:${textModel}`, result: await openAIJson('You are MONY Client Offer Builder. Turn the supplied business problem into a concrete, sellable service offer. Do not invent client facts or guaranteed results. Keep the offer operational and easy to deliver.', `Build a service offer from this problem/context:\n${source}`, schemas.offer) };
+}
+
+const workbench = () => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MONY — AI Workbench</title><style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#050b14;color:#edf7ff}main{max-width:1080px;margin:auto;padding:24px 18px 60px}.nav{display:flex;justify-content:space-between;align-items:center;padding:8px 2px 26px}.logo{font-size:30px;font-weight:950}.live{font-size:12px;padding:7px 10px;border:1px solid #31506d;border-radius:999px;color:#bfe9ff}.hero{padding:32px 24px;border:1px solid #29465f;border-radius:26px;background:#0a1725}.hero h1{font-size:clamp(34px,7vw,58px);line-height:1;margin:8px 0 12px;letter-spacing:-2px}.hero p{color:#9eb4c9;line-height:1.65;max-width:760px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}.card{padding:20px;border:1px solid #243f56;border-radius:20px;background:#08131f}.card h2{margin:0 0 8px;font-size:19px}.card p{color:#91a7bb;line-height:1.5;font-size:14px}.card button,.partner{width:100%;padding:13px 15px;border:0;border-radius:11px;background:#73dcff;color:#031019;font-weight:900;cursor:pointer;margin-top:14px}.workspace{margin-top:16px;padding:22px;border:1px solid #29465f;border-radius:20px;background:#07111c}.workspace h2{margin-top:0}.workspace textarea{width:100%;min-height:170px;resize:vertical;background:#050c14;color:#eef8ff;border:1px solid #29465f;border-radius:12px;padding:14px;font:inherit;line-height:1.5}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{width:auto;min-width:180px}.status{color:#8fa8be;font-size:13px;margin-top:12px}.result{margin-top:16px;display:none;background:#050c14;border:1px solid #29465f;border-radius:14px;padding:16px;white-space:pre-wrap;line-height:1.6;overflow:auto}.result.show{display:block}.partner{display:block;text-align:center;text-decoration:none;margin-top:16px}.disclosure{font-size:12px;color:#6f8498;line-height:1.5;margin-top:20px}@media(max-width:760px){.grid{grid-template-columns:1fr}.hero{padding:26px 18px}}</style></head><body><main><div class="nav"><div class="logo">MONY</div><div class="live">AI Workbench</div></div><section class="hero"><div>REAL CUSTOMER WORKSPACE</div><h1>Do the work here. Use providers only when they add value.</h1><p>MONY is now the interface: create product content, prepare voice scripts, or turn a business problem into a sellable service offer. AI generation runs behind MONY; partner tools remain optional.</p></section><section class="grid"><div class="card"><h2>Product Content</h2><p>Turn product facts into a ready listing, selling points, ad copy and CTA.</p><button data-task="product">Use Product Content</button></div><div class="card"><h2>Voice Studio</h2><p>Turn a script or rough idea into a clean, natural voiceover-ready script.</p><button data-task="voice">Use Voice Studio</button></div><div class="card"><h2>Client Offer</h2><p>Turn a business problem into a concrete service package and outreach message.</p><button data-task="offer">Build Client Offer</button></div></section><section class="workspace"><h2 id="taskTitle">Choose a service</h2><p id="hint">Select one of the three services above, then paste the material you want MONY to work on.</p><textarea id="source" placeholder="Your product facts, script, or client problem..."></textarea><div class="actions"><button id="run" disabled>Run MONY</button><a id="partner" class="partner" href="#" target="_blank" rel="sponsored noopener noreferrer" style="display:none">Open verified AI voice partner</a></div><div id="status" class="status"></div><pre id="result" class="result"></pre></section><p class="disclosure">MONY uses AI providers behind the product interface. Affiliate links are disclosed and are optional; MONY only records revenue after a provider confirms a qualifying reward.</p></main><script>let task='';const title=document.getElementById('taskTitle'),hint=document.getElementById('hint'),source=document.getElementById('source'),run=document.getElementById('run'),status=document.getElementById('status'),result=document.getElementById('result'),partner=document.getElementById('partner');const config={product:['Product Content','Paste product facts, features, materials, audience and any verified claims.'],voice:['Voice Studio','Paste the script, notes or rough copy you want prepared for narration.'],offer:['Client Offer','Describe the business problem, target client and service context.']};document.querySelectorAll('[data-task]').forEach(b=>b.onclick=()=>{task=b.dataset.task;title.textContent=config[task][0];hint.textContent=config[task][1];run.disabled=false;source.focus();result.classList.remove('show');partner.style.display=task==='voice'?'block':'none';if(task==='voice')loadPartner()});async function loadPartner(){try{const r=await fetch('/api/revenue/affiliate-link',{cache:'no-store'});const b=await r.json();if(r.ok&&b.trackingUrl){partner.href=b.trackingUrl;status.textContent='Verified partner link ready. You can use MONY first, then continue to the partner if needed.'}else throw new Error()}catch{partner.style.display='none';status.textContent='AI voice partner link is temporarily unavailable; MONY services remain available.'}}run.onclick=async()=>{if(!task||source.value.trim().length<12)return;run.disabled=true;status.textContent='MONY is processing…';result.classList.remove('show');try{const r=await fetch('/api/revenue/mony/work',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({task,source:source.value})});const b=await r.json();if(!r.ok)throw Object.assign(new Error(b.error||'request_failed'),{retryAfter:r.headers.get('retry-after')});result.textContent=JSON.stringify(b.result,null,2);result.classList.add('show');status.textContent='Completed by MONY.'}catch(e){status.textContent=e.retryAfter?`Provider rate limit. Retry in ${e.retryAfter}s.`:`MONY could not complete this run: ${e.message}`}finally{run.disabled=false}};</script></body></html>`;
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     if (req.method === 'GET' && url.pathname === '/api/revenue/health') {
       const adapter = createElevenLabsAffiliateAdapter();
       const affiliate = await adapter.healthCheck();
-      return json(res, 200, { ok: true, mode: 'live', affiliate, postbackConfigured: Boolean(postbackSecret), ledgerPath, rule: 'Only PartnerStack reward events that are cash-eligible are recorded as revenue.' });
+      return json(res, 200, { ok: true, mode: 'live', affiliate, ai: { configured: Boolean(apiKey), model: textModel }, postbackConfigured: Boolean(postbackSecret), ledgerPath, rule: 'Only PartnerStack reward events that are cash-eligible are recorded as revenue.' });
     }
     if (req.method === 'GET' && url.pathname === '/api/revenue/affiliate-link') {
       const adapter = createElevenLabsAffiliateAdapter();
       const health = await adapter.healthCheck();
       if (!health.ok) return json(res, 503, { error: 'affiliate_unavailable' });
-      const result = await adapter.execute({ action: 'tracking_url' });
-      return json(res, 200, { provider: result.provider, trackingUrl: result.trackingUrl, disclosureRequired: true });
+      return json(res, 200, { provider: 'mony', trackingUrl: '/api/revenue/mony/workbench', partnerTrackingUrl: (await adapter.execute({ action: 'tracking_url' })).trackingUrl, disclosureRequired: true });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/revenue/mony/workbench') return html(res, 200, workbench());
+    if (req.method === 'POST' && url.pathname === '/api/revenue/mony/work') {
+      const retryAfter = checkRateLimit(req);
+      if (retryAfter) return json(res, 429, { error: 'rate_limited', retryAfter }, { 'retry-after': String(retryAfter) });
+      const input = await body(req);
+      const result = await runWork(input);
+      return json(res, 200, result);
     }
     if (req.method === 'GET' && url.pathname === '/api/revenue/ledger') {
       const records = await readLedger();
@@ -84,9 +158,11 @@ const server = createServer(async (req, res) => {
     }
     return json(res, 404, { error: 'not_found' });
   } catch (error) {
-    return json(res, 400, { error: error.message });
+    const status = Number(error.status || 400);
+    const headers = error.retryAfter ? { 'retry-after': String(error.retryAfter) } : {};
+    return json(res, status, { error: error.message || 'request_failed', code: error.code || 'request_failed' }, headers);
   }
 });
 
 await ensureLedger();
-server.listen(port, '127.0.0.1', () => console.log(JSON.stringify({ service: 'mony-affiliate-live-bridge', port, live: true, partnerstackPostback: Boolean(postbackSecret) })));
+server.listen(port, '127.0.0.1', () => console.log(JSON.stringify({ service: 'mony-affiliate-live-bridge', port, live: true, partnerstackPostback: Boolean(postbackSecret), aiConfigured: Boolean(apiKey), textModel })));
