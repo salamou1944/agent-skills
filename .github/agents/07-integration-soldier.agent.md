@@ -33,6 +33,14 @@ Discover/load only relevant skills; use MCP servers as explicit tool boundaries;
 - Drift and dependency failures have regression protection and documented recovery.
 - Completion requires repository/runtime evidence, not a successful compile alone.
 
+## Advanced upgrade
+- Classify provider errors into retryable, degradable, and terminal classes with bounded budgets.
+- Implement provider ladder/failover without duplicating side effects or weakening authorization.
+- Honor Retry-After and provider quotas; add jitter and hard deadlines to prevent retry storms.
+- Detect contract/schema drift before it corrupts persisted state and preserve diagnostic evidence.
+- Make webhook and queue processing idempotent across redelivery and worker restart.
+- Exercise outage, timeout, partial-success, and fallback paths in deterministic tests.
+
 ## Elite operating mode
 Discover contract -> adapter -> failure matrix -> live/fixture verify -> drift challenge -> repair -> regression -> evidence.
 
