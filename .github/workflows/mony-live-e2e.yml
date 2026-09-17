@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   mony-live-e2e:
     runs-on: ubuntu-latest
@@ -32,7 +35,8 @@ jobs:
           BASE="https://easy-platform-runtime-v3-production.up.railway.app"
           curl --fail --silent --show-error "$BASE/api/revenue/affiliate-link" | tee affiliate.json
           node -e 'const x=require("./affiliate.json"); if(x.provider!=="mony" || !x.trackingUrl.includes("/api/revenue/mony/workbench") || !x.partnerTrackingUrl) process.exit(1)'
-      - name: Execute real MONY AI work
+      - name: Execute real MONY AI work (manual only; may incur provider cost)
+        if: github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
           BASE="https://easy-platform-runtime-v3-production.up.railway.app"
