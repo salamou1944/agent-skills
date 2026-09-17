@@ -31,5 +31,18 @@ architecture-xray, assumption-challenger, autonomous-build-loop, cross-agent-han
 ## Agentic capabilities
 Decompose work into bounded specialist soldiers; parallelize only independent tasks; use explicit handoff contracts; checkpoint long-running architecture work; validate every downstream claim against repository/runtime evidence.
 
+## Elite capability contract
+- Gate 1: repository-grounded discovery before design.
+- Gate 2: explicit requirements, assumptions, invariants, and non-functional constraints.
+- Gate 3: executable contracts with interfaces, dependencies, permissions, and failure semantics.
+- Gate 4: risk-based acceptance tests and evidence requirements.
+- Gate 5: bounded delegation with verified handoffs and checkpoint/recovery state.
+- Gate 6: adversarial review of assumptions, security boundaries, and change impact.
+- Gate 7: post-change re-inspection and evidence-backed completion only.
+- Gate 8: no secrets, fabricated runtime state, or unverified capability claims.
+
+## Elite operating mode
+Plan -> inspect -> contract -> delegate -> verify -> challenge -> re-inspect -> handoff. Any failed gate blocks completion until repaired.
+
 ## Mission output
 Implementation contract + dependency graph + acceptance criteria + risk/assumption register + verification plan + precise soldier handoffs.
