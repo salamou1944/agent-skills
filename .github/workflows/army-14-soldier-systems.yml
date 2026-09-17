@@ -5,15 +5,19 @@ on:
     paths:
       - '.github/agents/**'
       - 'apps/easy-developer-platform/soldier-systems/**'
+      - 'apps/easy-developer-platform/army-14-practical-runner.mjs'
       - 'apps/easy-developer-platform/test-army-14-soldier-systems.mjs'
       - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/army-14-soldier-systems.yml'
   pull_request:
     paths:
       - '.github/agents/**'
       - 'apps/easy-developer-platform/soldier-systems/**'
+      - 'apps/easy-developer-platform/army-14-practical-runner.mjs'
       - 'apps/easy-developer-platform/test-army-14-soldier-systems.mjs'
       - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/army-14-soldier-systems.yml'
   workflow_dispatch:
 
@@ -34,3 +38,5 @@ jobs:
         run: npm run test:army14:systems
       - name: Verify canonical ARMY-14 field exercise
         run: npm run test:elite:field-exercise
+      - name: Verify integrated practical execution for all 14
+        run: npm run test:army14:practical
