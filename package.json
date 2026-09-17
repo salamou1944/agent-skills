@@ -25,7 +25,7 @@
     "revenue:markets": "node apps/revenue-engine/test-market-strategy.mjs",
     "revenue:campaign": "node apps/revenue-engine/test-campaign-planner.mjs",
     "revenue:affiliate:test": "node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs",
-    "test:elite": "node --test apps/easy-developer-platform/test-elite-code-supervisor.mjs",
+    "test:elite": "node --test apps/easy-developer-platform/test-elite-code-supervisor.mjs && node --test apps/easy-developer-platform/task-result-gate.test.mjs",
     "test:elite:harness": "node --test apps/easy-developer-platform/test-elite-harness.mjs",
     "test:elite:engine": "node --test apps/easy-developer-platform/test-elite-engine.mjs",
     "test:elite:components": "node --test apps/easy-developer-platform/test-elite-components.mjs",
