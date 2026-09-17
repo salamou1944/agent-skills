@@ -24,7 +24,7 @@ jobs:
       - name: Validate ARMY-14 roster
         shell: bash
         run: |
-          set -euo pipefail
+          set -u
           files=(
             01-architect-soldier.agent.md
             02-builder-soldier.agent.md
@@ -41,20 +41,22 @@ jobs:
             13-product-mvp-soldier.agent.md
             14-research-capability-soldier.agent.md
           )
-          test -f docs/ARMY-14.md
-          test "$(find .github/agents -maxdepth 1 -type f -name '*-soldier.agent.md' | wc -l)" -eq 14
+          failed=0
+          count=$(find .github/agents -maxdepth 1 -type f -name '*-soldier.agent.md' | wc -l)
+          echo "soldier-file-count=$count"
+          if [ "$count" -ne 14 ]; then failed=1; fi
+          test -f docs/ARMY-14.md || failed=1
           for file in "${files[@]}"; do
             path=".github/agents/$file"
-            test -f "$path"
-            grep -Fq '## Mission' "$path"
-            (grep -Fq '## Doctrine' "$path" || grep -Fq '## Operating doctrine' "$path")
-            grep -Fq '## Execution loop' "$path"
-            grep -Fq '## Quality bar' "$path"
-            grep -Fq '## Skill arsenal' "$path"
-            grep -Fq '## Agentic capabilities' "$path"
-            grep -Fq '## Mission output' "$path"
-            ! grep -Eiq '(api[_-]?key|access[_-]?token|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|password\s*[:=])' "$path"
+            echo "checking $path"
+            if [ ! -f "$path" ]; then echo "MISSING $path"; failed=1; continue; fi
+            for heading in '## Mission' '## Execution loop' '## Quality bar' '## Skill arsenal' '## Agentic capabilities' '## Mission output'; do
+              if ! grep -Fq "$heading" "$path"; then echo "MISSING HEADING: $heading in $path"; failed=1; fi
+            done
+            if ! grep -Fq '## Doctrine' "$path" && ! grep -Fq '## Operating doctrine' "$path"; then echo "MISSING DOCTRINE in $path"; failed=1; fi
+            if grep -Eiq '(api[_-]?key|access[_-]?token|BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY|password\s*[:=])' "$path"; then echo "SECRET-LIKE PATTERN in $path"; failed=1; fi
           done
-          grep -Fq '13 | Product/MVP' docs/ARMY-14.md
-          grep -Fq '14 | Research/Capability' docs/ARMY-14.md
-          echo 'ARMY-14 roster, common contract, and basic secret-pattern checks passed.'
+          grep -Fq '13 | Product/MVP' docs/ARMY-14.md || { echo 'MISSING PRODUCT/MVP REGISTRY ENTRY'; failed=1; }
+          grep -Fq '14 | Research/Capability' docs/ARMY-14.md || { echo 'MISSING RESEARCH REGISTRY ENTRY'; failed=1; }
+          if [ "$failed" -ne 0 ]; then echo 'ARMY-14 validation FAILED'; exit 1; fi
+          echo 'ARMY-14 validation PASSED.'
