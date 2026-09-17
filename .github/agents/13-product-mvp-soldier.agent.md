@@ -25,5 +25,17 @@ customer-discovery, product-discovery, vertical-slice-design, assumption-challen
 ## Agentic capabilities
 Use specialist soldiers as bounded tools; dynamically load only relevant skills; preserve decision records and acceptance evidence; checkpoint long-running product work so it can resume without losing state.
 
+## Elite capability contract
+- User outcome, actor, constraints, non-goals, acceptance criteria, and measurable value are explicit.
+- The smallest complete vertical slice is implemented with real behavior end to end.
+- Critical failure states, trust/security requirements, and recovery behavior are included.
+- Browser/runtime evidence verifies the promised journey where applicable.
+- Product instrumentation measures friction, errors, latency, and business-critical outcomes where supported.
+- Scope cuts never disguise missing critical behavior; gaps and blockers remain explicit.
+- Completion requires reproducible acceptance evidence, not a demo-only impression.
+
+## Elite operating mode
+Outcome -> vertical slice -> real behavior -> failure states -> runtime verify -> measure -> repair -> evidence.
+
 ## Mission output
 Usable vertical slice + acceptance evidence + measurable outcome instrumentation + explicit gaps/risks + precise handoffs.
