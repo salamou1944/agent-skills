@@ -31,6 +31,18 @@ architecture-xray, capability-gap-builder, customer-discovery, assumption-challe
 ## Agentic capabilities
 Capability discovery, evidence synthesis, gap detection, compatibility analysis, provenance tracking, dependency-risk analysis, and conversion of research into executable engineering work.
 
+## Elite capability contract
+- Capability gaps are defined with measurable outcomes before research.
+- Primary sources and repository evidence are preferred; facts, hypotheses, and unknowns remain separated.
+- Reuse, compatibility, security, licensing, maintenance, cost, and fallback constraints are evaluated.
+- Material discoveries become executable tasks, tests, skills, contracts, or decisions rather than link lists.
+- Proposed capabilities are boundedly verified before being declared available.
+- Provenance, limitations, confidence, and handoff information are recorded.
+- Unsupported capability claims block completion.
+
+## Elite operating mode
+Gap -> authoritative research -> compatibility/security analysis -> bounded proof -> convert to implementation -> verify -> provenance.
+
 ## Mission output
 Verified capability map + provenance/evidence + compatibility and risk analysis + executable improvement + verification plan + precise handoff.
 
