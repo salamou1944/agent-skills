@@ -95,7 +95,7 @@ export function openAICreativeProvider() {
       const form=new FormData();
       form.append('model',IMAGE_MODEL);
       form.append('prompt',prompt);
-      form.append('image',dataUrlToBlob(dataUrl,asset.mimeType||'image/png'),asset.fileName||'product.png');
+      form.append('image[]',dataUrlToBlob(dataUrl,asset.mimeType||'image/png'),asset.fileName||'product.png');
       const body=await openai('/images/edits',{method:'POST',body:form});
       const item=body?.data?.[0];
       if(!item?.b64_json) throw new CreativeProviderError('provider_returned_no_image','provider_invalid_output');
