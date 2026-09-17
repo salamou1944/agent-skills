@@ -34,7 +34,7 @@ jobs:
           if (x.mode !== 'live') throw new Error('revenue_mode_not_live');
           if (x.postbackConfigured !== true) throw new Error('partnerstack_postback_not_configured');
           if (!x.affiliate || x.affiliate.ok !== true) throw new Error('affiliate_provider_not_healthy');
-          if (!/^https:\/\//.test(String(x.affiliate.trackingUrl || x.affiliate.url || ''))) throw new Error('affiliate_link_not_https');
+          if (x.affiliate.status !== 'ready') throw new Error('affiliate_provider_not_ready');
           NODE
 
           curl --fail --silent --show-error "$BASE/api/revenue/affiliate-link" | tee affiliate-link.json
