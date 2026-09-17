@@ -25,3 +25,4 @@ jobs:
       - run: npm run test:elite
       - run: npm run test:elite:queue
       - run: npm run test:revenue:all
+      - run: npm run revenue:doctor
