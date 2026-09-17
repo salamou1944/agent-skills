@@ -51,7 +51,7 @@ jobs:
         with:
           repository: salamou1944/agent-skills
           ref: main
-          path: /tmp/elite-code-tools
+          path: .elite-code-tools
           fetch-depth: 1
 
       - name: Inspect target rules and state
@@ -77,7 +77,7 @@ jobs:
               if [ -f "$f" ]; then printf '\n--- %s ---\n' "$f"; sed -n '1,260p' "$f"; fi
             done
             printf '\n--- file inventory ---\n'
-            find . -maxdepth 3 -type f -not -path './.git/*' -not -path './node_modules/*' | sort | head -400
+            find . -maxdepth 3 -type f -not -path './.git/*' -not -path './node_modules/*' -not -path './.elite-code-tools/*' | sort | head -400
           } > /tmp/target-context.txt
 
       - name: Prepare current goal and unfinished task queue
@@ -92,14 +92,14 @@ jobs:
             echo 'AFTER THE CURRENT GOAL IS VERIFIED COMPLETE OR VERIFIED NO-OP, SELECT THE FIRST UNFINISHED APPLICABLE TASK FROM THIS QUEUE:'
             case "$TARGET_REPOSITORY" in
               salamou1944/Easy-)
-                sed -n '/^### P0 — EASY/,/^### P0 — mony/ p' /tmp/elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                sed -n '/^### P0 — EASY/,/^### P0 — mony/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
                 ;;
               salamou1944/Salamou-31)
-                sed -n '/^### P1 — Salamou-31/,/^### P1 — agent-skills engineering core/ p' /tmp/elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                sed -n '/^### P1 — Salamou-31/,/^### P1 — agent-skills engineering core/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
                 ;;
               salamou1944/agent-skills)
-                sed -n '/^### P0 — mony/,/^### P1 — Salamou-31/ p' /tmp/elite-code-tools/docs/ELITE-TASK-QUEUE.md
-                sed -n '/^### P1 — agent-skills engineering core/,/^## Advancement rule/ p' /tmp/elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                sed -n '/^### P0 — mony/,/^### P1 — Salamou-31/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
+                sed -n '/^### P1 — agent-skills engineering core/,/^## Advancement rule/ p' .elite-code-tools/docs/ELITE-TASK-QUEUE.md
                 ;;
               *)
                 echo 'No repository-specific queue section. Continue only the current workflow goal.'
@@ -124,20 +124,20 @@ jobs:
           EASY_OPERATOR_GITHUB_MODELS_MODEL: ''
           GITHUB_TOKEN: ${{ github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
-          ARMY_AGENT_SOURCE: /tmp/elite-code-tools/.github/agents
+          ARMY_AGENT_SOURCE: .elite-code-tools/.github/agents
           EASY_OPERATOR_CODER_ATTEMPTS: '2'
           EASY_OPERATOR_PROVIDER_RETRIES: '2'
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: '15000'
           EASY_OPERATOR_PROVIDER_TIMEOUT_MS: '45000'
         run: |
-          node /tmp/elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$(cat /tmp/elite-goal.txt)"
+          node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$(cat /tmp/elite-goal.txt)"
 
       - name: Verify Elite worker result
         if: steps.elite.outcome == 'success'
         run: |
           set -euo pipefail
           git diff --check
-          node --check /tmp/elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
+          node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
 
       - name: Run provider-independent practical fallback as PIPELINE verification only
         id: fallback
@@ -145,10 +145,10 @@ jobs:
         env:
           ARMY_GOAL: ${{ inputs.goal }}
           ARMY_WORKSPACE: ${{ github.workspace }}
-          ARMY_AGENT_SOURCE: /tmp/elite-code-tools/.github/agents
+          ARMY_AGENT_SOURCE: .elite-code-tools/.github/agents
         run: |
           set -euo pipefail
-          node /tmp/elite-code-tools/apps/easy-developer-platform/army-14-practical-runner.mjs "$ARMY_GOAL" | tee /tmp/army-14-result.json
+          node .elite-code-tools/apps/easy-developer-platform/army-14-practical-runner.mjs "$ARMY_GOAL" | tee /tmp/army-14-result.json
           node -e 'const fs=require("fs"); const r=JSON.parse(fs.readFileSync("/tmp/army-14-result.json","utf8")); if(r.status!=="PIPELINE_VERIFIED" || r.soldierCount!==14 || !r.allSoldiersExecuted || !r.allHandoffsVerified || !r.allRoleChecksPassed || r.taskVerified===true) throw new Error("army14_pipeline_gate_failed");'
 
       - name: Block persistence when only pipeline verification exists
@@ -163,8 +163,8 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
-          node --check /tmp/elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
-          node --check /tmp/elite-code-tools/apps/easy-developer-platform/army-14-practical-runner.mjs
+          node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
+          node --check .elite-code-tools/apps/easy-developer-platform/army-14-practical-runner.mjs
           test -f .elite/army-14/*/manifest.json
 
       - name: Run repository-native verification
