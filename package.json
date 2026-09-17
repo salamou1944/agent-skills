@@ -39,6 +39,7 @@
     "test:elite:soldiers": "node --test apps/easy-developer-platform/test-elite-soldiers.mjs",
     "test:elite:field-exercise": "node --test apps/easy-developer-platform/test-army-14-field-exercise.mjs",
     "test:army14:systems": "node --test apps/easy-developer-platform/test-army-14-soldier-systems.mjs",
+    "test:army14:practical": "node apps/easy-developer-platform/army-14-practical-runner.mjs \"Verify all 14 soldier systems end-to-end\"",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
   },
   "dependencies": { "yaml": "2.9.0" }
