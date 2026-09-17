@@ -1,6 +1,15 @@
 name: autonomous-project-loop
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/easy-developer-platform/autonomous-project-loop.mjs'
+      - 'apps/easy-developer-platform/project-queue-orchestrator.mjs'
+      - 'apps/easy-developer-platform/run-project-queue-cycle.mjs'
+      - '.github/workflows/autonomous-project-loop.yml'
+      - 'package.json'
+      - 'package-lock.json'
   schedule:
     - cron: "*/10 * * * *"
 concurrency:
