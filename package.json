@@ -30,6 +30,7 @@
     "test:elite:planner": "node --test apps/easy-developer-platform/test-elite-planner.mjs",
     "test:elite:dna": "node --test apps/easy-developer-platform/test-elite-dna.mjs",
     "test:elite:unique": "node --test apps/easy-developer-platform/test-elite-unique-intelligence.mjs",
+    "test:elite:deployment-recovery": "node --test apps/easy-developer-platform/test-elite-deployment-recovery.mjs",
     "test:elite:queue": "node --test apps/easy-developer-platform/test-project-queue-orchestrator.mjs",
     "test:elite:benchmark": "node apps/easy-developer-platform/elite-benchmark.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs"
