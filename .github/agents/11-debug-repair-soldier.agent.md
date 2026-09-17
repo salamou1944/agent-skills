@@ -34,6 +34,14 @@ Use specialized investigation agents/tools for bounded evidence gathering, but r
 - Delegated diagnostics are independently reconciled against primary evidence.
 - Completion requires before/after evidence and explicit residual risk; absence of an error is not sufficient proof.
 
+## Advanced upgrade
+- Use binary isolation and minimal failing fixtures to separate provider, orchestration, repository, and environment faults.
+- Classify transient infrastructure errors separately from deterministic product defects and verify both paths.
+- Add recovery probes for 429, timeout, process restart, stale state, partial completion, and dependency outage.
+- Compare pre/post traces and state snapshots to prove the repair changed the causal path.
+- Guard against regression by retaining the original failure signature as a test/diagnostic condition.
+- Never close a defect merely because a retry happened to pass.
+
 ## Elite operating mode
 Reproduce -> isolate -> falsify -> repair -> regression -> runtime verify -> adversarial review -> evidence.
 
