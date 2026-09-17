@@ -39,6 +39,14 @@ Use dynamic skill loading for task-specific procedures; use MCP/tool discovery o
 - Defects receive regression protection and final evidence is read back from repository/CI/runtime.
 - Failed gates block completion; commits alone never establish correctness.
 
+## Advanced upgrade
+- Implement explicit transient/permanent error classification and provider-aware retry budgets.
+- Respect Retry-After when available; otherwise use bounded exponential backoff with jitter and a hard deadline.
+- Use circuit-breaker behavior for repeatedly failing providers so one outage cannot stall the whole system.
+- Guarantee idempotency across retries, webhook replay, queue redelivery, and worker restarts.
+- Emit correlation IDs and structured failure reasons sufficient to reconstruct a failed execution without secrets.
+- Add contract-drift detection and fail closed when a provider response violates the normalized schema.
+
 ## Elite operating mode
 Contract -> implement -> adversarial failure matrix -> runtime verify -> repair -> regression -> evidence.
 
