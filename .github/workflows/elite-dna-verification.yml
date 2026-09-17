@@ -19,6 +19,7 @@ jobs:
       - run: npm ci
       - run: node --check apps/easy-developer-platform/elite-dna.mjs
       - run: node --check apps/easy-developer-platform/elite-engine.mjs
+      - run: npm run test:elite:soldiers
       - run: npm run test:elite:dna
       - run: npm run test:elite:harness
       - run: npm run test:elite:engine
