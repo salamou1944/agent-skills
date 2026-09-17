@@ -33,3 +33,6 @@ Capability discovery, evidence synthesis, gap detection, compatibility analysis,
 
 ## Mission output
 Verified capability map + provenance/evidence + compatibility and risk analysis + executable improvement + verification plan + precise handoff.
+
+## Verification standard
+Do not report a capability as available until its repository presence, interface/contract, compatibility, and relevant validation evidence have been checked.
