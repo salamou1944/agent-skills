@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
-  generateCounterfactuals, chooseCounterfactual, immuneSignature, immuneGate,
-  adversarialProbe, evolutionEvent, projectScope, crossProjectSignal, stopAndExplain,
-  integritySummary
+  generateCounterfactuals, chooseCounterfactual, immuneSignature, immuneGate, recordAttempt, readAttemptLedger,
+  adversarialProbe, evolutionEvent, projectScope, crossProjectSignal, stopAndExplain, integritySummary
 } from './elite-unique-intelligence.mjs';
 
 test('counterfactual engine emits independent hypotheses and a constraint-bound selection', () => {
@@ -19,6 +21,21 @@ test('code immune system blocks a known failure signature but allows a different
   const signature = immuneSignature({ failureCode: 'test_failed', failureMessage: 'bad', changedFiles: ['a.mjs'], strategy: 'old' });
   assert.equal(immuneGate({ knownFailures: [{ signature }], failureCode: 'test_failed', failureMessage: 'bad', changedFiles: ['a.mjs'], strategy: 'old' }).ok, false);
   assert.equal(immuneGate({ knownFailures: [{ signature }], failureCode: 'test_failed', failureMessage: 'bad', changedFiles: ['a.mjs'], strategy: 'new' }).ok, true);
+});
+
+test('persisted failure ledger is sufficient for immune rejection', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'elite-immune-'));
+  try {
+    const path = join(dir, 'attempts.jsonl');
+    await recordAttempt(path, { goal: 'fix parser', plan: { summary: 'old', changes: [{ path: 'a.mjs' }] }, failureCode: 'test_failed', failureMessage: 'bad', strategy: 'old', changedFiles: ['a.mjs'] });
+    const ledger = await readAttemptLedger(path);
+    const blocked = immuneGate({ knownFailures: ledger, failureCode: 'test_failed', failureMessage: 'bad', changedFiles: ['a.mjs'], strategy: 'old' });
+    const allowed = immuneGate({ knownFailures: ledger, failureCode: 'test_failed', failureMessage: 'bad', changedFiles: ['a.mjs'], strategy: 'new' });
+    assert.equal(blocked.ok, false);
+    assert.equal(allowed.ok, true);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test('adversarial engineering identifies blocking hazards', () => {
@@ -40,7 +57,7 @@ test('stop-and-explain blocks incomplete evidence', () => {
   assert.equal(blocked.ok, false);
   assert.ok(blocked.reasons.includes('verification_failed'));
   assert.equal(stopAndExplain({ result: { status: 'verified' }, proof: { proofHash: 'x' }, verification: { ok: true } }).ok, true);
-  assert.ok(integritySummary({ counterfactual: [], immune: { signature: 'x' }, adversarial: { challengeHash: 'y' }, evolution: eventForTest(), crossProject: { scope: 'shared' } }).version === 1);
+  assert.equal(integritySummary({ counterfactual: [], immune: { signature: 'x' }, adversarial: { challengeHash: 'y' }, evolution: eventForTest(), crossProject: { scope: 'shared' } }).version, 1);
 });
 
 function eventForTest() { return { event: 'task_verified' }; }
