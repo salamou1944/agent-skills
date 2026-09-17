@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { appendFile, mkdir } from 'node:fs/promises';
+import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
@@ -30,6 +30,30 @@ export function immuneGate({ knownFailures = [], failureCode = '', failureMessag
     return item?.failureCode === String(failureCode || '') || (item?.failureHash === hash(failureMessage || '') && JSON.stringify(files) === JSON.stringify(normalizedFiles) && item?.strategy === String(strategy));
   });
   return known ? { ok: false, reason: 'known_failure_signature', signature } : { ok: true, signature };
+}
+export async function recordAttempt(path, attempt = {}) {
+  const normalized = {
+    at: new Date().toISOString(),
+    signature: immuneSignature(attempt),
+    goalHash: hash(attempt.goal || ''),
+    failureCode: String(attempt.failureCode || ''),
+    failureMessage: String(attempt.failureMessage || ''),
+    strategy: String(attempt.strategy || ''),
+    changedFiles: [...new Set((attempt.changedFiles || []).map(clean))].sort(),
+    plan: attempt.plan || null
+  };
+  await mkdir(dirname(path), { recursive: true });
+  await appendFile(path, `${JSON.stringify(normalized)}\n`, 'utf8');
+  return normalized;
+}
+export async function readAttemptLedger(path) {
+  try {
+    const raw = await readFile(path, 'utf8');
+    return raw.split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
 }
 export function adversarialProbe({ changes = [], goal = '' }) {
   const findings = [];
