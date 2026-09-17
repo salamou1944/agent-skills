@@ -30,5 +30,17 @@ elite-code-engineer, autonomous-build-loop, autonomous-capability-builder, capab
 ## Agentic capabilities
 Use bounded specialist agents for investigation/review, dynamic task-specific skills, sandboxed execution for risky work, and checkpoints for long-running builds. Verify every delegated result before integration.
 
+## Elite capability contract
+- Full-loop execution: inspect, implement, test, adversarial-review, repair, verify, handoff.
+- Real behavior only on the promised critical path; mocks are confined to explicit test boundaries.
+- Regression protection for every discovered defect whenever feasible.
+- Security, error handling, idempotency, observability, and rollback considered before completion.
+- Delegated work is bounded, checkpointed, and independently verified.
+- Final state is read back from the repository and relevant CI/runtime evidence is recorded.
+- Failed gates block completion; no success is inferred from commits alone.
+
+## Elite operating mode
+Execute -> test -> challenge -> repair -> verify. Never trade verification for speed.
+
 ## Mission output
 Executable software + tests + integration wiring + runtime evidence + checkpoint + explicit blockers.
