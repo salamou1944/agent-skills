@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import test from 'node:test';
+import { LABS, compareMetrics, createExperiment, evaluateExperiment, appendExperiment, buildSoldierReport, fingerprintExperiment } from './evolution-lab.mjs';
+const before = { successRate:0.70, medianMs:200, p95Ms:500, retryRate:0.20, reworkRate:0.15, verificationRate:0.80 };
+const after = { successRate:0.88, medianMs:140, p95Ms:330, retryRate:0.08, reworkRate:0.05, verificationRate:0.95 };
+test('all evolution labs are represented', () => { assert.equal(LABS.length,11); assert.ok(LABS.includes('adversarial')); assert.ok(LABS.includes('regression')); assert.ok(LABS.includes('elite-verification')); });
+test('comparison produces deterministic deltas', () => { const x=compareMetrics(before,after); assert.equal(x.delta.successRate,0.18); assert.equal(x.delta.medianMsPct,-0.3); assert.equal(x.delta.retryRate,-0.12); });
+test('improvement is rejected without safety proof', () => { const x=evaluateExperiment({before,after,safety:{adversarialPass:true,regressionPass:true,verified:false}}); assert.equal(x.materialImprovement,true); assert.equal(x.status,'REJECT'); });
+test('proven improvement can be promoted', () => { const e=createExperiment({soldierId:'6',soldierName:'security',hypothesis:'reduce redundant verification work',baseline:before,candidate:after,safety:{adversarialPass:true,regressionPass:true,verified:true},metadata:{commit:'test'}}); assert.equal(e.evaluation.status,'PROMOTE'); assert.match(fingerprintExperiment(e),/^[a-f0-9]{64}$/); });
+test('ledger is durable and reportable', async () => { const dir=await mkdtemp(join(tmpdir(),'evolution-lab-')); const path=join(dir,'experiments.json'); const e=createExperiment({soldierId:'1',hypothesis:'benchmark control',baseline:before,candidate:after,safety:{adversarialPass:true,regressionPass:true,verified:true}}); await appendExperiment(path,e); const records=JSON.parse(await readFile(path,'utf8')); const report=buildSoldierReport(records); assert.equal(records.length,1); assert.equal(report[0].soldierId,'1'); assert.equal(report[0].promoted,1); });
