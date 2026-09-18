@@ -1,0 +1,34 @@
+name: evolution-lab-runtime
+on:
+  workflow_dispatch:
+    inputs:
+      soldier: {description: "Army-14 soldier id", required: true, default: "09"}
+      hypothesis: {description: "Experiment hypothesis", required: true, default: "verify selected soldier benchmark is reproducible"}
+      baseline: {description: "JSON argv for baseline command", required: true, default: '["npm","run","test:army14:systems"]'}
+      candidate: {description: "JSON argv for candidate command", required: true, default: '["npm","run","test:army14:systems"]'}
+      runs: {description: "Measured runs", required: true, default: "5"}
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    permissions: {contents: read}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - name: Measure baseline and candidate
+        env:
+          SOLDIER: ${{ inputs.soldier }}
+          HYPOTHESIS: ${{ inputs.hypothesis }}
+          BASELINE: ${{ inputs.baseline }}
+          CANDIDATE: ${{ inputs.candidate }}
+          RUNS: ${{ inputs.runs }}
+        run: >-
+          node apps/easy-developer-platform/evolution-lab-runner.mjs
+          --soldier "$SOLDIER" --hypothesis "$HYPOTHESIS" --runs "$RUNS"
+          --baseline "$BASELINE" --candidate "$CANDIDATE"
+          --ledger .easy/evolution-lab/experiments.json
+          --report .easy/evolution-lab/report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: evolution-lab-report, path: .easy/evolution-lab/report.json}
