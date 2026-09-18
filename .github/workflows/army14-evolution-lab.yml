@@ -1,0 +1,36 @@
+name: ARMY-14 Evolution Lab
+
+on:
+  push:
+    branches:
+      - main
+      - feat/army14-evolution-lab
+  workflow_dispatch:
+    inputs:
+      mutation:
+        description: Mutation label (must be evidence-backed)
+        required: false
+        default: control-baseline
+
+jobs:
+  lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Lab contract
+        run: npm run test:lab
+      - name: ARMY-14 / EASY / MONY control experiment
+        env:
+          LAB_MUTATION: ${{ inputs.mutation || 'control-baseline' }}
+        run: npm run lab:army14
+      - name: Upload lab evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: army14-evolution-lab
+          path: .lab/results/latest.json
