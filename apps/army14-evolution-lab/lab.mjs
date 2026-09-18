@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 
 const ROOT = process.cwd();
 const LAB_SCHEMA = 'ARMY-14 Evolution Lab';
+const VERIFICATION_CONTRACT = 'independent verification';
 const SOLDIERS = [
   ['01','architect'],['02','builder'],['03','ui-ux'],['04','backend-api'],['05','database'],
   ['06','security'],['07','integration'],['08','ai-agent'],['09','test-qa'],['10','browser-e2e'],
