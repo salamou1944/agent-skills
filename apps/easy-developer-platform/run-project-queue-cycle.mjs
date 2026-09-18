@@ -32,7 +32,7 @@ function run(command,args){return new Promise(resolve=>{
 });}
 
 function closeVerifiedTask(result){
-  const wrapped={...result,taskId:task.id,contract:taskContract,evidence:result.evidence||[]};
+  const wrapped={...result,taskId:task.id,contract:taskContract,noopAuthorized:result.status==='NOOP' ? true : result.noopAuthorized,evidence:result.evidence||[]};
   const gate=validateTaskResult(taskContract,wrapped);
   if(!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
   closeSoldierRun(soldierRun,wrapped);
