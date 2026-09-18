@@ -20,7 +20,7 @@ globalThis.fetch = async (url, init = {}) => {
   const target = String(url);
   if (target.endsWith('/responses')) {
     const body = JSON.parse(init.body);
-    assert.equal(body.model, 'gpt-5.6-luna');
+    assert.equal(body.model, 'gpt-4.1-mini');
     assert.equal(body.store, false);
     assert.equal(body.text.format.type, 'json_schema');
     assert.equal(body.input[0].content[1].type, 'input_image');
@@ -31,8 +31,8 @@ globalThis.fetch = async (url, init = {}) => {
     assert.match(init.headers.authorization, /^Bearer test-key$/);
     assert.ok(init.body instanceof FormData);
     assert.equal(init.body.get('model'), 'gpt-image-2');
-    assert.ok(init.body.get('image[]'));
-    assert.equal(init.body.getAll('image[]').length, 1);
+    assert.ok(init.body.get('image'));
+    assert.equal(init.body.getAll('image').length, 1);
     return new Response(JSON.stringify({ data: [{ b64_json: fakePng, revised_prompt: 'verified test prompt' }] }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
   throw new Error(`unexpected_url:${target}`);
@@ -51,7 +51,7 @@ const result = await runCreativeJob({
   request: { direction: 'premium studio creative', background: 'neutral studio' },
 }, provider);
 
-assert.equal(result.status, 'SUCCEEDED');
+assert.equal(result.status, 'SUCCEEDED', JSON.stringify(result));
 assert.equal(result.decision, 'PASS');
 assert.equal(result.events.find(e => e.stage === 'product-dna').decision, 'PASS');
 assert.equal(result.events.find(e => e.stage === 'generation').decision, 'PASS');
