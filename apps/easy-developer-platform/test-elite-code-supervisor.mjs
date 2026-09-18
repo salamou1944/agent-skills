@@ -42,6 +42,9 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /relevance\(b,goal\)/);
   assert.match(coder, /ctx \|\|= await context\(root,goal\)/);
   assert.match(coder, /paths\.has/);
+  assert.match(coder, /copilotPlan/);
+  assert.match(coder, /COPILOT_GITHUB_TOKEN/);
+  assert.match(coder, /copilot_cli_failed/);
 });
 
 test('Project queue recovery uses current Copilot CLI fallback and exact failure evidence', async () => {
