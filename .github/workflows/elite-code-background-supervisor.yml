@@ -138,6 +138,31 @@ jobs:
           set -euo pipefail
           node apps/easy-developer-platform/autonomous-coder.mjs "Apply the verified recovery plan for the Elite Code engineering cycle." | tee /tmp/elite-recovery-result.json
           node apps/easy-developer-platform/task-result-gate.mjs "$(cat /tmp/elite-recovery-result.json)"
+      - name: Execute next verified project-queue mission
+        id: queue
+        if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
+        continue-on-error: true
+        env:
+          ELITE_QUEUE_STATE: .easy/project-queue-state.json
+          EASY_OPERATOR_LLM_API_KEY: ${{ secrets.EASY_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          EASY_OPERATOR_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_LLM_ENDPOINT || 'https://api.openai.com/v1/chat/completions' }}
+          EASY_OPERATOR_LLM_MODEL: ${{ vars.EASY_OPERATOR_LLM_MODEL || 'gpt-4o-mini' }}
+          EASY_OPERATOR_LLM_FALLBACK_MODEL: ${{ vars.EASY_OPERATOR_LLM_FALLBACK_MODEL || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_OPERATOR_SECONDARY_LLM_API_KEY || secrets.EASY_SECONDARY_LLM_API_KEY || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_ENDPOINT || vars.EASY_SECONDARY_LLM_ENDPOINT || '' }}
+          EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_MODEL || vars.EASY_SECONDARY_LLM_MODEL || '' }}
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+          GITHUB_TOKEN: ${{ github.token }}
+          ARMY14_SOLDIER_ID: ${{ steps.queue.outputs.soldier_id || '' }}
+        run: |
+          set +e
+          node apps/easy-developer-platform/run-project-queue-cycle.mjs | tee /tmp/project-queue-cycle.json
+          status=$?
+          if [ -f /tmp/project-queue-cycle.json ]; then
+            echo "queue-status=$(node -e "const fs=require('fs');const x=JSON.parse(fs.readFileSync('/tmp/project-queue-cycle.json','utf8'));process.stdout.write(x.status||'UNKNOWN')" 2>/dev/null || echo UNKNOWN)" >> "$GITHUB_OUTPUT"
+          fi
+          exit $status
+
       - name: Run Elite Code contract tests
         if: steps.primary.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
