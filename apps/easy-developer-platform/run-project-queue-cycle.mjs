@@ -12,7 +12,7 @@ const route=task ? routeMission(task) : null;
 const baselineRun=task ? await run('git',['rev-parse','HEAD']) : null;
 const baseline={commit:baselineRun?.code===0 ? baselineRun.stdout.trim() : null};
 const taskContract=task ? createTaskContract(task,baseline) : null;
-const soldierRun=task ? buildSoldierRun(task,baseline,Math.max(0,Number(route?.soldierId||'13')-1)) : null;
+const soldierRun=task ? buildSoldierRun(task,baseline,route || { soldierId:'13' }) : null;
 
 if(!task){
   console.log(JSON.stringify({status:'COMPLETE',phase:'all',message:'All queued project tasks are verified.'},null,2));
@@ -61,7 +61,9 @@ if(task.id==='elite.defect-closure'){
       {kind:'authoritative-defect-scan',command:'git grep -nE DEF-005|DEF-006 -- docs apps .github',exitCode:records.code,stdout:'No unresolved DEF-005 or DEF-006 records found.',stderr:''},
       {kind:'resolution',message:'No documented defect record remains for the requested closure scope; provider-backed implementation was not required.'}
     ];
-    await markTask(stateFile,task.id,'NOOP',evidence);
+    const contractEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'defect closure scan executed'},{kind:'verification',ok:true,command:'npm run test:elite + authoritative defect scan',summary:'No unresolved defect records found.'},{kind:'result',status:'NOOP',taskVerified:false,pipelineVerified:true},...evidence];
+    closeVerifiedTask({status:'NOOP',verification:{passed:true,summary:'Provider-independent defect closure verified'},evidence:contractEvidence});
+    await markTask(stateFile,task.id,'NOOP',contractEvidence);
     console.log(JSON.stringify({status:'NOOP',task,verification:'passed',evidence},null,2));
     process.exit(0);
   }
@@ -76,7 +78,9 @@ if(task.id==='mony.first-revenue-blocker'){
       {kind:'revenue-regression-suite',command:'npm run test:revenue:all',exitCode:revenue.code,stdout:revenue.stdout.slice(-4000),stderr:revenue.stderr.slice(-4000)},
       {kind:'rule',message:'Provider rate-limit handling is verified without inventing live provider access or revenue.'}
     ];
-    await markTask(stateFile,task.id,'VERIFIED',evidence);
+    const contractEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'provider ladder and revenue regression executed'},{kind:'verification',ok:true,command:'provider ladder + npm run test:revenue:all',summary:'Provider/revenue regression contract passed.'},{kind:'result',status:'VERIFIED',taskVerified:true,pipelineVerified:true},...evidence];
+    closeVerifiedTask({status:'VERIFIED',verification:{passed:true,summary:'Provider/revenue regression contract verified'},evidence:contractEvidence});
+    await markTask(stateFile,task.id,'VERIFIED',contractEvidence);
     console.log(JSON.stringify({status:'VERIFIED',task,verification:'passed',evidence},null,2));
     process.exit(0);
   }
