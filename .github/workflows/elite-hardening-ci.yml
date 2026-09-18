@@ -1,0 +1,30 @@
+name: elite-hardening-ci
+
+on:
+  push:
+    branches:
+      - feat/elite-independent-evidence-hardening
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verification-hardening:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:elite:evidence
+      - run: npm run test:elite:retrieval
+      - run: npm run test:elite:faults
+      - run: node --check apps/easy-developer-platform/independent-evidence-gate.mjs
+      - run: node --check apps/easy-developer-platform/retrieval-evaluator.mjs
+      - run: node --check apps/easy-developer-platform/fault-matrix.mjs
+      - run: git diff --check
