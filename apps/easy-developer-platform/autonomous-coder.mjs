@@ -66,6 +66,7 @@ export async function ask(prompt,c){
   const fetchImpl=c.fetchImpl||fetch;
   const sleepImpl=c.sleepImpl||sleep;
   const telemetry=c.telemetry;
+  c.runImpl ||= run;
   const ladder=providerLadder(c);
   if(!ladder.length)throw new Error('llm_provider_not_configured');
   const failures=[];
@@ -75,6 +76,16 @@ export async function ask(prompt,c){
       if(!isRecoverableProviderError(error))throw error;
       failures.push(`${provider.name}:${error.message}`);
       telemetry?.({provider:provider.name,event:'provider_fallback',reason:error.message});
+    }
+  }
+  if(copilotToken){
+    try {
+      const plan=await copilotPlan(prompt,{token:copilotToken,timeoutMs:copilotTimeoutMs,workspace:c.workspace||process.env.EASY_OPERATOR_WORKSPACE||'.',runImpl:c.runImpl||run});
+      telemetry?.({provider:'copilot-cli',event:'provider_fallback',reason:'configured_providers_exhausted'});
+      return plan;
+    } catch(error){
+      failures.push(`copilot-cli:${error.message}`);
+      telemetry?.({provider:'copilot-cli',event:'provider_fallback_failed',reason:error.message});
     }
   }
   throw new Error(`all_providers_exhausted:${failures.join(',')}`)
