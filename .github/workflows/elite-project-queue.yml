@@ -47,6 +47,9 @@ jobs:
       - name: Verify queue contract
         run: npm run test:elite:queue
 
+      - name: Ensure Copilot CLI recovery is available
+        run: command -v copilot >/dev/null 2>&1 || npm install -g @github/copilot
+
       - name: Execute next verified mony task
         id: cycle
         continue-on-error: true
@@ -64,6 +67,7 @@ jobs:
           EASY_OPERATOR_PROVIDER_RETRIES: "3"
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "120000"
           GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           ELITE_QUEUE_STATE: .easy/project-queue-state.json
         run: |
