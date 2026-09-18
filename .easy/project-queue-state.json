@@ -189,7 +189,7 @@
         }
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
-      "updatedAt": "2026-09-17T18:35:35.194Z"
+      "updatedAt": "2026-09-18T00:18:53.575Z"
     }
   },
   "history": [
@@ -1074,6 +1074,21 @@
       ],
       "scope": "apps/easy-developer-platform/ci-contracts",
       "at": "2026-09-18T00:18:16.080Z"
+    },
+    {
+      "id": "elite.release-evidence",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.release-evidence",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/release-evidence",
+      "at": "2026-09-18T00:18:53.575Z"
     }
   ]
 }
