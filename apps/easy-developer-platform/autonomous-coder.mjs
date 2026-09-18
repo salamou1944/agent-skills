@@ -19,7 +19,7 @@ function extractJson(text){const cleaned=String(text||'').trim().replace(/^```(?
 function sleep(ms){return new Promise(resolveResult=>setTimeout(resolveResult,ms))}
 function shouldRetry(status){return status===408||status===429||status>=500}
 function parseRetryAfterMs(headers,now=Date.now()){const raw=headers?.get?.('retry-after');if(raw){const seconds=Number(raw);if(Number.isFinite(seconds)&&seconds>=0)return Math.round(seconds*1000);const date=Date.parse(raw);if(Number.isFinite(date))return Math.max(0,date-now)}for(const name of ['x-ratelimit-reset-requests','x-ratelimit-reset-tokens','x-ratelimit-reset']){const value=Number(headers?.get?.(name));if(!Number.isFinite(value)||value<0)continue;if(value>1e12)return Math.max(0,value-now);if(value>1e9)return Math.max(0,value*1000-now);return Math.max(0,value*1000)}return null}
-function retryDelay(attempt,retryAfter,maxWaitMs=DEFAULT_RATE_LIMIT_WAIT_MS){const header=Number(retryAfter);if(Number.isFinite(header)&&header>=0)return Math.min(header,maxWaitMs);const base=Math.min(1000*2**(attempt-1),15000);return Math.min(base+Math.floor(Math.random()*250),maxWaitMs)}
+function retryDelay(attempt,retryAfter,maxWaitMs=DEFAULT_RATE_LIMIT_WAIT_MS){const header=Number(retryAfter);if(Number.isFinite(header)&&header>=0)return Math.min(header,maxWaitMs);const base=Math.min(1000*2**(attempt-1),15000);return Math.min(base,maxWaitMs)}
 function providerError(status){return `provider_http_${status}`}
 function isRecoverableProviderError(error){return ['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted','provider_timeout'].includes(error.message)||/^provider_http_5\d\d$/.test(error.message)}
 
