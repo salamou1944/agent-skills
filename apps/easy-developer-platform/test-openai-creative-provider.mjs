@@ -20,7 +20,7 @@ globalThis.fetch = async (url, init = {}) => {
   const target = String(url);
   if (target.endsWith('/responses')) {
     const body = JSON.parse(init.body);
-    assert.equal(body.model, 'gpt-5.6-luna');
+    assert.equal(body.model, 'gpt-4.1-mini');
     assert.equal(body.store, false);
     assert.equal(body.text.format.type, 'json_schema');
     assert.equal(body.input[0].content[1].type, 'input_image');
