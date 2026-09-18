@@ -1,7 +1,7 @@
 import { CreativeProviderError, createProviderAdapter } from './creative-orchestrator.mjs';
 
 const API_BASE = String(process.env.EASY_OPENAI_API_BASE || 'https://api.openai.com/v1').replace(/\/$/, '');
-const IMAGE_MODEL = String(process.env.EASY_OPENAI_IMAGE_MODEL || 'gpt-image-2');
+const IMAGE_MODEL = String(process.env.EASY_OPENAI_IMAGE_MODEL || 'gpt-image-1');
 const configuredVisionModel = String(process.env.EASY_OPENAI_VISION_MODEL || 'gpt-4.1-mini');
 const VISION_MODEL = configuredVisionModel === 'gpt-5.6-luna' ? 'gpt-4.1-mini' : configuredVisionModel;
 const API_KEY = String(process.env.EASY_OPENAI_API_KEY || '').trim();
@@ -36,7 +36,8 @@ async function openai(path, init = {}) {
   if (!response.ok) {
     const message = body?.error?.message || `openai_http_${response.status}`;
     const code = body?.error?.code || null;
-    throw new CreativeProviderError(code ? `${message} [${code}]` : message, `provider_http_${response.status}`);
+    const detail = code ? `${message} [${code}]` : message;
+    throw new CreativeProviderError(detail, `provider_http_${response.status}`);
   }
   return body;
 }
