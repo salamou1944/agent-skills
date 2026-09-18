@@ -154,7 +154,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "5b9cb16621a381083bfa41d64f219605e84012d2"
+          "commit": "9aa135a3d4e79c44a11a953c872537b3c8285152"
         },
         {
           "kind": "action",
@@ -183,7 +183,7 @@
         }
       ],
       "scope": "apps/easy-developer-platform/defects",
-      "updatedAt": "2026-09-18T22:30:18.612Z"
+      "updatedAt": "2026-09-18T23:08:41.302Z"
     },
     "elite.ci-contract-closure": {
       "status": "BLOCKED",
@@ -2982,6 +2982,43 @@
       ],
       "scope": "apps/easy-developer-platform/defects",
       "at": "2026-09-18T22:30:18.612Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "9aa135a3d4e79c44a11a953c872537b3c8285152"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "09",
+            "soldier": "test-qa",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:spawn copilot ENOENT",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.defect-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/defects",
+      "at": "2026-09-18T23:08:41.302Z"
     }
   ]
 }
