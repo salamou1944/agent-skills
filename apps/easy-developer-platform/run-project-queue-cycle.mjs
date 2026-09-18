@@ -1,10 +1,18 @@
 import { spawn } from 'node:child_process';
 import { execute as autonomousExecute } from './autonomous-coder.mjs';
 import { TASKS, loadState, selectNext, markTask } from './project-queue-orchestrator.mjs';
+import { routeMission } from './army-14-mission-router.mjs';
+import { createTaskContract, validateTaskResult } from './task-contract.mjs';
+import { buildSoldierRun, closeSoldierRun } from './army-14-director.mjs';
 
 const stateFile=process.env.ELITE_QUEUE_STATE||'.easy/project-queue-state.json';
 const state=await loadState(stateFile);
 const task=selectNext(state);
+const route=task ? routeMission(task) : null;
+const baselineRun=task ? await run('git',['rev-parse','HEAD']) : null;
+const baseline={commit:baselineRun?.code===0 ? baselineRun.stdout.trim() : null};
+const taskContract=task ? createTaskContract(task,baseline) : null;
+const soldierRun=task ? buildSoldierRun(task,baseline,Math.max(0,Number(route?.soldierId||'13')-1)) : null;
 
 if(!task){
   console.log(JSON.stringify({status:'COMPLETE',phase:'all',message:'All queued project tasks are verified.'},null,2));
@@ -22,6 +30,14 @@ function run(command,args){return new Promise(resolve=>{
   child.stdout.on('data',d=>stdout+=d); child.stderr.on('data',d=>stderr+=d);
   child.on('close',(code,signal)=>resolve({code,signal,stdout,stderr})); child.on('error',e=>resolve({code:1,stdout,stderr:e.message}));
 });}
+
+function closeVerifiedTask(result){
+  const wrapped={...result,taskId:task.id,contract:taskContract,evidence:result.evidence||[]};
+  const gate=validateTaskResult(taskContract,wrapped);
+  if(!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
+  closeSoldierRun(soldierRun,wrapped);
+  return wrapped;
+}
 
 function providerBlocker(error){
   const message=String(error?.message||error||'');
@@ -73,7 +89,8 @@ catch(error){
   const evidence=blocker
     ? [{kind:'provider-blocked',error:blocker.message,errorClass:blocker.code,task:task.id,action:'Use the configured provider fallback or resolve the provider dependency before retrying this queue task.'}]
     : [{kind:'autonomous-coder',error:error.message}];
-  await markTask(stateFile,task.id,blocker?'BLOCKED':'FAILED',evidence);
+  const failureEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:false,route},{kind:'verification',ok:false},{kind:'result',status:blocker?'BLOCKED':'FAILED'},...evidence];
+  await markTask(stateFile,task.id,blocker?'BLOCKED':'FAILED',failureEvidence);
   console.error(JSON.stringify({status:blocker?'BLOCKED':'FAILED',task:task.id,error:error.message,evidence},null,2));
   process.exit(1);
 }
@@ -86,6 +103,10 @@ if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
 
 const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
 const evidence=[
+  {kind:'baseline',commit:baseline.commit,stateFingerprint:taskContract.baseline.stateFingerprint},
+  {kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
+  {kind:'verification',ok:verification.code===0,command:task.verify,exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)},
+  {kind:'result',status:coding.status,taskVerified:coding.status==='VERIFIED',pipelineVerified:true},
   {kind:'autonomous-coder',status:coding.status,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
   {kind:'verification-command',command:task.verify,exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}
 ];
@@ -97,5 +118,6 @@ if(verification.code!==0){
 }
 
 const finalStatus=coding.status==='VERIFIED_NOOP'?'NOOP':'VERIFIED';
+closeVerifiedTask({status:finalStatus,verification:{passed:true,summary:'task-specific verification passed'},evidence});
 await markTask(stateFile,task.id,finalStatus,evidence);
 console.log(JSON.stringify({status:finalStatus,task,verification:'passed',evidence},null,2));
