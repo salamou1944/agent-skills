@@ -14,8 +14,18 @@ export function assignSoldier(task, index = 0) {
   return { taskId:task.id, soldierId:id, soldier:name, domain:soldier.domain };
 }
 
-export function buildSoldierRun(task, baseline, index = 0) {
-  const assignment = assignSoldier(task,index);
+export function assignSoldierById(task, soldierId) {
+  if (!task?.id) throw new Error('assignment_task_invalid');
+  const id = String(soldierId || '');
+  const soldier = SOLDIER_SYSTEMS.find(s => s.id === id);
+  if (!soldier) throw new Error('assignment_soldier_invalid');
+  return { taskId:task.id, soldierId:soldier.id, soldier:soldier.name, domain:soldier.domain };
+}
+
+export function buildSoldierRun(task, baseline, assignmentOrIndex = 0) {
+  const assignment = typeof assignmentOrIndex === 'object'
+    ? assignSoldierById(task, assignmentOrIndex.soldierId)
+    : assignSoldier(task, assignmentOrIndex);
   const contract = createTaskContract(task, baseline);
   let run = createSoldierRun({ soldierId:assignment.soldierId, taskId:task.id, input:{ goal:task.goal, contract } });
   run = transitionSoldierRun(run,'executing',{kind:'action',ok:true,action:'assigned-and-started',soldier:assignment.soldier});
