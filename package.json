@@ -15,7 +15,7 @@
     "test:revenue:all": "node apps/revenue-engine/test-revenue-engine.mjs && node apps/revenue-engine/test-revenue-components.mjs && node apps/revenue-engine/test-revenue-api.mjs && node apps/revenue-engine/test-revenue-operator.mjs && node apps/revenue-engine/test-market-strategy.mjs && node apps/revenue-engine/test-campaign-planner.mjs && node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs && node apps/revenue-engine/test-product-listing-sales.mjs && node apps/revenue-engine/test-sales-pipeline.mjs && node apps/revenue-engine/test-service-market-intelligence.mjs && node apps/revenue-engine/test-payment-billing-adapter.mjs && node apps/revenue-engine/test-live-provider-adapters.mjs && node apps/revenue-engine/test-mony-workbench.mjs && node apps/revenue-engine/test-mony-customer-e2e.mjs",
     "test:mony": "node apps/revenue-engine/test-mony-workbench.mjs && node apps/revenue-engine/test-mony-customer-e2e.mjs",
     "test:payment-billing": "node --test apps/revenue-engine/test-payment-billing-adapter.mjs",
-    "test:paid-client-readiness": "node --test apps/revenue-engine/test-paid-client-readiness.mjs",
+    "test:paid-client-readiness": "node --test apps/easy-developer-platform/test-paid-client-readiness.mjs",
     "test:product-listing-sales": "node apps/revenue-engine/test-product-listing-sales.mjs",
     "test:sales": "node apps/revenue-engine/test-sales-pipeline.mjs",
     "test:service-market": "node apps/revenue-engine/test-service-market-intelligence.mjs",
@@ -52,6 +52,8 @@
     "test:elite:faults": "node --test apps/easy-developer-platform/test-fault-matrix.mjs",
     "lab:army14": "node apps/army14-evolution-lab/lab.mjs",
     "test:lab": "node --test apps/army14-evolution-lab/test-lab.mjs",
+    "test:lab:mutation": "node --test apps/army14-evolution-lab/test-mutation-engine.mjs",
+    "test:elite:copilot-recovery": "node --test apps/easy-developer-platform/test-elite-copilot-recovery.mjs",
     "lab:army14:compare": "node apps/army14-evolution-lab/compare.mjs"
   },
   "dependencies": {
