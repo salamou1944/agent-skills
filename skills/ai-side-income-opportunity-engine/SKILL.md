@@ -1,3 +1,8 @@
+---
+name: ai-side-income-opportunity-engine
+description: Evidence-driven opportunity discovery and revenue testing pipeline for MONY, covering demand signals, buyer use cases, offers, fulfillment, economics, acquisition experiments, and revenue verification.
+---
+
 # AI Side-Income Opportunity Engine
 
 ## Purpose
