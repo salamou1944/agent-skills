@@ -9,7 +9,9 @@ const s = createSupervisorState({ maxRepairs: 1 });
 assert.equal(s.state, 'DISCOVER');
 s.transition('PLAN'); s.transition('ASSIGN'); s.transition('EXECUTE'); s.transition('VERIFY'); s.transition('REPAIR'); s.transition('REVERIFY');
 assert.equal(s.repairs, 1);
-assert.throws(() => s.transition('REPAIR'), /invalid_supervisor_transition|repair_budget/);
+assert.equal(s.transition('REPAIR'), 'FAILED');
+assert.equal(s.state, 'FAILED');
+assert.equal(s.history.at(-1).reason, 'repair_budget_exhausted');
 
 assert.equal(detectOwnershipConflicts([{ soldier:'Builder', paths:['src/a.js'] }, { soldier:'Test-QA', paths:['src/a.js'] }]).length, 1);
 const event = createEvidenceEvent({ subject:'affiliate:x', level:'reachable', source:'adapter-health' });
