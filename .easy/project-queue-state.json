@@ -154,7 +154,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "9555edbbe629d3f901e77bc0552600e69dc97a65"
+          "commit": "e76a81f9a3e2e5ca69541fb4f8efb83202e5faee"
         },
         {
           "kind": "action",
@@ -183,7 +183,7 @@
         }
       ],
       "scope": "apps/easy-developer-platform/defects",
-      "updatedAt": "2026-09-18T21:59:53.965Z"
+      "updatedAt": "2026-09-18T22:07:23.170Z"
     },
     "elite.ci-contract-closure": {
       "status": "BLOCKED",
@@ -2834,6 +2834,43 @@
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
       "at": "2026-09-18T22:03:34.861Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "e76a81f9a3e2e5ca69541fb4f8efb83202e5faee"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "09",
+            "soldier": "test-qa",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.defect-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/defects",
+      "at": "2026-09-18T22:07:23.170Z"
     }
   ]
 }
