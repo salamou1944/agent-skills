@@ -1,0 +1,27 @@
+name: Human trial readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_url:
+        description: Public EASY runtime URL to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify bounded human-trial entry criteria
+        env:
+          EASY_PUBLIC_URL: ${{ inputs.runtime_url }}
+        run: node apps/easy-developer-platform/human-trial-readiness.mjs
