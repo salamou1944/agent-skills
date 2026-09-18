@@ -256,6 +256,42 @@
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
       "updatedAt": "2026-09-18T03:33:00.002Z"
+    },
+    "mony.pipeline-live-readiness": {
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "5d66a7d3077396e27d42384f53cd515080a22551"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "07",
+            "soldier": "integration",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "mony.pipeline-live-readiness",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/revenue-engine/live-readiness",
+      "updatedAt": "2026-09-18T03:34:28.705Z"
     }
   },
   "history": [
@@ -1762,6 +1798,43 @@
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
       "at": "2026-09-18T03:33:00.002Z"
+    },
+    {
+      "id": "mony.pipeline-live-readiness",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "5d66a7d3077396e27d42384f53cd515080a22551"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "07",
+            "soldier": "integration",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "mony.pipeline-live-readiness",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/revenue-engine/live-readiness",
+      "at": "2026-09-18T03:34:28.705Z"
     }
   ]
 }
