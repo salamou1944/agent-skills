@@ -51,7 +51,7 @@ const result = await runCreativeJob({
   request: { direction: 'premium studio creative', background: 'neutral studio' },
 }, provider);
 
-assert.equal(result.status, 'SUCCEEDED');
+assert.equal(result.status, 'SUCCEEDED', JSON.stringify(result));
 assert.equal(result.decision, 'PASS');
 assert.equal(result.events.find(e => e.stage === 'product-dna').decision, 'PASS');
 assert.equal(result.events.find(e => e.stage === 'generation').decision, 'PASS');
