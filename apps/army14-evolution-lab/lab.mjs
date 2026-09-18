@@ -52,6 +52,7 @@ async function soldierContract(id, name) {
 
 async function main() {
   const mutation = process.env.LAB_MUTATION ?? 'control-baseline';
+const phase = process.env.LAB_PHASE ?? 'candidate';
   const targetRuns = {};
   for (const [target, command] of Object.entries(TARGETS)) {
     targetRuns[target] = await run(command[0], command.slice(1));
@@ -78,6 +79,7 @@ async function main() {
     schema:'army14-evolution-lab/v2',
     generatedAt:new Date().toISOString(),
     mutation,
+    phase,
     targets:Object.fromEntries(Object.entries(targetRuns).map(([k,v]) => [k,{ok:v.ok,code:v.code,durationMs:v.durationMs}])),
     soldiers:SOLDIERS.length,
     totalExperiments:total,
@@ -90,6 +92,7 @@ async function main() {
   };
 
   await mkdir('.lab/results',{recursive:true});
+  await writeFile(`.lab/results/${phase}.json`,JSON.stringify(report,null,2));
   await writeFile('.lab/results/latest.json',JSON.stringify(report,null,2));
   console.log(JSON.stringify({
     schema:report.schema, mutation:report.mutation, soldiers:report.soldiers,
