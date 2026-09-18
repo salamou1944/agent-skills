@@ -31,8 +31,8 @@ globalThis.fetch = async (url, init = {}) => {
     assert.match(init.headers.authorization, /^Bearer test-key$/);
     assert.ok(init.body instanceof FormData);
     assert.equal(init.body.get('model'), 'gpt-image-2');
-    assert.ok(init.body.get('image[]'));
-    assert.equal(init.body.getAll('image[]').length, 1);
+    assert.ok(init.body.get('image'));
+    assert.equal(init.body.getAll('image').length, 1);
     return new Response(JSON.stringify({ data: [{ b64_json: fakePng, revised_prompt: 'verified test prompt' }] }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
   throw new Error(`unexpected_url:${target}`);
