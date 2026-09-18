@@ -190,7 +190,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "f759e543aeaa41da925adf64b0eade90ff39b21a"
+          "commit": "5ce22ccbb4776f5078635ce1dc9d3f007e89762c"
         },
         {
           "kind": "action",
@@ -212,14 +212,14 @@
         },
         {
           "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:spawn copilot ENOENT",
           "errorClass": "all_providers_exhausted",
           "task": "elite.ci-contract-closure",
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
       "scope": "apps/easy-developer-platform/ci-contracts",
-      "updatedAt": "2026-09-18T22:02:09.221Z"
+      "updatedAt": "2026-09-18T22:10:12.818Z"
     },
     "elite.release-evidence": {
       "status": "BLOCKED",
@@ -2871,6 +2871,43 @@
       ],
       "scope": "apps/easy-developer-platform/defects",
       "at": "2026-09-18T22:07:23.170Z"
+    },
+    {
+      "id": "elite.ci-contract-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "5ce22ccbb4776f5078635ce1dc9d3f007e89762c"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "11",
+            "soldier": "debug-repair",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:spawn copilot ENOENT",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.ci-contract-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/ci-contracts",
+      "at": "2026-09-18T22:10:12.818Z"
     }
   ]
 }
