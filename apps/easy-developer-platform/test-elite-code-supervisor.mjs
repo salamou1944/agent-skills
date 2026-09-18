@@ -320,3 +320,31 @@ test('Supervisor workflow has bounded execution, Copilot recovery, and post-chan
   assert.match(copilotPrompt, /Return ONLY one JSON object/);
   assert.match(copilotPrompt, /Never modify \.github\/workflows/);
 });
+
+
+test('Provider exhaustion activates Copilot CLI as the final recovery route', async () => {
+  const calls = [];
+  const result = await ask('test Copilot recovery', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.invalid',
+    model: 'primary-model',
+    providerRetries: 1,
+    providerTimeoutMs: 1000,
+    copilotToken: 'copilot-test-token',
+    runImpl: async (command, args) => {
+      calls.push({ command, args });
+      return { ok: true, stdout: '{"summary":"copilot-recovered","changes":[]}' };
+    },
+    fetchImpl: async () => ({
+      ok: false,
+      status: 429,
+      headers: new Headers(),
+      clone() { return this; },
+      async json() { return { error: { code: 'insufficient_quota' } }; },
+    }),
+  });
+  assert.equal(result.summary, 'copilot-recovered');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].command, 'copilot');
+  assert.ok(calls[0].args.includes('--no-ask-user'));
+});
