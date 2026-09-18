@@ -44,6 +44,7 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /paths\.has/);
   assert.match(coder, /copilotPlan/);
   assert.match(coder, /COPILOT_GITHUB_TOKEN/);
+  assert.match(coder, /copilotToken:env\.COPILOT_GITHUB_TOKEN\|\|env\.GITHUB_TOKEN/);
   assert.match(coder, /copilot_cli_failed/);
 });
 
