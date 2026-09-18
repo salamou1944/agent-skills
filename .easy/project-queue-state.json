@@ -203,6 +203,28 @@
       "status": "BLOCKED",
       "evidence": [
         {
+          "kind": "baseline",
+          "commit": "359c6e232ae978e843936a9651c61900568a2197"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "12",
+            "soldier": "deployment-ops",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
           "kind": "provider-blocked",
           "error": "all_providers_exhausted:primary:provider_http_429",
           "errorClass": "all_providers_exhausted",
@@ -211,7 +233,7 @@
         }
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
-      "updatedAt": "2026-09-18T00:18:53.575Z"
+      "updatedAt": "2026-09-18T00:59:33.266Z"
     }
   },
   "history": [
@@ -1163,6 +1185,43 @@
       ],
       "scope": "apps/easy-developer-platform/ci-contracts",
       "at": "2026-09-18T00:59:17.551Z"
+    },
+    {
+      "id": "elite.release-evidence",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "359c6e232ae978e843936a9651c61900568a2197"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "12",
+            "soldier": "deployment-ops",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.release-evidence",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/release-evidence",
+      "at": "2026-09-18T00:59:33.266Z"
     }
   ]
 }
