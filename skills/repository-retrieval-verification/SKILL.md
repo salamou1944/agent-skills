@@ -1,3 +1,8 @@
+---
+name: repository-retrieval-verification
+description: Verify repository retrieval scope, provenance, revision, and evidence before using retrieved code or project state in an engineering decision.
+---
+
 # Repository Retrieval Verification
 
 ## Purpose
