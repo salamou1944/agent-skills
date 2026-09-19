@@ -74,26 +74,29 @@ export function runMetaEvolutionExperiment() {
     x.metamorphic.stablePhenotypeHash
   );
 
-  const adversariallyRobust = valid.filter((x) =>
+  const evaluatorFailureDetectable = valid.filter((x) =>
     !x.adversarial.interactionDependency || x.adversarial.detectableEvaluatorFailure
   );
 
-  const evaluatorSensitivity = observations.filter((x) =>
+  const evaluatorSensitive = observations.filter((x) =>
     x.adversarial.interactionDependency && x.adversarial.detectableEvaluatorFailure
   );
+
+  const originalWinner = observations
+    .slice()
+    .sort((a, b) => b.score.score - a.score.score || a.genomeHash.localeCompare(b.genomeHash))[0]?.genomeHash;
 
   const evaluatorMutations = ['reverse', 'interaction-blind'].map((mutation) => {
     const mutated = mutateEvaluator(evaluateFrontierGenome, mutation);
     const ranked = observations.map((x) => ({
       genomeHash: x.genomeHash,
       score: mutated(x.genome).score,
-    })).sort((a, b) => b.score - a.score);
+    })).sort((a, b) => b.score - a.score || a.genomeHash.localeCompare(b.genomeHash));
     return {
       mutation,
       topGenomeHash: ranked[0]?.genomeHash,
       topScore: ranked[0]?.score,
-      changesWinner: ranked[0]?.genomeHash !== observations
-        .slice().sort((a,b) => b.score.score - a.score.score)[0]?.genomeHash,
+      changesWinner: ranked[0]?.genomeHash !== originalWinner,
     };
   });
 
@@ -111,8 +114,8 @@ export function runMetaEvolutionExperiment() {
       totalCandidates: observations.length,
     },
     adversarial: {
-      robustCandidates: adversariallyRobust.length,
-      evaluatorSensitiveCandidates: evaluatorSensitivity.length,
+      evaluatorFailureDetectableCandidates: evaluatorFailureDetectable.length,
+      evaluatorSensitiveCandidates: evaluatorSensitive.length,
     },
     evaluatorMutations,
     promotionRule: 'Evaluator mutation can invalidate a frontier; no promotion is permitted from a single evaluator.',
