@@ -54,7 +54,10 @@
     "test:lab": "node --test apps/army14-evolution-lab/test-lab.mjs",
     "test:lab:mutation": "node --test apps/army14-evolution-lab/test-mutation-engine.mjs",
     "test:elite:copilot-recovery": "node --test apps/easy-developer-platform/test-elite-copilot-recovery.mjs",
-    "lab:army14:compare": "node apps/army14-evolution-lab/compare.mjs"
+    "lab:army14:compare": "node apps/army14-evolution-lab/compare.mjs",
+    "lab:army14:evaluate": "node apps/army14-evolution-lab/evolution-cycle.mjs",
+    "lab:army14:hypotheses": "node apps/army14-evolution-lab/hypothesis-engine.mjs",
+    "test:lab:science": "node --test apps/army14-evolution-lab/test-scientific-evaluator.mjs apps/army14-evolution-lab/test-evolution-system.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
