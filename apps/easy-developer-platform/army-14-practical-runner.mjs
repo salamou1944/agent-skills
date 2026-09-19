@@ -27,9 +27,9 @@ function verifySoldierContract(id, taskId, goal) {
   const soldier = getSoldierSystem(id);
   if (!soldier) throw new Error(`soldier_system_missing:${id}`);
   const run0 = createSoldierRun({ soldierId:id, taskId, input:{ goal, fixture:true } });
-  const executing = transitionSoldierRun(run0, 'executing', { kind:'action', ok:true });
-  const verifying = transitionSoldierRun(executing, 'verifying', { kind:'verification', ok:true });
-  const completed = transitionSoldierRun(verifying, 'completed');
+  const executing = transitionSoldierRun(run0, 'executing', { runId: run0.runId, evidenceId: `${id}-action`, kind:'action', ok:true }, { expectedRevision: 0 });
+  const verifying = transitionSoldierRun(executing, 'verifying', { runId: run0.runId, evidenceId: `${id}-verification`, kind:'verification', ok:true }, { expectedRevision: 1 });
+  const completed = transitionSoldierRun(verifying, 'completed', null, { expectedRevision: 2 });
   if (!verifySoldierSystem(completed)) throw new Error(`soldier_contract_verification_failed:${id}`);
   return completed;
 }
