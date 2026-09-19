@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -8,7 +8,7 @@ const ALLOWED=/^(?!\.git)(?!\.github\/workflows\/)(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0
 function run(cmd,args,cwd,timeout=120000){return new Promise(res=>{const p=spawn(cmd,args,{cwd,stdio:['ignore','pipe','pipe']});let o='',e='';const t=setTimeout(()=>{p.kill('SIGKILL');res({ok:false,code:null,timeout:true,stdout:o,stderr:e})},timeout);p.stdout.on('data',d=>o+=d);p.stderr.on('data',d=>e+=d);p.on('close',c=>{clearTimeout(t);res({ok:c===0,code:c,stdout:o,stderr:e})});p.on('error',x=>{clearTimeout(t);res({ok:false,error:x.message,stdout:o,stderr:e})})})}
 function hash(x){return createHash('sha256').update(JSON.stringify(x)).digest('hex')}
 function validate(change){if(!change||typeof change.path!=='string'||change.path.startsWith('/')||change.path.includes('..')||!ALLOWED.test(change.path))throw new Error('unsafe_candidate_path');if(typeof change.content!=='string')throw new Error('invalid_candidate_content')}
-async function apply(dir,candidate){for(const c of candidate.changes){validate(c);await writeFile(join(dir,c.path),c.content,'utf8')}}
+async function apply(dir,candidate){for(const c of candidate.changes){validate(c);const target=join(dir,c.path);await mkdir(resolve(target,'..'),{recursive:true});await writeFile(target,c.content,'utf8')}}
 async function checks(dir,tests=[]){const results=[];for(const t of tests){const r=await run(t.cmd,t.args||[],dir,t.timeout||120000);results.push({name:t.name,ok:r.ok,code:r.code,stdout:r.stdout.slice(-3000),stderr:r.stderr.slice(-3000)});if(!r.ok)break}return results}
 export async function independentlyVerify({workspace,manifest,evidence}){
   const root=resolve(workspace), temp=await mkdtemp(join(tmpdir(),'evolution-independent-'));
