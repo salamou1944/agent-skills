@@ -6,7 +6,7 @@ const port = Number(process.env.EASY_CREATIVE_JOB_PORT || 8794);
 const send = (res, status, data) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' }); res.end(JSON.stringify(data)); };
 async function body(req) { let raw=''; for await (const chunk of req) { raw += chunk; if (raw.length > 2_000_000) throw Object.assign(new Error('body_too_large'), {status:413}); } try { return raw ? JSON.parse(raw) : {}; } catch { throw Object.assign(new Error('invalid_json'), {status:400}); } }
 const selfTestEnabled = () => String(process.env.EASY_CREATIVE_SELF_TEST || '').trim().toLowerCase() === 'true';
-const testAsset = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==';
+const testAsset = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAAB/ElEQVR42u3TQQ0AAAjEMMC/2JPAGw20AAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADwLV3WQTQQMB8VgAAAABJRU5ErkJggg==';
 
 http.createServer(async (req,res)=>{
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
