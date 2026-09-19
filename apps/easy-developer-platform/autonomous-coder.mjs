@@ -65,7 +65,7 @@ async function copilotPlan(prompt,{token,timeoutMs=120000,workspace='.',runImpl=
 function providerLadder(c){const list=[];const add=(name,endpoint,model,token)=>{if(endpoint&&model&&token)list.push({name,endpoint,model,token})};add('primary',c.endpoint,c.model,c.apiKey);if(c.modelFallback)add('primary-model-fallback',c.endpoint,c.modelFallback,c.apiKey);add('secondary',c.secondaryEndpoint,c.secondaryModel,c.secondaryApiKey);add('github-copilot-compatible',c.githubEndpoint,c.githubModel,c.githubToken);return list}
 
 export async function ask(prompt,c){
-  const copilotToken=c.copilotToken||process.env.COPILOT_GITHUB_TOKEN||process.env.GITHUB_TOKEN||'';
+  const copilotToken=c.copilotToken||c.EASY_GITHUB_TOKEN||process.env.COPILOT_GITHUB_TOKEN||process.env.GITHUB_TOKEN||process.env.EASY_GITHUB_TOKEN||'';
   const copilotTimeoutMs=Math.max(10000,Number(c.copilotTimeoutMs||120000));
   const fetchImpl=c.fetchImpl||fetch;
   const sleepImpl=c.sleepImpl||sleep;
