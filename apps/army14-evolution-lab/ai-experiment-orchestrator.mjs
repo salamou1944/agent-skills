@@ -23,7 +23,7 @@ export async function runAIExperimentCycle({root=process.cwd(),hypotheses=[],con
     catch(error){cycle.experiments.push({candidateId:candidate.id,mutationId:generated.id,status:'EXECUTION_BLOCKED',reason:error.message,falsifier});continue}
     const falsification=evaluateFalsifier({falsifier,independentResult:result,baselineResult:context.baseline,candidateResult:context.candidate||{}});
     const confidence=confidenceGate({runs:[result.status==='VERIFIED'?1:0],baseline:1,minRuns:2});
-    const promotion=promotionGateV2({noRegression:result.status==='VERIFIED',netGain:false,independentEvidence:false,repeatability:confidence.runs,harnessStable:false,evidenceArtifact:false,newSecurityFindings:0});
+    const promotion=promotionGateV2({baselineScore:Number(context.baseline?.score||0),candidateScore:Number(context.candidate?.score||0),regressed:result.status==='VERIFIED'?0:1,independent:false,repeats:confidence.runs,securityFindings:0,harnessStable:false,evidenceArtifact:false});
     cycle.experiments.push({candidateId:candidate.id,mutationId:generated.id,status:result.status,result,falsification,confidence,promotion});
   }
   cycle.status=cycle.experiments.some(x=>x.status==='VERIFIED')?'EXPERIMENTS_VERIFIED':'NO_VERIFIED_EXPERIMENT';
