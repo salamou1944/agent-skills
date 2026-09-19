@@ -55,7 +55,10 @@
     "test:lab:mutation": "node --test apps/army14-evolution-lab/test-mutation-engine.mjs",
     "test:elite:copilot-recovery": "node --test apps/easy-developer-platform/test-elite-copilot-recovery.mjs",
     "lab:army14:compare": "node apps/army14-evolution-lab/compare.mjs",
-    "test:evolution-orchestrator": "node --test apps/easy-developer-platform/test-evolution-orchestrator.mjs"
+    "test:evolution-orchestrator": "node --test apps/easy-developer-platform/test-evolution-orchestrator.mjs",
+    "test:evolution-frontier": "node --test apps/easy-developer-platform/test-evolution-frontier.mjs",
+    "evolution:research": "node apps/easy-developer-platform/evolution-research.mjs",
+    "evolution:run": "node apps/easy-developer-platform/evolution-frontier.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
