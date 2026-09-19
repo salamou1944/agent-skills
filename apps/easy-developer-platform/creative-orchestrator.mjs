@@ -8,6 +8,10 @@ import {
 
 const object = (v) => v && typeof v === 'object' && !Array.isArray(v) ? v : {};
 const id = () => `creative_${crypto.randomUUID()}`;
+const safeErrorDetail = (error) => String(error?.message || 'execution_failed')
+  .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [redacted]')
+  .replace(/sk-[A-Za-z0-9_-]{12,}/g, '[redacted]')
+  .slice(0, 500);
 
 export class CreativeProviderError extends Error {
   constructor(message, code = 'provider_error') { super(message); this.code = code; }
@@ -127,7 +131,15 @@ export async function runCreativeJob(input = {}, provider = null) {
       events,
     };
   } catch (error) {
-    mark('execution', 'FAILED', { error: error.message, code: error.code || 'execution_error' });
-    return { jobId, status: 'FAILED', decision: 'BLOCK', reason: error.code || 'execution_error', events };
+    const errorDetail = safeErrorDetail(error);
+    mark('execution', 'FAILED', { error: errorDetail, code: error.code || 'execution_error' });
+    return {
+      jobId,
+      status: 'FAILED',
+      decision: 'BLOCK',
+      reason: error.code || 'execution_error',
+      errorDetail,
+      events,
+    };
   }
 }
