@@ -5,7 +5,8 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile as readTextFile } from 'node:fs/promises';
 
-const ALLOWED=/^(?!\.git)(?!\.github\/workflows\/)(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+$/;\nconst FORBIDDEN=/(^|\/)(\.env(?:\..*)?|.*\.(?:pem|key|p12|pfx)|secrets?(?:\/|\.)|credentials?(?:\/\.))/i;
+const ALLOWED=/^(?!\.git)(?!\.github\/workflows\/)(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+$/;
+const FORBIDDEN=/(^|\/)(\.env(?:\..*)?|.*\.(?:pem|key|p12|pfx)|secrets?(?:\/|\.)|credentials?(?:\/\.))/i;
 function run(cmd,args,cwd,timeout=120000){return new Promise(res=>{const p=spawn(cmd,args,{cwd,stdio:['ignore','pipe','pipe']});let o='',e='';const t=setTimeout(()=>{p.kill('SIGKILL');res({ok:false,code:null,timeout:true,stdout:o,stderr:e})},timeout);p.stdout.on('data',d=>o+=d);p.stderr.on('data',d=>e+=d);p.on('close',c=>{clearTimeout(t);res({ok:c===0,code:c,stdout:o,stderr:e})});p.on('error',x=>{clearTimeout(t);res({ok:false,error:x.message,stdout:o,stderr:e})})})}
 function hash(x){return createHash('sha256').update(JSON.stringify(x)).digest('hex')}
 async function moduleHash(){return createHash('sha256').update(await readTextFile(new URL(import.meta.url))).digest('hex')}
