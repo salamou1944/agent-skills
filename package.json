@@ -51,7 +51,7 @@
     "test:elite:retrieval": "node --test apps/easy-developer-platform/test-retrieval-evaluator.mjs",
     "test:elite:faults": "node --test apps/easy-developer-platform/test-fault-matrix.mjs",
     "lab:army14": "node apps/army14-evolution-lab/lab.mjs",
-    "test:lab": "node --test apps/army14-evolution-lab/test-lab.mjs",
+    "test:lab": "node --test apps/army14-evolution-lab/test-lab.mjs apps/army14-evolution-lab/test-mutation-engine.mjs apps/army14-evolution-lab/test-scientific-evaluator.mjs apps/army14-evolution-lab/test-evolution-system.mjs apps/army14-evolution-lab/test-promotion-and-memory.mjs apps/army14-evolution-lab/test-ai-mutation-generator.mjs apps/army14-evolution-lab/test-experiment-planner.mjs apps/army14-evolution-lab/test-ai-experiment-orchestrator.mjs",
     "test:lab:mutation": "node --test apps/army14-evolution-lab/test-mutation-engine.mjs",
     "test:elite:copilot-recovery": "node --test apps/easy-developer-platform/test-elite-copilot-recovery.mjs",
     "lab:army14:compare": "node apps/army14-evolution-lab/compare.mjs",
