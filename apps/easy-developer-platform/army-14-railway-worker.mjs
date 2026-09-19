@@ -6,6 +6,7 @@ const port = Number(process.env.PORT || 3000);
 const intervalMs = Math.max(60_000, Number(process.env.ARMY_INTERVAL_MS || 300_000));
 const goal = String(process.env.ARMY_GOAL || 'MONY continuous Army-14 background execution').trim();
 const startedAt = new Date().toISOString();
+const deployedCommit = String(process.env.RAILWAY_GIT_COMMIT_SHA || '').trim() || null;
 let lastRun = null;
 let running = false;
 let failures = 0;
@@ -47,6 +48,7 @@ const server = createServer((req, res) => {
       service: 'army-14-railway-worker',
       status: lastFailure ? 'degraded' : 'running',
       startedAt,
+      deployedCommit,
       running,
       intervalMs,
       failures,
@@ -64,7 +66,7 @@ const server = createServer((req, res) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(JSON.stringify({ event: 'army14-worker-started', port, intervalMs, goal }));
+  console.log(JSON.stringify({ event: 'army14-worker-started', port, intervalMs, goal, deployedCommit }));
   void cycle();
   setInterval(() => void cycle(), intervalMs).unref();
 });
