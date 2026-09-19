@@ -59,7 +59,8 @@
     "test:evolution-frontier": "node --test apps/easy-developer-platform/test-evolution-frontier.mjs",
     "evolution:research": "node apps/easy-developer-platform/evolution-research.mjs",
     "evolution:run": "node apps/easy-developer-platform/evolution-frontier.mjs",
-    "test:heldout-evaluator": "node --test apps/easy-developer-platform/test-heldout-evaluator.mjs"
+    "test:heldout-evaluator": "node --test apps/easy-developer-platform/test-heldout-evaluator.mjs",
+    "test:release-gate": "node --test apps/easy-developer-platform/test-release-gate.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
