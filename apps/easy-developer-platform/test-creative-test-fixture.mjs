@@ -8,7 +8,7 @@ assert.ok(match, 'fixture must be a PNG data URL');
 const png = Buffer.from(match[1], 'base64');
 assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
 
-const ihdr = png.subarray(8 + 4, 8 + 4 + 13);
+const ihdr = png.subarray(8 + 4 + 4, 8 + 4 + 4 + 13);
 assert.equal(ihdr.readUInt32BE(0), 1024);
 assert.equal(ihdr.readUInt32BE(4), 1024);
 assert.equal(ihdr[8], 8);
