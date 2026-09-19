@@ -40,25 +40,30 @@ async function cycle() {
   }
 }
 
+export function buildArmy14Health({ lastRun, lastFailure, startedAt, running, intervalMs, deployedCommit, failures = 0 }) {
+  return {
+    service: 'army-14-railway-worker',
+    status: lastFailure ? 'degraded' : 'running',
+    startedAt,
+    deployedCommit,
+    running,
+    intervalMs,
+    failures,
+    lastRun: lastRun?.status || null,
+    failureCode: lastFailure?.code || null,
+    retryable: lastFailure?.retryable ?? null,
+    sourceDriftDetected: lastFailure?.code === 'SOURCE_VERIFICATION_FAILED',
+    providerAccess: 'not-claimed',
+    revenue: 'not-claimed',
+  };
+}
+
 const server = createServer((req, res) => {
   if (req.url === '/health' || req.url === '/') {
     const healthStatus = lastFailure ? 503 : 200;
     res.writeHead(healthStatus, { 'content-type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({
-      service: 'army-14-railway-worker',
-      status: lastFailure ? 'degraded' : 'running',
-      startedAt,
-      deployedCommit,
-      running,
-      intervalMs,
-      failures,
-      lastRun: lastRun?.status || null,
-      failureCode: lastFailure?.code || null,
-      retryable: lastFailure?.retryable ?? null,
-      sourceDriftDetected: lastFailure?.code === 'SOURCE_VERIFICATION_FAILED',
-      providerAccess: 'not-claimed',
-      revenue: 'not-claimed',
-    }));
+    res.end(JSON.stringify(buildArmy14Health({ lastRun, lastFailure, startedAt, running, intervalMs, deployedCommit, failures })));
+
     return;
   }
   res.writeHead(404, { 'content-type': 'application/json; charset=utf-8' });
