@@ -141,8 +141,30 @@ async function scanWorkspaceSecrets(root) {
   return Object.freeze([...new Set(findings)]);
 }
 
+export async function scanWorkspaceSecrets(root) {
+  const findings = [];
+  async function walk(dir) {
+    let entries = [];
+    try { entries = await (await import('node:fs/promises')).readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (entry.name === '.git' || entry.name === 'node_modules') continue;
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) await walk(path);
+      else if (WORKSPACE_SCAN_EXTENSIONS.test(entry.name)) {
+        let body = '';
+        try { body = await readFile(path, 'utf8'); } catch { continue; }
+        if (WORKSPACE_SCAN_SECRET_PATTERNS.some(pattern => pattern.test(body))) findings.push(path.slice(root.length + 1));
+      }
+    }
+  }
+  await walk(root);
+  return Object.freeze([...new Set(findings)]);
+}
+
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
-  const workspaceSecrets = await scanWorkspaceSecrets(root);\n  if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }\n  const activeProvider = provider || makeProvider(env);
+  const workspaceSecrets = await scanWorkspaceSecrets(root);
+  if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
+  const activeProvider = provider || makeProvider(env);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
   const guardedProvider = async args => {
