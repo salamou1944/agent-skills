@@ -16,12 +16,13 @@ This layer turns the Evolution contract into a bounded research-to-verification 
 ## Trust boundaries
 
 1. Provider output is untrusted input.
-2. Candidate changes cannot target `.github/workflows/`, absolute paths, traversal paths, or forbidden credential paths enforced by the mutation/orchestrator layers.
-3. The generator cannot declare a winner.
-4. The orchestrator cannot promote zero or multiple survivors.
-5. The independent verifier starts from a fresh clone at the exact recorded baseline.
-6. Evidence is bound to the baseline revision, candidate diff hash, and verifier implementation hash.
-7. A synthetic pass is not a production or revenue claim.
+2. Verification commands are trusted configuration owned by the coordinator; provider output cannot supply the verification command set.
+3. Candidate changes cannot target `.github/workflows/`, absolute paths, traversal paths, or forbidden credential paths enforced by the mutation/orchestrator layers.
+4. The generator cannot declare a winner.
+5. The orchestrator cannot promote zero or multiple survivors.
+6. The independent verifier starts from a fresh clone at the exact recorded baseline.
+7. Evidence is bound to the baseline revision, candidate diff hash, and verifier implementation hash.
+8. A synthetic pass is not a production or revenue claim.
 
 ## What this still does not claim
 
