@@ -25,3 +25,10 @@ export async function discoverGaps(root,projectId,experimentId='research'){
   if(!contract)gaps.push(gap('frontier-contract','medium','no local frontier contract','explicit safety/evidence invariants'));
   return {status:'GAPS_DISCOVERED',project_id:projectId,experiment_id:experimentId,baseline_revision:rev,file_count:files.length,gaps,signals:{mutationGeneration:hasAny(files,[/evolution-mutation-generator\.mjs$/]),independentVerification:hasAny(files,[/evolution-independent-verifier\.mjs$/]),negativeKnowledge:hasAny(files,[/evolution-negative-knowledge\.mjs$/]),research:hasAny(files,[/evolution-research\.mjs$/]),closedLoop:hasAny(files,[/evolution-frontier\.mjs$/])}};
 }
+
+
+if(process.argv[1] && resolve(process.argv[1])===resolve(new URL(import.meta.url).pathname)){
+  const [workspace='.',projectId='EVOLUTION-LAB',experimentId='research-run']=process.argv.slice(2);
+  const result=await discoverGaps(workspace,projectId,experimentId);
+  console.log(JSON.stringify(result,null,2));
+}
