@@ -7,7 +7,8 @@ export function buildPopulation(hypothesis, seeds=[], limit=8){
     const mutation={...seed, hypothesisId:hypothesis.id, populationIndex:index};
     const id=createHash('sha256').update(JSON.stringify(mutation)).digest('hex').slice(0,20);
     const plan={...mutation,id};
-    const validation=validateMutationPlan(plan);
+    let validation;
+    try { validateMutationPlan(plan); validation={ok:true}; } catch (error) { validation={ok:false,error:String(error?.message ?? error)}; }
     return {id, hypothesisId:hypothesis.id, index, plan, validation, expected: hypothesis.expected, falsifier:hypothesis.falsifier};
   });
 }
