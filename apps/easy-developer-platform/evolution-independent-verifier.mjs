@@ -5,11 +5,11 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile as readTextFile } from 'node:fs/promises';
 
-const ALLOWED=/^(?!\.git)(?!\.github\/workflows\/)(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+$/;
+const ALLOWED=/^(?!\.git)(?!\.github\/workflows\/)(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+$/;\nconst FORBIDDEN=/(^|\/)(\.env(?:\..*)?|.*\.(?:pem|key|p12|pfx)|secrets?(?:\/|\.)|credentials?(?:\/\.))/i;
 function run(cmd,args,cwd,timeout=120000){return new Promise(res=>{const p=spawn(cmd,args,{cwd,stdio:['ignore','pipe','pipe']});let o='',e='';const t=setTimeout(()=>{p.kill('SIGKILL');res({ok:false,code:null,timeout:true,stdout:o,stderr:e})},timeout);p.stdout.on('data',d=>o+=d);p.stderr.on('data',d=>e+=d);p.on('close',c=>{clearTimeout(t);res({ok:c===0,code:c,stdout:o,stderr:e})});p.on('error',x=>{clearTimeout(t);res({ok:false,error:x.message,stdout:o,stderr:e})})})}
 function hash(x){return createHash('sha256').update(JSON.stringify(x)).digest('hex')}
 async function moduleHash(){return createHash('sha256').update(await readTextFile(new URL(import.meta.url))).digest('hex')}
-function validate(change){if(!change||typeof change.path!=='string'||change.path.startsWith('/')||change.path.includes('..')||!ALLOWED.test(change.path))throw new Error('unsafe_candidate_path');if(typeof change.content!=='string')throw new Error('invalid_candidate_content')}
+function validate(change){if(!change||typeof change.path!=='string'||change.path.startsWith('/')||change.path.includes('..')||!ALLOWED.test(change.path)||FORBIDDEN.test(change.path))throw new Error('unsafe_candidate_path');if(typeof change.content!=='string')throw new Error('invalid_candidate_content')}
 async function apply(dir,candidate){for(const c of candidate.changes){validate(c);const target=join(dir,c.path);await mkdir(resolve(target,'..'),{recursive:true});await writeFile(target,c.content,'utf8')}}
 async function checks(dir,tests=[]){const results=[];for(const t of tests){const r=await run(t.cmd,t.args||[],dir,t.timeout||120000);results.push({name:t.name,ok:r.ok,code:r.code,stdout:r.stdout.slice(-3000),stderr:r.stderr.slice(-3000)});if(!r.ok)break}return results}
 export async function independentlyVerify({workspace,manifest,evidence}){
@@ -24,7 +24,7 @@ export async function independentlyVerify({workspace,manifest,evidence}){
     await apply(temp,survivor);
     const tests=await checks(temp,manifest.tests||[{name:'diff-check',cmd:'git',args:['diff','--check']}]);
     const attacks=await checks(temp,manifest.attacks||[{name:'diff-check',cmd:'git',args:['diff','--check']}]);
-    const diff=(await run('git',['diff','--binary'],temp)).stdout;
+    const changedFiles=(await run('git',['diff','--name-only'],temp)).stdout.split('\n').filter(Boolean);\n    if(changedFiles.some(x=>x.startsWith('.github/workflows/')))throw new Error('protected_workflow_boundary');\n    if(changedFiles.some(x=>FORBIDDEN.test(x)))throw new Error('forbidden_credential_path');\n    const diff=(await run('git',['diff','--binary'],temp)).stdout;
     const diffHash=createHash('sha256').update(diff).digest('hex');
     const recorded=evidence.results?.find(x=>x.id===evidence.survivor)?.diff_hash;
     const passed=tests.every(x=>x.ok)&&attacks.every(x=>x.ok)&&diffHash===recorded;
