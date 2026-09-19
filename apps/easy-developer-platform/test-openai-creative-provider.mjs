@@ -41,7 +41,7 @@ globalThis.fetch = async (url, init = {}) => {
 };
 
 const { openAICreativeProvider, openAICreativeProviderStatus } = await import('./openai-creative-provider.mjs');
-const { runCreativeJob } = await import('./creative-orchestrator.mjs');
+const { runCreativeJob, CreativeProviderError } = await import('./creative-orchestrator.mjs');
 
 assert.equal(openAICreativeProviderStatus().generationEnabled, true);
 assert.equal(openAICreativeProviderStatus().integrityEnabled, true);
@@ -74,6 +74,24 @@ const blocked = await runCreativeJob({
 assert.equal(blocked.status, 'BLOCKED');
 assert.equal(blocked.decision, 'BLOCK');
 assert.equal(blocked.reason, 'vision-detected-immutable-change');
+
+const providerFailure = await runCreativeJob({
+  assetId: 'test-asset',
+  asset: { dataUrl: `data:image/png;base64,${fakePng}`, mimeType: 'image/png', fileName: 'product.png' },
+  request: { direction: 'premium studio creative' },
+}, {
+  name: 'error-provider',
+  async analyzeAsset() { return { observations }; },
+  async generateCreative() {
+    throw new CreativeProviderError('Invalid image input | code=invalid_image | param=image[]', 'provider_http_400');
+  },
+  async validateOutput() { return null; },
+});
+assert.equal(providerFailure.status, 'FAILED');
+assert.equal(providerFailure.reason, 'provider_http_400');
+assert.equal(providerFailure.errorDetail, 'Invalid image input | code=invalid_image | param=image[]');
+assert.equal(providerFailure.events.find(e => e.stage === 'execution').error, providerFailure.errorDetail);
+
 
 globalThis.fetch = originalFetch;
 console.log('openai creative provider tests passed');
