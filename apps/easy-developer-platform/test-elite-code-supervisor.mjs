@@ -334,6 +334,7 @@ test('Provider exhaustion activates Copilot CLI as the final recovery route', as
     copilotToken: 'copilot-test-token',
     runImpl: async (command, args) => {
       calls.push({ command, args });
+      if (command === 'copilot' && args[0] === '--version') return { ok: false, error: 'spawn copilot ENOENT', stderr: 'spawn copilot ENOENT' };
       return { ok: true, stdout: '{"summary":"copilot-recovered","changes":[]}' };
     },
     fetchImpl: async () => ({
