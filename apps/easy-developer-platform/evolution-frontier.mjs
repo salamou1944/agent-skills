@@ -22,7 +22,7 @@ export async function runEvolution({workspace='.',projectId,experimentId='evolut
     report=await discoverGaps(root,projectId,experimentId);
     await writeFile(reportPath,JSON.stringify(report,null,2));
     const generated=await generateCandidates({gapReport:report,projectId,baselineRevision:report.baseline_revision,candidateCount,config});
-    const manifest={...generated,experiment_id:experimentId,tests:[{name:'git-diff-check',cmd:'git',args:['diff','--check']}],attacks:[{name:'workflow-boundary',cmd:'git',args:['diff','--name-only']}],workspace:root,output:evidencePath};
+    const manifest={...generated,experiment_id:experimentId,trusted_test_manifest:true,tests:[{name:'git-diff-check',cmd:'git',args:['diff','--check']}],attacks:[{name:'workflow-boundary',cmd:'git',args:['diff','--name-only']}],workspace:root,output:evidencePath};
     await writeFile(manifestPath,JSON.stringify(manifest,null,2));
     const orchestrator=join(root,'apps/easy-developer-platform/evolution-orchestrator.mjs');
     const runResult=await run(process.execPath,[orchestrator,manifestPath],root);
