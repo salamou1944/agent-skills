@@ -52,6 +52,7 @@ const server = createServer((req, res) => {
       lastRun: lastRun?.status || null,
       failureCode: lastFailure?.code || null,
       retryable: lastFailure?.retryable ?? null,
+      sourceDriftDetected: lastFailure?.code === 'SOURCE_VERIFICATION_FAILED',
       providerAccess: 'not-claimed',
       revenue: 'not-claimed',
     }));
