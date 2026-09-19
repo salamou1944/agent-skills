@@ -22,7 +22,7 @@ http.createServer(async (req,res)=>{
         asset:{assetId:'provider-smoke',mimeType:'image/png',fileName:'provider-smoke.png',dataUrl:testAsset,width:1,height:1},
         request:{direction:'Create a minimal realistic commercial presentation. Preserve every immutable product detail exactly; do not invent claims or product features.'},
       }, openAICreativeProvider());
-      const summary = {jobId:result.jobId,status:result.status,decision:result.decision,reason:result.reason||null,stages:result.events?.map(({stage,decision,reason})=>({stage,decision,reason:reason||null}))||[],integrity:{core:result.validation?.core?.decision||result.validation?.decision||null,provider:result.validation?.provider?.decision||null},generatedImage:Boolean(result.output?.dataUrl||result.output?.base64)};
+      const summary = {jobId:result.jobId,status:result.status,decision:result.decision,reason:result.reason||null,errorDetail:result.errorDetail||null,stages:result.events?.map(({stage,decision,reason,error})=>({stage,decision,reason:reason||null,error:error||null}))||[],integrity:{core:result.validation?.core?.decision||result.validation?.decision||null,provider:result.validation?.provider?.decision||null},generatedImage:Boolean(result.output?.dataUrl||result.output?.base64)};
       const passed = summary.status === 'SUCCEEDED' && summary.decision === 'PASS' && summary.generatedImage && summary.integrity.core === 'PASS' && summary.integrity.provider === 'PASS';
       console.log('CREATIVE_REAL_SELF_TEST', JSON.stringify({...summary,passed}));
       return send(res,passed ? 200 : 503,{...summary,passed});
