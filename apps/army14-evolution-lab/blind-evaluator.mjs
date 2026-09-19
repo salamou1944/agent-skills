@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-const FORBIDDEN = /(^|\\/)(?:test|tests|__tests__|\.github\\/workflows)(?:\\/|$)/i;
+const FORBIDDEN = /(^|\/)(?:test|tests|__tests__|\.github\/workflows)(?:\/|$)/i;
 export function createBlindManifest({candidateFiles=[],evaluatorFiles=[]}={}){
   const candidate=new Set(candidateFiles.map(String));
   const overlap=evaluatorFiles.map(String).filter(p=>candidate.has(p));
