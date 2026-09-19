@@ -30,10 +30,7 @@ export async function runEvolution({workspace='.',projectId,experimentId='evolut
     const evidence=JSON.parse(await readFile(evidencePath,'utf8'));
     const independent=await independentlyVerify({workspace:root,manifest,evidence});
     await writeFile(independentPath,JSON.stringify(independent,null,2));
-    if(independent.status!=='INDEPENDENTLY_VERIFIED'){
-      await recordNegativeKnowledge(ledger,{project_id:projectId,experiment_id:experimentId,type:'independent-verification-rejection',survivor:evidence.survivor,reason:'independent_verification_failed',evidence_hash:independent.evidence_hash});
-      throw new Error('independent_verification_rejected');
-    }
+    if(independent.status!=='INDEPENDENTLY_VERIFIED') throw new Error('independent_verification_rejected');
     const result={status:'EVOLUTION_VERIFIED',project_id:projectId,experiment_id:experimentId,baseline_revision:report.baseline_revision,survivor:evidence.survivor,evidence_hash:evidence.evidence_hash,independent_evidence_hash:independent.evidence_hash,verifier_module_sha256:independent.verifier_module_sha256,gaps:report.gaps};
     await mkdir(resolve(root,outputDir),{recursive:true});
     await writeFile(resolve(root,outputDir,experimentId+'-result.json'),JSON.stringify(result,null,2));
