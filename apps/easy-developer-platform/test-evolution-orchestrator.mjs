@@ -122,7 +122,7 @@ test('rejects unsafe candidate paths', async () => {
       baseline_revision: baseline,
       candidates: [
         { id: 'unsafe', changes: [{ path: '../escape.txt', content: 'nope' }] },
-        { id: 'safe', changes: [{ path: 'fixture.txt', content: 'safe\n' }] }
+        { id: 'also-unsafe', changes: [{ path: '../../escape.txt', content: 'nope' }] }
       ],
       tests: [{ name: 'always-pass', cmd: process.execPath, args: ['-e', 'process.exit(0)'] }]
     }, dir);
@@ -142,7 +142,7 @@ test('rejects protected workflow mutations', async () => {
       baseline_revision: baseline,
       candidates: [
         { id: 'workflow', changes: [{ path: '.github/workflows/pwn.yml', content: 'name: pwn\n' }] },
-        { id: 'safe', changes: [{ path: 'fixture.txt', content: 'safe\n' }] }
+        { id: 'also-workflow', changes: [{ path: '.github/workflows/other.yml', content: 'name: other\n' }] }
       ],
       tests: [{ name: 'always-pass', cmd: process.execPath, args: ['-e', 'process.exit(0)'] }]
     }, dir);
