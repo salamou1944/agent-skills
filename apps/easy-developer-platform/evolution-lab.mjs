@@ -14,14 +14,15 @@ export function normalizeMetrics(input = {}) {
   if (metrics.medianMs < 0 || metrics.p95Ms < 0) throw new Error('latency_out_of_range');
   return Object.freeze(metrics);
 }
+function roundDelta(value) { return Number(value.toFixed(12)); }
 export function compareMetrics(beforeInput, afterInput) {
   const before = normalizeMetrics(beforeInput), after = normalizeMetrics(afterInput);
   return { before, after, delta: {
-    successRate: after.successRate - before.successRate,
-    medianMsPct: before.medianMs === 0 ? 0 : (after.medianMs - before.medianMs) / before.medianMs,
-    p95MsPct: before.p95Ms === 0 ? 0 : (after.p95Ms - before.p95Ms) / before.p95Ms,
-    retryRate: after.retryRate - before.retryRate, reworkRate: after.reworkRate - before.reworkRate,
-    verificationRate: after.verificationRate - before.verificationRate
+    successRate: roundDelta(after.successRate - before.successRate),
+    medianMsPct: roundDelta(before.medianMs === 0 ? 0 : (after.medianMs - before.medianMs) / before.medianMs),
+    p95MsPct: roundDelta(before.p95Ms === 0 ? 0 : (after.p95Ms - before.p95Ms) / before.p95Ms),
+    retryRate: roundDelta(after.retryRate - before.retryRate), reworkRate: roundDelta(after.reworkRate - before.reworkRate),
+    verificationRate: roundDelta(after.verificationRate - before.verificationRate)
   }};
 }
 export function fingerprintExperiment(experiment) { return createHash('sha256').update(JSON.stringify(experiment)).digest('hex'); }
