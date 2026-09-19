@@ -10,7 +10,7 @@
     "test:build-monitor": "node --test apps/easy-developer-platform/test-build-monitor.mjs",
     "test:creative": "node apps/easy-developer-platform/test-creative-core.mjs",
     "test:creative-stage": "node apps/easy-developer-platform/test-creative-stage.mjs",
-    "test:creative-provider": "node apps/easy-developer-platform/test-openai-creative-provider.mjs",
+    "test:creative-provider": "node apps/easy-developer-platform/test-openai-creative-provider.mjs && node apps/easy-developer-platform/test-creative-test-fixture.mjs",
     "test:revenue": "node apps/revenue-engine/test-revenue-engine.mjs",
     "test:revenue:all": "node apps/revenue-engine/test-revenue-engine.mjs && node apps/revenue-engine/test-revenue-components.mjs && node apps/revenue-engine/test-revenue-api.mjs && node apps/revenue-engine/test-revenue-operator.mjs && node apps/revenue-engine/test-market-strategy.mjs && node apps/revenue-engine/test-campaign-planner.mjs && node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs && node apps/revenue-engine/test-product-listing-sales.mjs && node apps/revenue-engine/test-sales-pipeline.mjs && node apps/revenue-engine/test-service-market-intelligence.mjs && node apps/revenue-engine/test-payment-billing-adapter.mjs && node apps/revenue-engine/test-live-provider-adapters.mjs && node apps/revenue-engine/test-mony-workbench.mjs && node apps/revenue-engine/test-mony-customer-e2e.mjs",
     "test:mony": "node apps/revenue-engine/test-mony-workbench.mjs && node apps/revenue-engine/test-mony-customer-e2e.mjs",

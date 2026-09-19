@@ -2,6 +2,7 @@ import http from 'node:http';
 import { createProductDNA, checkProductIntegrity, compileCreativeInstruction, validateCreativeOutput, providerStatus } from './creative-core.mjs';
 import { runCreativeJob } from './creative-orchestrator.mjs';
 import { openAICreativeProvider } from './openai-creative-provider.mjs';
+import { createCreativeTestAsset } from './creative-test-fixture.mjs';
 
 const port = Number(process.env.EASY_CREATIVE_PORT || 8793);
 const send = (res, status, data) => {
@@ -15,7 +16,7 @@ async function body(req) {
   try { return JSON.parse(raw); } catch { throw Object.assign(new Error('invalid_json'), { status: 400 }); }
 }
 const selfTestEnabled = () => String(process.env.EASY_CREATIVE_SELF_TEST || '').trim().toLowerCase() === 'true';
-const testAsset = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAAB/ElEQVR42u3TQQ0AAAjEMMC/2JPAGw20AAwABgADgAHAAGAAMAAYAAwABgADgAHAAGAAMAAYAAwABgADwLV3WQTQQMB8VgAAAABJRU5ErkJggg==';
+const testAsset = createCreativeTestAsset(1024, 1024);
 
 http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
