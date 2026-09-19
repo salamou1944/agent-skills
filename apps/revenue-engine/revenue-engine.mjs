@@ -109,22 +109,27 @@ function providerFor(path) {
   })[path];
 }
 
-export function recordRevenue(event, providerRegistry = {}) {
+export function recordRevenue(event, providerRegistry = {}, seenEventIds = new Set()) {
   if (!event?.confirmed || !event?.provider || !providerRegistry[event.provider]) {
     return { status: 'rejected', reason: 'revenue_requires_confirmed_provider_event' };
   }
+  const externalEventId = String(event.externalEventId || '').trim();
+  if (!externalEventId) return { status: 'rejected', reason: 'provider_event_id_required' };
+  if (seenEventIds.has(externalEventId)) return { status: 'rejected', reason: 'duplicate_provider_event' };
   if (typeof event.amount !== 'number' || !Number.isFinite(event.amount) || event.amount <= 0) {
     return { status: 'rejected', reason: 'invalid_amount' };
   }
+  seenEventIds.add(externalEventId);
   return {
     status: 'recorded', id: id('txn'), recordedAt: now(), provider: event.provider,
     path: event.path || 'unknown', amount: event.amount, currency: event.currency || 'USD',
-    externalEventId: String(event.externalEventId || '')
+    externalEventId, evidence: { source: 'provider', confirmed: true }
   };
 }
 
 export function createEngine({ providers = {}, mode = 'dry-run' } = {}) {
   const providerRegistry = Object.freeze({ ...providers });
+  const seenEventIds = new Set();
   return Object.freeze({
     mode,
     providers: Object.keys(providerRegistry),
@@ -133,7 +138,7 @@ export function createEngine({ providers = {}, mode = 'dry-run' } = {}) {
     score: scoreOpportunity,
     plan: planMonetization,
     fanOut,
-    recordRevenue: (event) => recordRevenue(event, providerRegistry)
+    recordRevenue: (event) => recordRevenue(event, providerRegistry, seenEventIds)
   });
 }
 
