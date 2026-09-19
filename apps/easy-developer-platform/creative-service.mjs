@@ -1,8 +1,8 @@
 import http from 'node:http';
-import { deflateSync } from 'node:zlib';
 import { createProductDNA, checkProductIntegrity, compileCreativeInstruction, validateCreativeOutput, providerStatus } from './creative-core.mjs';
 import { runCreativeJob } from './creative-orchestrator.mjs';
 import { openAICreativeProvider } from './openai-creative-provider.mjs';
+import { createCreativeTestAsset } from './creative-test-fixture.mjs';
 
 const port = Number(process.env.EASY_CREATIVE_PORT || 8793);
 const send = (res, status, data) => {
@@ -16,40 +16,7 @@ async function body(req) {
   try { return JSON.parse(raw); } catch { throw Object.assign(new Error('invalid_json'), { status: 400 }); }
 }
 const selfTestEnabled = () => String(process.env.EASY_CREATIVE_SELF_TEST || '').trim().toLowerCase() === 'true';
-const testAsset = (() => {
-  // Deterministic, standards-compliant 1024x1024 RGB PNG fixture.
-  // The previous inline fixture was malformed and OpenAI correctly rejected it as invalid input.
-  const width = 1024;
-  const height = 1024;
-  const row = Buffer.alloc(1 + width * 3, 0);
-  row.fill(255, 1);
-  const raw = Buffer.alloc((1 + width * 3) * height);
-  for (let y = 0; y < height; y += 1) row.copy(raw, y * row.length);
-  const crc32 = (buffer) => {
-    let crc = 0xffffffff;
-    for (const byte of buffer) {
-      crc ^= byte;
-      for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ (0xedb88320 & -(crc & 1));
-    }
-    return (crc ^ 0xffffffff) >>> 0;
-  };
-  const chunk = (type, data) => {
-    const t = Buffer.from(type);
-    const body = Buffer.concat([t, data]);
-    const crc = Buffer.alloc(4);
-    crc.writeUInt32BE(crc32(body), 0);
-    const len = Buffer.alloc(4);
-    len.writeUInt32BE(data.length, 0);
-    return Buffer.concat([len, body, crc]);
-  };
-  const signature = Buffer.from([137,80,78,71,13,10,26,10]);
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8; ihdr[9] = 2; // 8-bit RGB
-  const png = Buffer.concat([signature, chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
-  return `data:image/png;base64,${png.toString('base64')}`;
-})();
+const testAsset = createCreativeTestAsset(1024, 1024);
 
 http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
