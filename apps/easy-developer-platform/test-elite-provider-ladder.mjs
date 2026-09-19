@@ -107,3 +107,32 @@ test('Elite fails closed when every configured provider is exhausted', async () 
     fetchImpl,
   }), /all_providers_exhausted:primary:provider_quota_exhausted,secondary:provider_quota_exhausted/);
 });
+
+
+test('Elite self-provisions Copilot CLI when the binary is missing', async () => {
+  const calls = [];
+  const runImpl = async (command, args, workspace, timeout, env) => {
+    calls.push({ command, args, workspace, timeout, hasToken: Boolean(env?.COPILOT_GITHUB_TOKEN) });
+    if (command === 'copilot') return { ok: false, error: 'spawn copilot ENOENT', stdout: '', stderr: '' };
+    assert.equal(command, 'npx');
+    assert.deepEqual(args.slice(0, 2), ['--yes', '@github/copilot']);
+    return { ok: true, stdout: '{"summary":"copilot-self-provisioned","changes":[]}', stderr: '' };
+  };
+
+  const result = await ask('test copilot self provision', {
+    apiKey: 'primary-test-token',
+    endpoint: 'https://primary.invalid',
+    model: 'primary-model',
+    providerRetries: 1,
+    providerTimeoutMs: 1000,
+    copilotToken: 'copilot-test-token',
+    workspace: '.',
+    runImpl,
+  });
+
+  assert.equal(result.summary, 'copilot-self-provisioned');
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].command, 'copilot');
+  assert.equal(calls[1].command, 'npx');
+  assert.equal(calls[1].hasToken, true);
+});
