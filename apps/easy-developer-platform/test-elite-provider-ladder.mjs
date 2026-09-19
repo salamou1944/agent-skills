@@ -31,13 +31,13 @@ test('Elite rotates across a provider ladder after quota exhaustion', async () =
   };
 
   const result = await ask('test provider ladder', {
-    apiKey: 'primary-test-token',
+    apiKey: 'x',
     endpoint: 'https://primary.invalid',
     model: 'primary-model',
-    secondaryApiKey: 'secondary-test-token',
+    secondaryApiKey: 'y',
     secondaryEndpoint: 'https://secondary.invalid',
     secondaryModel: 'secondary-model',
-    githubToken: 'third-test-token',
+    githubToken: 'z',
     githubEndpoint: 'https://third.invalid',
     githubModel: 'third-model',
     providerRetries: 1,
@@ -73,7 +73,7 @@ test('Elite can switch models on the same endpoint before moving to another prov
   };
 
   const result = await ask('test model fallback', {
-    apiKey: 'primary-test-token',
+    apiKey: 'x',
     endpoint: 'https://primary.invalid',
     model: 'primary-model',
     modelFallback: 'secondary-model-on-same-endpoint',
@@ -96,10 +96,10 @@ test('Elite fails closed when every configured provider is exhausted', async () 
   });
 
   await assert.rejects(() => ask('test all providers exhausted', {
-    apiKey: 'primary-test-token',
+    apiKey: 'x',
     endpoint: 'https://primary.invalid',
     model: 'primary-model',
-    secondaryApiKey: 'secondary-test-token',
+    secondaryApiKey: 'y',
     secondaryEndpoint: 'https://secondary.invalid',
     secondaryModel: 'secondary-model',
     providerRetries: 1,
@@ -120,12 +120,12 @@ test('Elite self-provisions Copilot CLI when the binary is missing', async () =>
   };
 
   const result = await ask('test copilot self provision', {
-    apiKey: 'primary-test-token',
+    apiKey: 'x',
     endpoint: 'https://primary.invalid',
     model: 'primary-model',
     providerRetries: 1,
     providerTimeoutMs: 1000,
-    copilotToken: 'copilot-test-token',
+    copilotToken: 'w',
     workspace: '.',
     runImpl,
   });
