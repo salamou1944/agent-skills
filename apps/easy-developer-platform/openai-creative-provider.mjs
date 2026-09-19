@@ -98,7 +98,9 @@ export function openAICreativeProvider() {
       const form=new FormData();
       form.append('model',IMAGE_MODEL);
       form.append('prompt',prompt);
-      form.append('image',dataUrlToBlob(dataUrl,asset.mimeType||'image/png'),asset.fileName||'product.png');
+      form.append('image[]',dataUrlToBlob(dataUrl,asset.mimeType||'image/png'),asset.fileName||'product.png');
+      form.append('size','1024x1024');
+      form.append('quality','medium');
       form.append('output_format','png');
       const body=await openai('/images/edits',{method:'POST',body:form});
       const item=body?.data?.[0];
