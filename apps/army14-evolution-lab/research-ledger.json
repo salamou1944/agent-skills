@@ -1,0 +1,12 @@
+{
+  "schema":"army14-evolution-lab/research-ledger/v1",
+  "updated":"2026-09-19",
+  "principles":[
+    {"id":"P1","claim":"Continuous repository evolution must be evaluated over repeated iterations.","evidence":"SWE-CI and EvoClaw research","operationalization":"baseline/candidate cycles + delta history"},
+    {"id":"P2","claim":"Regression control is a first-class objective, not a side effect.","evidence":"SWE-CI continuous-maintenance findings","operationalization":"automatic rejection on regression"},
+    {"id":"P3","claim":"Executable feedback and repository context are central to self-evolution.","evidence":"Self-Evolving Coding Agents survey","operationalization":"tests, contracts, trajectories and evidence ledger"},
+    {"id":"P4","claim":"Behavioral success alone can be insufficient to prove intended structural change.","evidence":"SWE Refactor Bench","operationalization":"independent evidence gate before promotion"},
+    {"id":"P5","claim":"Scaffolding and harness changes can alter observed agent behavior.","evidence":"2026 coding-agent evaluation literature","operationalization":"hold evaluation conditions stable and record harness version"}
+  ],
+  "promotionPolicy":"Research informs hypotheses; experiments generate evidence; independent verification controls promotion."
+}
