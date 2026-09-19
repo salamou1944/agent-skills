@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { ask } from './autonomous-coder.mjs';
+import { scanWorkspaceSecrets } from './elite-engine.mjs';
 
 const read = (path) => readFile(path, 'utf8');
 
@@ -297,6 +298,18 @@ test('Timeouts are bounded and can recover through an explicit fallback', async 
 
   assert.equal(result.summary, 'timeout-recovered');
   assert.deepEqual(calls, ['https://primary.timeout.invalid', 'https://fallback.invalid']);
+});
+
+test('Elite workspace Guardian detects secrets before provider execution', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'elite-guardian-'));
+  try {
+    await writeFile(join(workspace, 'safe.mjs'), 'export const safe = true;\\n');
+    assert.deepEqual(await scanWorkspaceSecrets(workspace), []);
+    await writeFile(join(workspace, 'guardian-probe.mjs'), 'const api_key = "guardian-test-secret-123";\\n');
+    assert.deepEqual(await scanWorkspaceSecrets(workspace), ['guardian-probe.mjs']);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
 });
 
 test('Supervisor workflow has bounded execution, Copilot recovery, and post-change verification', async () => {
