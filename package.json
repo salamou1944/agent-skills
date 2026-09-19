@@ -60,7 +60,11 @@
     "evolution:research": "node apps/easy-developer-platform/evolution-research.mjs",
     "evolution:run": "node apps/easy-developer-platform/evolution-frontier.mjs",
     "test:heldout-evaluator": "node --test apps/easy-developer-platform/test-heldout-evaluator.mjs",
-    "test:release-gate": "node --test apps/easy-developer-platform/test-release-gate.mjs"
+    "test:release-gate": "node --test apps/easy-developer-platform/test-release-gate.mjs",
+    "test:lab:evolution": "node --test apps/army14-evolution-lab/test-digital-evolution.mjs",
+    "test:lab:luna-frontier": "node --test apps/army14-evolution-lab/test-luna-frontier-experiments.mjs",
+    "test:lab:luna-meta": "node --test apps/army14-evolution-lab/test-luna-meta-evolution.mjs",
+    "test:lab:luna-unknown": "node --test apps/army14-evolution-lab/test-luna-unknown-capability-discovery.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
