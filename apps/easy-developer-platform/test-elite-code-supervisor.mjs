@@ -325,6 +325,7 @@ test('Supervisor workflow has bounded execution, Copilot recovery, and post-chan
 
 test('Provider exhaustion activates Copilot CLI as the final recovery route', async () => {
   const calls = [];
+  let probeAttempts = 0;
   const result = await ask('test Copilot recovery', {
     apiKey: 'primary-test-token',
     endpoint: 'https://primary.invalid',
@@ -332,7 +333,6 @@ test('Provider exhaustion activates Copilot CLI as the final recovery route', as
     providerRetries: 1,
     providerTimeoutMs: 1000,
     copilotToken: 'copilot-test-token',
-    let probeAttempts = 0;
     runImpl: async (command, args) => {
       calls.push({ command, args });
       if (command === 'copilot' && args[0] === '--version' && probeAttempts++ === 0) return { ok: false, error: 'spawn copilot ENOENT', stderr: 'spawn copilot ENOENT' };
