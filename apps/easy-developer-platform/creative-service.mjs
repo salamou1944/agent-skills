@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { deflateSync } from 'node:zlib';
 import { createProductDNA, checkProductIntegrity, compileCreativeInstruction, validateCreativeOutput, providerStatus } from './creative-core.mjs';
 import { runCreativeJob } from './creative-orchestrator.mjs';
 import { openAICreativeProvider } from './openai-creative-provider.mjs';
@@ -18,7 +19,6 @@ const selfTestEnabled = () => String(process.env.EASY_CREATIVE_SELF_TEST || '').
 const testAsset = (() => {
   // Deterministic, standards-compliant 1024x1024 RGB PNG fixture.
   // The previous inline fixture was malformed and OpenAI correctly rejected it as invalid input.
-  const { deflateSync } = await import('node:zlib');
   const width = 1024;
   const height = 1024;
   const row = Buffer.alloc(1 + width * 3, 0);
