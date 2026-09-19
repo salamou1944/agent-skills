@@ -53,7 +53,11 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
 
 async function copilotPlan(prompt,{token,timeoutMs=120000,workspace='.',runImpl=run}={}) {
   if (!token) throw new Error('copilot_provider_not_configured');
-  const result = await runImpl('copilot',['-s','--no-ask-user','-p',prompt],workspace,timeoutMs);
+  const env = { ...process.env, COPILOT_GITHUB_TOKEN: token, GITHUB_TOKEN: process.env.GITHUB_TOKEN || token };
+  let result = await runImpl('copilot',['-s','--no-ask-user','-p',prompt],workspace,timeoutMs,env);
+  if (!result.ok && result.error === 'spawn copilot ENOENT') {
+    result = await runImpl('npx',['--yes','@github/copilot','-s','--no-ask-user','-p',prompt],workspace,timeoutMs,env);
+  }
   if (!result.ok) throw new Error(`copilot_cli_failed:${result.error||result.stderr||result.code||'unknown'}`);
   return extractJson(result.stdout);
 }
