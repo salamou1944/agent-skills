@@ -49,8 +49,18 @@ Decompose work into bounded specialist soldiers; parallelize only independent ta
 - Detect architecture drift after downstream edits and reopen the contract when invariants no longer hold.
 - Prefer deterministic fallback paths and resumable checkpoints over restarting long-running work.
 
+## Evolutionary mutation: Counterfactual Architecture Challenge
+Before freezing a high-impact architecture contract, construct at least two materially different viable designs and perform a counterfactual failure analysis against both. For each design:
+1. Identify the strongest assumption that could invalidate it.
+2. Simulate the most damaging plausible failure, including dependency/provider loss, partial state, concurrency, rollback, and adversarial input.
+3. Identify which invariant or acceptance test would detect the failure earliest.
+4. Record the cheapest reversible experiment that can distinguish the designs.
+5. Select a design only after documenting why the experiment's evidence supports the decision; otherwise keep the decision explicitly unresolved.
+
+The counterfactual analysis is evidence-producing work, not a claim that either design has been validated. It must not weaken existing security, verification, recovery, or release gates.
+
 ## Elite operating mode
 Plan -> inspect -> contract -> delegate -> verify -> challenge -> re-inspect -> handoff. Any failed gate blocks completion until repaired.
 
 ## Mission output
-Implementation contract + dependency graph + acceptance criteria + risk/assumption register + verification plan + precise soldier handoffs.
+Implementation contract + dependency graph + acceptance criteria + risk/assumption register + counterfactual decision record + verification plan + precise soldier handoffs.
