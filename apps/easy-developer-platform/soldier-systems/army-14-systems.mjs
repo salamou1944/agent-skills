@@ -62,10 +62,12 @@ export function getSoldierSystem(id) {
   return SOLDIER_SYSTEMS.find((soldier) => soldier.id === String(id)) ?? null;
 }
 
-function assertEvidence(evidence) {
+function assertEvidence(evidence, runId) {
   if (!evidence || typeof evidence !== 'object' || typeof evidence.kind !== 'string' || evidence.kind.length === 0) {
     throw new Error('soldier_evidence_invalid');
   }
+  if (evidence.runId !== runId) throw new Error('soldier_evidence_run_mismatch');
+  if (typeof evidence.evidenceId !== 'string' || evidence.evidenceId.length === 0) throw new Error('soldier_evidence_id_invalid');
 }
 
 export function createSoldierRun({ soldierId, taskId, input }) {
@@ -79,21 +81,27 @@ export function createSoldierRun({ soldierId, taskId, input }) {
     state: 'claimed',
     checkpoint: 'claimed',
     input,
-    evidence: [{ kind: 'input', ok: true }],
+    revision: 0,
+    evidence: [{ kind: 'input', ok: true, runId: `${soldier.id}:${taskId}`, evidenceId: 'input' }],
     nextAction: 'execute',
   };
 }
 
-export function transitionSoldierRun(run, state, evidence = null) {
+export function transitionSoldierRun(run, state, evidence = null, options = {}) {
   if (!run || !SOLDIER_SYSTEMS.some((soldier) => soldier.id === run.soldierId)) throw new Error('soldier_run_unknown');
+  if (!Number.isInteger(run.revision) || run.revision < 0) throw new Error('soldier_revision_invalid');
+  if (options.expectedRevision !== undefined && options.expectedRevision !== run.revision) throw new Error('soldier_revision_conflict');
   if (!STATES.includes(state)) throw new Error('soldier_state_invalid');
   if (!TRANSITIONS[run.state]?.has(state)) throw new Error('soldier_transition_invalid');
-  if (evidence !== null) assertEvidence(evidence);
+  if (evidence !== null) assertEvidence(evidence, run.runId);
+  if (evidence && run.evidence.some((item) => item.evidenceId === evidence.evidenceId)) {
+    throw new Error('soldier_evidence_duplicate');
+  }
   const evidenceList = evidence ? [...run.evidence, evidence] : run.evidence;
   if (state === 'completed' && !evidenceList.some((item) => item.kind === 'verification' && item.ok === true)) {
     throw new Error('soldier_completion_verification_missing');
   }
-  const next = { ...run, state, checkpoint: state, evidence: evidenceList };
+  const next = { ...run, state, checkpoint: state, revision: run.revision + 1, evidence: evidenceList };
   next.nextAction = state === 'completed' ? null : state === 'recovering' ? 'repair-or-retry' : state === 'verifying' ? 'verify' : 'execute';
   return next;
 }
@@ -106,10 +114,11 @@ export function verifySoldierSystem(run) {
     typeof run.taskId === 'string' &&
     run.state === 'completed' &&
     run.checkpoint === 'completed' &&
+    Number.isInteger(run.revision) &&
     Array.isArray(run.evidence) &&
-    run.evidence.some((item) => item?.kind === 'input' && item?.ok === true) &&
-    run.evidence.some((item) => item?.kind === 'action' && item?.ok === true) &&
-    run.evidence.some((item) => item?.kind === 'verification' && item?.ok === true),
+    run.evidence.some((item) => item?.kind === 'input' && item?.ok === true && item?.runId === run.runId) &&
+    run.evidence.some((item) => item?.kind === 'action' && item?.ok === true && item?.runId === run.runId) &&
+    run.evidence.some((item) => item?.kind === 'verification' && item?.ok === true && item?.runId === run.runId),
   );
 }
 
