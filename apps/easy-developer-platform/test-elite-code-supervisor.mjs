@@ -345,7 +345,7 @@ test('Provider exhaustion activates Copilot CLI as the final recovery route', as
     }),
   });
   assert.equal(result.summary, 'copilot-recovered');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].command, 'copilot');
-  assert.ok(calls[0].args.includes('--no-ask-user'));
+  assert.ok(calls.some((call) => call.command === 'npm' && call.args[0] === 'install' && call.args[1] === '-g' && call.args[2] === '@github/copilot'));
+  const copilotCall = calls.find((call) => call.command === 'copilot' && call.args.includes('--no-ask-user'));
+  assert.ok(copilotCall);
 });
