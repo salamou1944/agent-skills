@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, dirname } from 'node:path';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { runEliteTask } from './elite-harness.mjs';
 import { ask } from './autonomous-coder.mjs';
 import { inspectRepository, discoverTests, scanImports } from './elite-intelligence.mjs';
