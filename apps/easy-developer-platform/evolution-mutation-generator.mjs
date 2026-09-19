@@ -7,6 +7,7 @@ const PROJECTS = new Set(['EASY','MONY','ELITE','ARMY-14','EVOLUTION-LAB','AGENT
 
 function fail(message){ throw new Error(message); }
 
+function signature(candidate){return JSON.stringify(candidate.changes.map(x=>({path:x.path,content:x.content})).sort((a,b)=>a.path.localeCompare(b.path)));}
 function validateCandidate(candidate){
   if(!candidate || typeof candidate.id !== 'string' || !candidate.id.trim()) fail('candidate_id_required');
   if(!Array.isArray(candidate.changes) || candidate.changes.length === 0) fail('candidate_changes_required');
@@ -46,6 +47,7 @@ export async function generateCandidates({gapReport, projectId, baselineRevision
   const candidates=result.candidates.map(validateCandidate);
   if(candidates.length!==count) fail('provider_candidate_count_mismatch');
   if(new Set(candidates.map(x=>x.id)).size!==candidates.length) fail('candidate_ids_must_be_unique');
+  if(new Set(candidates.map(signature)).size!==candidates.length) fail('candidate_mutations_must_be_distinct');
   return {project_id:projectId,baseline_revision:baselineRevision,candidates};
 }
 
