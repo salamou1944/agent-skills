@@ -55,6 +55,12 @@ export function buildArmy14Health({ lastRun, lastFailure, startedAt, running, in
     sourceDriftDetected: lastFailure?.code === 'SOURCE_VERIFICATION_FAILED',
     providerAccess: 'not-claimed',
     revenue: 'not-claimed',
+    sourceIdentity: {
+      provider: 'github',
+      repository: 'salamou1944/agent-skills',
+      branch: 'main',
+      deployedCommit,
+    },
   };
 }
 
