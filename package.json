@@ -57,7 +57,9 @@
     "lab:army14:compare": "node apps/army14-evolution-lab/compare.mjs",
     "lab:army14:evaluate": "node apps/army14-evolution-lab/evolution-cycle.mjs",
     "lab:army14:hypotheses": "node apps/army14-evolution-lab/hypothesis-engine.mjs",
-    "test:lab:science": "node --test apps/army14-evolution-lab/test-scientific-evaluator.mjs apps/army14-evolution-lab/test-evolution-system.mjs"
+    "test:lab:science": "node --test apps/army14-evolution-lab/test-scientific-evaluator.mjs apps/army14-evolution-lab/test-evolution-system.mjs",
+    "test:lab:evolution-system": "node --test apps/army14-evolution-lab/test-evolution-system.mjs apps/army14-evolution-lab/test-promotion-and-memory.mjs",
+    "lab:army14:population": "node apps/army14-evolution-lab/mutation-population.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
