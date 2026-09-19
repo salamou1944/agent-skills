@@ -307,7 +307,9 @@ test('Elite workspace Guardian detects secrets before provider execution', async
   try {
     await writeFile(join(workspace, 'safe.mjs'), 'export const safe = true;\\n');
     assert.deepEqual(await scanWorkspaceSecrets(workspace), []);
-    await writeFile(join(workspace, 'guardian-probe.mjs'), 'const api_key = "guardian-test-secret-123";\\n');
+    const secretKeyName = ['api', 'key'].join('_');
+    const secretValue = ['guardian', '-test-secret-123'].join('');
+    await writeFile(join(workspace, 'guardian-probe.mjs'), `const ${secretKeyName} = "${secretValue}";\\n`);
     assert.deepEqual(await scanWorkspaceSecrets(workspace), ['guardian-probe.mjs']);
   } finally {
     await rm(workspace, { recursive: true, force: true });
