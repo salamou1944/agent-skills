@@ -41,7 +41,8 @@ async function cycle() {
 
 const server = createServer((req, res) => {
   if (req.url === '/health' || req.url === '/') {
-    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+    const healthStatus = lastFailure ? 503 : 200;
+    res.writeHead(healthStatus, { 'content-type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       service: 'army-14-railway-worker',
       status: lastFailure ? 'degraded' : 'running',
