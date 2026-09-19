@@ -14,10 +14,10 @@ assert.equal(ihdr.readUInt32BE(4), 1024);
 assert.equal(ihdr[8], 8);
 assert.equal(ihdr[9], 2);
 
-const idatTypeOffset = 8 + 4 + 13 + 4;
+const idatTypeOffset = 8 + 4 + 4 + 13 + 4 + 4;
 assert.equal(png.subarray(idatTypeOffset, idatTypeOffset + 4).toString(), 'IDAT');
-const idatLength = png.readUInt32BE(8 + 4 + 13 + 4 + 4);
-const idatStart = 8 + 4 + 13 + 4 + 4 + 4;
+const idatLength = png.readUInt32BE(8 + 4 + 4 + 13 + 4);
+const idatStart = 8 + 4 + 4 + 13 + 4 + 4 + 4;
 const raw = inflateSync(png.subarray(idatStart, idatStart + idatLength));
 assert.equal(raw.length, (1 + 1024 * 3) * 1024);
 assert.equal(raw[0], 0);
