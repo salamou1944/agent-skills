@@ -9,9 +9,10 @@ test('Elite invokes Copilot after every configured provider is exhausted', async
     clone(){return this;},
     async json(){return {error:{code:'insufficient_quota'}};},
   });
+  let probeAttempts = 0;
   const runImpl = async (command,args) => {
     events.push({command,args});
-    if (command === 'copilot' && args[0] === '--version') return {ok:false,error:'spawn copilot ENOENT',stderr:'spawn copilot ENOENT'};
+    if (command === 'copilot' && args[0] === '--version' && probeAttempts++ === 0) return {ok:false,error:'spawn copilot ENOENT',stderr:'spawn copilot ENOENT'};
     return {ok:true,stdout:'{"summary":"copilot-recovered","changes":[]}',stderr:''};
   };
   const result = await ask('recover task', {
