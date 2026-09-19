@@ -18,10 +18,14 @@ assert.equal(plan.claims.revenue, 'unconfirmed_until_provider_event');
 const engine = createEngine({ providers: { testAffiliate: { name: 'test' } } });
 const blockedRevenue = engine.recordRevenue({ confirmed: true, provider: 'unknown', amount: 10 });
 assert.equal(blockedRevenue.status, 'rejected');
+const missingEventId = engine.recordRevenue({ confirmed: true, provider: 'testAffiliate', amount: 10 });
+assert.equal(missingEventId.reason, 'provider_event_id_required');
 
 const recorded = engine.recordRevenue({ confirmed: true, provider: 'testAffiliate', path: 'affiliate', amount: 10, currency: 'USD', externalEventId: 'evt-1' });
 assert.equal(recorded.status, 'recorded');
 assert.equal(recorded.amount, 10);
+assert.equal(recorded.evidence.source, 'provider');
+assert.equal(engine.recordRevenue({ confirmed: true, provider: 'testAffiliate', amount: 10, externalEventId: 'evt-1' }).reason, 'duplicate_provider_event');
 
 const unsafe = createOpportunity({ title: 'Guaranteed income', source: 'x', description: 'spam and self-referral' });
 assert.equal(unsafe.status, 'blocked');
