@@ -41,7 +41,8 @@ jobs:
           node - <<'NODE'
           const x=require('./affiliate-link.json');
           if (!x.provider) throw new Error('affiliate_provider_missing');
-          if (!/^https:\/\//.test(String(x.trackingUrl || ''))) throw new Error('tracking_url_not_https');
+          if (!/^\/api\/revenue\/mony\/workbench$/.test(String(x.trackingUrl || ''))) throw new Error('mony_tracking_url_invalid');
+          if (!/^https:\/\//.test(String(x.partnerTrackingUrl || ''))) throw new Error('partner_tracking_url_not_https');
           NODE
 
           curl --fail --silent --show-error "$BASE/api/revenue/ledger" | tee ledger.json
