@@ -1,3 +1,8 @@
+---
+name: multi-modal-provider-gateway
+description: Route multimodal generation and analysis requests through explicit provider adapters with validation, quotas, failure handling, and evidence boundaries.
+---
+
 # Multi-Modal Provider Gateway
 
 ## Purpose
