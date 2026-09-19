@@ -9,6 +9,18 @@ const startedAt = new Date().toISOString();
 let lastRun = null;
 let running = false;
 let failures = 0;
+let lastFailure = null;
+
+export function classifyArmy14CycleFailure(value) {
+  const error = String(value?.error ?? value?.message ?? value ?? '').toLowerCase();
+  if (/repository_verification_failed:syntax_failed|syntax_failed:/.test(error)) {
+    return { code: 'SOURCE_VERIFICATION_FAILED', retryable: false };
+  }
+  if (/\b429\b|rate.?limit|quota|credit_balance_exhausted/.test(error)) {
+    return { code: 'EXTERNAL_PROVIDER_RATE_LIMIT', retryable: true };
+  }
+  return { code: 'UNKNOWN', retryable: true };
+}
 
 async function cycle() {
   if (running) return;
@@ -16,9 +28,11 @@ async function cycle() {
   try {
     lastRun = await runArmy14(goal, { runId: `railway-${Date.now()}` });
     failures = 0;
+    lastFailure = null;
   } catch (error) {
     failures += 1;
     lastRun = { status: 'FAILED', error: error instanceof Error ? error.message : String(error), failures };
+    lastFailure = classifyArmy14CycleFailure(lastRun);
     console.error(JSON.stringify({ event: 'army14-cycle-failed', ...lastRun }));
   } finally {
     running = false;
@@ -30,12 +44,14 @@ const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       service: 'army-14-railway-worker',
-      status: 'running',
+      status: lastFailure ? 'degraded' : 'running',
       startedAt,
       running,
       intervalMs,
       failures,
       lastRun: lastRun?.status || null,
+      failureCode: lastFailure?.code || null,
+      retryable: lastFailure?.retryable ?? null,
       providerAccess: 'not-claimed',
       revenue: 'not-claimed',
     }));
