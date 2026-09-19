@@ -60,6 +60,8 @@ jobs:
               sed -n '1,320p' "$file" >> /tmp/elite-code-context.txt
             fi
           done
+      - name: Ensure Copilot CLI recovery is available
+        run: command -v copilot >/dev/null 2>&1 || npm install -g @github/copilot
       - name: Run primary Elite Code engineering cycle
         id: primary
         continue-on-error: true
@@ -76,6 +78,7 @@ jobs:
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "15000"
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
         run: |
           set -euo pipefail
           node apps/easy-developer-platform/autonomous-coder.mjs "Improve Elite Code autonomous engineering reliability using the verified repository state, tests, and rules. Do not edit workflows, secrets, deployment configuration, authentication policy, or protected paths. Make the smallest safe verified change; return VERIFIED_NOOP when no justified change exists." | tee /tmp/elite-primary-result.json
