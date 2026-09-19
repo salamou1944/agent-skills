@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -33,7 +33,10 @@ export async function runEvolution({workspace='.',projectId,experimentId='evolut
       await recordNegativeKnowledge(ledger,{project_id:projectId,experiment_id:experimentId,type:'independent-verification-rejection',survivor:evidence.survivor,reason:'independent_verification_failed',evidence_hash:independent.evidence_hash});
       throw new Error('independent_verification_rejected');
     }
-    return {status:'EVOLUTION_VERIFIED',project_id:projectId,experiment_id:experimentId,baseline_revision:report.baseline_revision,survivor:evidence.survivor,evidence_hash:evidence.evidence_hash,independent_evidence_hash:independent.evidence_hash,gaps:report.gaps};
+    const result={status:'EVOLUTION_VERIFIED',project_id:projectId,experiment_id:experimentId,baseline_revision:report.baseline_revision,survivor:evidence.survivor,evidence_hash:evidence.evidence_hash,independent_evidence_hash:independent.evidence_hash,verifier_module_sha256:independent.verifier_module_sha256,gaps:report.gaps};
+    await mkdir(resolve(root,outputDir),{recursive:true});
+    await writeFile(resolve(root,outputDir,experimentId+'-result.json'),JSON.stringify(result,null,2));
+    return result;
   }catch(error){
     await recordNegativeKnowledge(ledger,{project_id:projectId,experiment_id:experimentId,type:'evolution-run-rejection',reason:error.message,gaps:report.gaps});
     throw error;
