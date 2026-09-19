@@ -27,7 +27,8 @@ export async function independentlyVerify({workspace,manifest,evidence}){
     const attacks=await checks(temp,manifest.attacks||[{name:'diff-check',cmd:'git',args:['diff','--check']}]);
     const changedFiles=(await run('git',['diff','--name-only'],temp)).stdout.split('\n').filter(Boolean);
     if(changedFiles.some(x=>x.startsWith('.github/workflows/')))throw new Error('protected_workflow_boundary');
-    if(changedFiles.some(x=>FORBIDDEN.test(x)))throw new Error('forbidden_credential_path');\n    const diff=(await run('git',['diff','--binary'],temp)).stdout;
+    if(changedFiles.some(x=>FORBIDDEN.test(x)))throw new Error('forbidden_credential_path');
+    const diff=(await run('git',['diff','--binary'],temp)).stdout;
     const diffHash=createHash('sha256').update(diff).digest('hex');
     const recorded=evidence.results?.find(x=>x.id===evidence.survivor)?.diff_hash;
     const passed=tests.every(x=>x.ok)&&attacks.every(x=>x.ok)&&diffHash===recorded;
