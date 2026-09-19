@@ -18,8 +18,8 @@ for (const soldier of SOLDIER_SYSTEMS) {
 
   const run = createSoldierRun({ soldierId: soldier.id, taskId: `system-test-${soldier.id}`, input: { fixture: true } });
   assert.equal(run.evidence[0].kind, 'input');
-  const executing = transitionSoldierRun(run, 'executing', { kind: 'action', ok: true });
-  const verifying = transitionSoldierRun(executing, 'verifying', { kind: 'verification', ok: true });
+  const executing = transitionSoldierRun(run, 'executing', { runId: run.runId, evidenceId: `action-${soldier.id}`, kind: 'action', ok: true });
+  const verifying = transitionSoldierRun(executing, 'verifying', { runId: run.runId, evidenceId: `verification-${soldier.id}`, kind: 'verification', ok: true });
   const completed = transitionSoldierRun(verifying, 'completed');
   assert.equal(completed.checkpoint, 'completed');
   assert.equal(completed.nextAction, null);
@@ -29,8 +29,8 @@ for (const soldier of SOLDIER_SYSTEMS) {
   assert.throws(() => transitionSoldierRun(run, 'completed'), /soldier_transition_invalid/);
   assert.throws(() => transitionSoldierRun(run, 'executing', { bad: true }), /soldier_evidence_invalid/);
   const failedRun = createSoldierRun({ soldierId: soldier.id, taskId: `negative-${soldier.id}`, input: { fixture: true } });
-  const failedExecuting = transitionSoldierRun(failedRun, 'executing', { kind: 'action', ok: true });
-  const failedVerifying = transitionSoldierRun(failedExecuting, 'verifying', { kind: 'verification', ok: false });
+  const failedExecuting = transitionSoldierRun(failedRun, 'executing', { runId: failedRun.runId, evidenceId: `failed-action-${soldier.id}`, kind: 'action', ok: true });
+  const failedVerifying = transitionSoldierRun(failedExecuting, 'verifying', { runId: failedRun.runId, evidenceId: `failed-verification-${soldier.id}`, kind: 'verification', ok: false });
   assert.throws(() => transitionSoldierRun(failedVerifying, 'completed'), /soldier_completion_verification_missing/);
 }
 
