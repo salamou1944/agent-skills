@@ -21,10 +21,24 @@ http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   try {
     if (req.method === 'GET' && u.pathname === '/api/creative/health') {
-      if (!selfTestEnabled()) return send(res, 200, { ok: true, service: 'easy-creative-core', version: '0.1.0', generationEnabled: false });
+      const provider = providerStatus();
+      return send(res, 200, {
+        ok: true,
+        service: 'easy-creative-core',
+        version: '0.1.0',
+        generationEnabled: provider.generationEnabled,
+        integrityEnabled: provider.integrityEnabled,
+        provider: provider.provider,
+        status: provider.status,
+        reason: provider.reason,
+        selfTestRequired: Boolean(selfTestEnabled()),
+      });
+    }
+    if (req.method === 'GET' && u.pathname === '/api/creative/self-test') {
+      if (!selfTestEnabled()) return send(res, 404, { error: 'not_found' });
       const result = await runCreativeJob({
         mode: 'openai',
-        asset: { assetId: 'provider-smoke', mimeType: 'image/png', fileName: 'provider-smoke.png', dataUrl: testAsset, width: 256, height: 256 },
+        asset: { assetId: 'provider-smoke', mimeType: 'image/png', fileName: 'provider-smoke.png', dataUrl: testAsset, width: 1024, height: 1024 },
         request: { direction: 'Create a minimal realistic commercial presentation. Preserve every immutable product detail exactly; do not invent claims or product features.' },
       }, openAICreativeProvider());
       const summary = {
@@ -32,7 +46,8 @@ http.createServer(async (req, res) => {
         status: result.status,
         decision: result.decision,
         reason: result.reason || null,
-        stages: result.events?.map(({ stage, decision, reason }) => ({ stage, decision, reason: reason || null })) || [],
+        errorDetail: result.errorDetail || null,
+        stages: result.events?.map(({ stage, decision, reason, error }) => ({ stage, decision, reason: reason || null, error: error || null })) || [],
         integrity: { core: result.validation?.core?.decision || result.validation?.decision || null, provider: result.validation?.provider?.decision || null },
         generatedImage: Boolean(result.output?.dataUrl || result.output?.base64),
       };
