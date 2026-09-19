@@ -38,7 +38,7 @@ async function fixture() {
 
 async function runManifest(manifest, dir) {
   const manifestPath = join(dir, 'manifest.json');
-  await writeFile(manifestPath, JSON.stringify({ ...manifest, workspace: dir }));
+  await writeFile(manifestPath, JSON.stringify({ ...manifest, trusted_test_manifest: true, workspace: dir }));
   return run(process.execPath, [orchestrator.pathname, manifestPath], dir);
 }
 
