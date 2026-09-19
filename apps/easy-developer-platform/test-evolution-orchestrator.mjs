@@ -171,3 +171,42 @@ test('rejects a project outside the explicit allowlist', async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+
+test('rejects duplicate candidate IDs before sandbox execution', async () => {
+  const { dir, baseline } = await fixture();
+  try {
+    const r = await runManifest({
+      experiment_id: 'fixture-duplicate-ids',
+      project_id: 'EVOLUTION-LAB',
+      baseline_revision: baseline,
+      candidates: [
+        { id: 'same', changes: [{ path: 'fixture.txt', content: 'a\n' }] },
+        { id: 'same', changes: [{ path: 'fixture.txt', content: 'b\n' }] }
+      ]
+    }, dir);
+    assert.notEqual(r.code, 0);
+    assert.match(r.stderr, /candidate_ids_must_be_unique/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('rejects a manifest whose baseline revision does not match the workspace', async () => {
+  const { dir, baseline } = await fixture();
+  try {
+    const r = await runManifest({
+      experiment_id: 'fixture-baseline-mismatch',
+      project_id: 'EVOLUTION-LAB',
+      baseline_revision: '0'.repeat(40),
+      candidates: [
+        { id: 'a', changes: [{ path: 'fixture.txt', content: 'a\n' }] },
+        { id: 'b', changes: [{ path: 'fixture.txt', content: 'b\n' }] }
+      ]
+    }, dir);
+    assert.notEqual(r.code, 0);
+    assert.match(r.stderr, /baseline_revision_mismatch/);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
