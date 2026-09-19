@@ -51,8 +51,14 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
   throw new Error('provider_unavailable')
 }
 
-async function copilotPlan(prompt,{token,timeoutMs=120000,workspace='.',runImpl=run}={}) {
+async function copilotPlan(prompt,{token,timeoutMs=120000,workspace='.',runImpl=run,autoInstall=true}={}) {
   if (!token) throw new Error('copilot_provider_not_configured');
+  let probe = await runImpl('copilot',['--version'],workspace,15000);
+  if (!probe.ok && autoInstall) {
+    const install = await runImpl('npm',['install','-g','@github/copilot'],workspace,180000);
+    if (install.ok) probe = await runImpl('copilot',['--version'],workspace,15000);
+  }
+  if (!probe.ok) throw new Error(`copilot_cli_unavailable:${probe.error||probe.stderr||probe.code||'unknown'}`);
   const result = await runImpl('copilot',['-s','--no-ask-user','-p',prompt],workspace,timeoutMs);
   if (!result.ok) throw new Error(`copilot_cli_failed:${result.error||result.stderr||result.code||'unknown'}`);
   return extractJson(result.stdout);
