@@ -43,6 +43,10 @@
     "trusted_test_manifest": {
       "type": "boolean",
       "const": true
+    },
+    "allow_test_mutation": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
