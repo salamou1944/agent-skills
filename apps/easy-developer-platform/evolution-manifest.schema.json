@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "required": [
+    "experiment_id",
+    "project_id",
+    "baseline_revision",
+    "candidates"
+  ],
+  "properties": {
+    "experiment_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "enum": [
+        "EASY",
+        "MONY",
+        "ELITE",
+        "ARMY-14",
+        "EVOLUTION-LAB",
+        "AGENT-SKILLS"
+      ]
+    },
+    "baseline_revision": {
+      "type": "string"
+    },
+    "workspace": {
+      "type": "string"
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 2
+    },
+    "tests": {
+      "type": "array"
+    },
+    "attacks": {
+      "type": "array"
+    },
+    "output": {
+      "type": "string"
+    }
+  }
+}
