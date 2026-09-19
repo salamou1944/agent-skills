@@ -61,7 +61,8 @@
     "evolution:run": "node apps/easy-developer-platform/evolution-frontier.mjs",
     "test:heldout-evaluator": "node --test apps/easy-developer-platform/test-heldout-evaluator.mjs",
     "test:release-gate": "node --test apps/easy-developer-platform/test-release-gate.mjs",
-    "test:lab:evolution": "node --test apps/army14-evolution-lab/test-digital-evolution.mjs"
+    "test:lab:evolution": "node --test apps/army14-evolution-lab/test-digital-evolution.mjs",
+    "test:lab:luna-frontier": "node --test apps/army14-evolution-lab/test-luna-frontier-experiments.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
