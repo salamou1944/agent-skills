@@ -1,3 +1,8 @@
+---
+name: value-packaging-engineering
+description: Convert validated capabilities into explicit buyer-facing value propositions, deliverables, constraints, and measurable outcomes without unsupported claims.
+---
+
 # Value Packaging & Perceived-Value Engineering
 
 ## Purpose
