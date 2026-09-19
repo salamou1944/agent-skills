@@ -4,7 +4,8 @@
     "experiment_id",
     "project_id",
     "baseline_revision",
-    "candidates"
+    "candidates",
+    "trusted_test_manifest"
   ],
   "properties": {
     "experiment_id": {
@@ -38,6 +39,10 @@
     },
     "output": {
       "type": "string"
+    },
+    "trusted_test_manifest": {
+      "type": "boolean",
+      "const": true
     }
   }
 }
