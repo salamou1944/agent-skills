@@ -37,7 +37,11 @@ export function closeSoldierRun(run, result) {
   if (!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
   let current = run;
   if (current.state === 'executing') current = transitionSoldierRun(current,'verifying',{kind:'verification',ok:result.verification?.passed === true,summary:result.verification?.summary ?? null});
-  if (result.status === 'VERIFIED' && !verifySoldierSystem(current)) throw new Error('soldier_verification_incomplete');
+  if (result.status === 'VERIFIED') {
+    current = transitionSoldierRun(current,'completed',{kind:'result',ok:true,status:result.status});
+    if (!verifySoldierSystem(current)) throw new Error('soldier_verification_incomplete');
+    return current;
+  }
   if (result.status === 'BLOCKED') return transitionSoldierRun(current,'blocked',{kind:'result',ok:false,reason:'blocked-with-evidence'});
   if (result.status === 'FAILED') return transitionSoldierRun(current,'recovering',{kind:'result',ok:false,reason:'failed-with-recovery-path'});
   return transitionSoldierRun(current,'completed',{kind:'result',ok:true,status:result.status});
