@@ -37,8 +37,8 @@
 - Product/runtime surfaces: Gateway, Operator, Creative, Creative Job, Customer/Auth, Revenue.
 - Internal readiness must be reported separately from external provider capability.
 - Current Railway developer runtime service: `easy-platform-runtime-v3` in project `EASY Developer Platform`, production environment.
-- Latest verified runtime commit at ledger creation: `aa240abe3d32ef3bedc1915c239b9477b0f1a42a`.
-- Latest deployment evidence: Railway deployment `4281b429-f25c-46b7-950a-9b936d503d9e` succeeded.
+- Latest verified runtime commit: `de75967c06ad166bca3b83f87d321941c7286a83` (fixed runtime E2E project path to match the isolated `.elite/e2e-runtime` workspace).
+- Latest deployment evidence: Railway deployment `b36bf611-1cb9-4159-82e9-e97cf19e592b` succeeded from that commit; runtime logs show gateway/customer/auth/background services starting successfully and gateway/customer health checks returning 200.
 - Runtime smoke currently proves platform/operator/creative/customer/revenue/dashboard/public gateway health and provider-readiness wiring.
 - Current external blocker: real OpenAI image generation reaches the provider but is blocked by HTTP 429 / `credit_balance_exhausted`. The runtime now records this as `BLOCKED_EXTERNAL_PROVIDER`, not success.
 - Guardian/security E2E now classifies embedded-secret detection as `BLOCKED`; the boot smoke also verifies the blocked path.
