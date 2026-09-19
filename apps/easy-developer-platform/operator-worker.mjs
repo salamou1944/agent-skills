@@ -35,9 +35,12 @@ export async function runOnce(options={}) {
     return { taskId:task.id, status:retry?'QUEUED':status, attempts, result };
   } catch (error) {
     const attempts=task.attempts+1;
-    const retry=attempts<cfg.maxAttempts;
-    await updateTask(cfg.stateFile, task.id, { status:retry?'QUEUED':'FAILED', result:{status:'FAILED',error:error.message,code:error.code||null}, finishedAt:retry?null:new Date().toISOString(), updatedAt:new Date().toISOString() });
-    return { taskId:task.id, status:retry?'QUEUED':'FAILED', attempts, error:error.message, code:error.code||null };
+    const securityBlocked=error?.code==='workspace_secret_detected';
+    const blocked=securityBlocked || error?.code==='workspace_dirty';
+    const status=blocked?'BLOCKED':'FAILED';
+    const retry=!blocked && attempts<cfg.maxAttempts;
+    await updateTask(cfg.stateFile, task.id, { status:retry?'QUEUED':status, result:{status,error:error.message,code:error.code||null}, finishedAt:retry?null:new Date().toISOString(), updatedAt:new Date().toISOString() });
+    return { taskId:task.id, status:retry?'QUEUED':status, attempts, error:error.message, code:error.code||null };
   }
 }
 
