@@ -18,7 +18,7 @@ test('ARMY-14 rejects stale concurrent transitions', () => {
   const base = createSoldierRun({ soldierId: '02', taskId: 'concurrency', input: { goal: 'test' } });
   const winner = transitionSoldierRun(base, 'executing', evidence(base.runId, 'action-a', 'action'), { expectedRevision: 0 });
   assert.throws(
-    () => transitionSoldierRun(base, 'executing', evidence(base.runId, 'action-b', 'action'), { expectedRevision: 0 }),
+    () => transitionSoldierRun(winner, 'verifying', evidence(winner.runId, 'verify-stale', 'verification'), { expectedRevision: 0 }),
     /soldier_revision_conflict/
   );
   assert.equal(winner.revision, 1);
