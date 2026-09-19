@@ -35,5 +35,5 @@ test('Elite fails closed when Copilot is absent', async () => {
     apiKey:'primary-token', endpoint:'https://primary.invalid', model:'primary',
     providerRetries:1, providerTimeoutMs:1000,
     copilotToken:'copilot-token', fetchImpl, runImpl,
-  }), /all_providers_exhausted:primary:provider_quota_exhausted,copilot-cli:copilot_cli_failed/);
+  }), /all_providers_exhausted:primary:provider_quota_exhausted,copilot-cli:copilot_cli_unavailable/);
 });
