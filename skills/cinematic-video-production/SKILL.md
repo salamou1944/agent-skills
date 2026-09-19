@@ -1,3 +1,8 @@
+---
+name: cinematic-video-production
+description: Produce structured cinematic video concepts, shot plans, prompts, and validation guidance while preserving source-product facts and explicit uncertainty.
+---
+
 # Cinematic Video Production
 
 ## Purpose

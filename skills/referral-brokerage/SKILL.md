@@ -1,3 +1,8 @@
+---
+name: referral-brokerage
+description: Identify and package legitimate referral opportunities with explicit buyer fit, attribution, compliance, and evidence boundaries; never claim commissions without provider-confirmed evidence.
+---
+
 # Referral Brokerage
 
 ## Purpose
