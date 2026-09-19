@@ -63,7 +63,7 @@
 - Each soldier has bounded scope, explicit state machine, evidence, recovery, checkpoint, rollback-or-safe-stop, and handoff invariants.
 - Director completion bug fixed in `a47a2739994456a8a4b94dc3f501f9420d138e28`: transition verifying -> completed before final soldier verification.
 - Syntax-diagnostic preservation in the practical runner fixed in `7d98623de5a2f15d908e8d318c6cb7f88f2b01ab`.
-- A separate legacy Railway ARMY-14 worker remains stale at commit `648e7a809c5a3cae2da34519b39a32909aef0902`; its historical source contains a syntax error in `elite-deployment-recovery.mjs`. Current `main` contains the corrected file, but the available Railway controls cannot re-point that existing service to the latest commit. Creating a replacement service is currently blocked by Railway Free-plan resource limits.
+- A separate legacy Railway ARMY-14 worker remains pinned to commit `648e7a809c5a3cae2da34519b39a32909aef0902`; its historical source contains a syntax error in `elite-deployment-recovery.mjs`. A fresh redeploy was attempted at 2026-09-19 15:36Z and Railway again selected the same stale commit, so this is confirmed source/deployment drift rather than a current-main source failure. The redeploy remained BUILDING during observation. Available controls still do not expose a safe repoint of that service to current `main`; replacement service creation was previously blocked by Railway Free-plan resource limits.
 - Do not interpret that legacy worker's failure as failure of the current ARMY-14 source; treat it as a deployment/source-drift blocker.
 
 ## Railway
