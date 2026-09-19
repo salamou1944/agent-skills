@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { classifyDeploymentFailure, parseJsonLines } from './elite-deployment-recovery.mjs';
-import { readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 
 function runNodeCheck(file) {
