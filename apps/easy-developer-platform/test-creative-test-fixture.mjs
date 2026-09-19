@@ -22,6 +22,6 @@ const raw = inflateSync(png.subarray(idatStart, idatStart + idatLength));
 assert.equal(raw.length, (1 + 1024 * 3) * 1024);
 assert.equal(raw[0], 0);
 assert.equal(raw[1], 255);
-assert.equal(png.subarray(png.length - 12, png.length - 8).toString(), 'IEND');
+assert.equal(png.subarray(png.length - 8, png.length - 4).toString(), 'IEND');
 
 console.log('creative test fixture passed');
