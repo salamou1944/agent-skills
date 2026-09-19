@@ -16,7 +16,7 @@ export function classifyArmy14CycleFailure(value) {
   if (/repository_verification_failed:syntax_failed|syntax_failed:/.test(error)) {
     return { code: 'SOURCE_VERIFICATION_FAILED', retryable: false };
   }
-  if (/\\b429\\b|rate.?limit|quota|credit_balance_exhausted/.test(error)) {
+  if (/\b429\b|rate.?limit|quota|credit_balance_exhausted/.test(error)) {
     return { code: 'EXTERNAL_PROVIDER_RATE_LIMIT', retryable: true };
   }
   return { code: 'UNKNOWN', retryable: true };
@@ -44,7 +44,7 @@ const server = createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       service: 'army-14-railway-worker',
-      status: 'running',
+      status: lastFailure ? 'degraded' : 'running',
       startedAt,
       running,
       intervalMs,
