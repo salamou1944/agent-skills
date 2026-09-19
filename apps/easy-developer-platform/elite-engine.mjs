@@ -113,8 +113,36 @@ async function verify({ root, changes, prediction }) {
   return { ok: true, evidence: { gitDiffCheck: true, patch, syntaxChecked, shadow } };
 }
 
+const WORKSPACE_SCAN_EXTENSIONS = /\\.(mjs|js|cjs|json|yml|yaml|md)$/i;
+const WORKSPACE_SCAN_SECRET_PATTERNS = [
+  /(?:api[_-]?key|secret|token|password)\\s*[:=]\\s*[\\"'][^\\"']{12,}[\\"']/i,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i,
+  /gh[pousr]_[A-Za-z0-9_]{20,}/,
+  /sk-[A-Za-z0-9]{20,}/
+];
+
+async function scanWorkspaceSecrets(root) {
+  const findings = [];
+  async function walk(dir) {
+    let entries = [];
+    try { entries = await (await import('node:fs/promises')).readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      if (entry.name === '.git' || entry.name === 'node_modules') continue;
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) await walk(path);
+      else if (WORKSPACE_SCAN_EXTENSIONS.test(entry.name)) {
+        let body = '';
+        try { body = await readFile(path, 'utf8'); } catch { continue; }
+        if (WORKSPACE_SCAN_SECRET_PATTERNS.some(pattern => pattern.test(body))) findings.push(path.slice(root.length + 1));
+      }
+    }
+  }
+  await walk(root);
+  return Object.freeze([...new Set(findings)]);
+}
+
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
-  const activeProvider = provider || makeProvider(env);
+  const workspaceSecrets = await scanWorkspaceSecrets(root);\n  if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }\n  const activeProvider = provider || makeProvider(env);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
   const guardedProvider = async args => {
