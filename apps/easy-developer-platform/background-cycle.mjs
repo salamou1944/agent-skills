@@ -5,6 +5,13 @@ const port = Number(process.env.PORT || 8080);
 const baseUrl = `http://127.0.0.1:${port}`;
 const stateDir = process.env.EASY_STATE_DIR || '/app/data/easy';
 const statePath = path.join(stateDir, 'background-cycle.json');
+const routes = [
+  '/api/gateway/status',
+  '/api/customer/health',
+  '/api/creative/health',
+  '/api/creative-job/health',
+  '/api/revenue/health',
+];
 
 async function probe(route) {
   try {
@@ -16,14 +23,12 @@ async function probe(route) {
   }
 }
 
-const checks = await Promise.all([
-  probe('/api/gateway/status'),
-  probe('/api/customer/health'),
-]);
+const checks = await Promise.all(routes.map(probe));
 const result = {
   service: 'easy-background-cycle',
   checkedAt: new Date().toISOString(),
   ok: checks.every((item) => item.ok),
+  failedRoutes: checks.filter((item) => !item.ok).map((item) => item.route),
   checks,
 };
 
