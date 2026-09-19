@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile as readTextFile } from 'node:fs/promises';
+import { evaluateHeldOutEvidence } from './heldout-evaluator.mjs';
 
 const ALLOWED=/^(?!\.git)(?!\.github\/workflows\/)(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-9_.-]+$/;
 const FORBIDDEN=/(^|\/)(\.env(?:\..*)?|.*\.(?:pem|key|p12|pfx)|secrets?(?:\/|\.)|credentials?(?:\/\.))/i;
@@ -32,7 +33,8 @@ export async function independentlyVerify({workspace,manifest,evidence}){
     const diffHash=createHash('sha256').update(diff).digest('hex');
     const recorded=evidence.results?.find(x=>x.id===evidence.survivor)?.diff_hash;
     const passed=tests.every(x=>x.ok)&&attacks.every(x=>x.ok)&&diffHash===recorded;
-    const independentEvidence={status:passed?'INDEPENDENTLY_VERIFIED':'REJECTED',survivor:evidence.survivor,baseline_revision:actual,diff_hash:diffHash,recorded_diff_hash:recorded,verifier_module_sha256:await moduleHash(),tests,attacks};
+    const heldout=evaluateHeldOutEvidence({workspace:temp,evidence:{baseline_revision:actual,candidate_id:evidence.survivor,candidate_diff_hash:diffHash,deterministic_tests_passed:tests.every(x=>x.ok),adversarial_checks_passed:attacks.every(x=>x.ok),independent_replay_passed:passed}});
+    const independentEvidence={status:passed&&heldout.status==='HELDOUT_VERIFIED'?'INDEPENDENTLY_VERIFIED':'REJECTED',survivor:evidence.survivor,baseline_revision:actual,diff_hash:diffHash,recorded_diff_hash:recorded,verifier_module_sha256:await moduleHash(),heldout,tests,attacks};
     independentEvidence.evidence_hash=hash(independentEvidence);
     return independentEvidence;
   }finally{await rm(temp,{recursive:true,force:true})}
