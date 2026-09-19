@@ -11,5 +11,5 @@ test('cycle fails closed when AI provider is unavailable',async()=>{
 test('verified execution cannot promote without independent repeated evidence',async()=>{
   const h={id:'h2',hypothesis:'Improve verification reliability',expected:'verification coverage rises',falsifier:'independent verification fails',validation:{ok:true},plan:{target:'01-architect'}};
   const cycle=await runAIExperimentCycle({hypotheses:[h],budget:1,mutationGenerator:async()=>({id:'mutation-1',plan:{changes:[{path:'apps/army14-evolution-lab/sample.mjs',content:'export const x=1;'}]}}),executor:async()=>({status:'VERIFIED',tests:{ok:true}})});
-  assert.equal(cycle.status,'EXPERIMENTS_VERIFIED'); assert.equal(cycle.experiments[0].promotion.decision,'BLOCKED'); assert.ok(cycle.experiments[0].promotion.reasons.includes('independent_evidence_required'));
+  assert.equal(cycle.status,'EXPERIMENTS_VERIFIED'); assert.equal(cycle.experiments[0].promotion.decision,'BLOCKED'); assert.equal(cycle.experiments[0].promotion.checks.independentEvidence,false); assert.equal(cycle.experiments[0].promotion.checks.repeatability,false);
 });
