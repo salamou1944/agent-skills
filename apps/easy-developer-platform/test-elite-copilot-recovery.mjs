@@ -19,9 +19,10 @@ test('Elite invokes Copilot after every configured provider is exhausted', async
     copilotToken:'copilot-token', fetchImpl, runImpl,
   });
   assert.equal(result.summary,'copilot-recovered');
-  assert.equal(events.length,1);
-  assert.equal(events[0].command,'copilot');
-  assert.deepEqual(events[0].args.slice(0,3),['-s','--no-ask-user','-p']);
+  assert.ok(events.some((event) => event.command === 'npm' && event.args[0] === 'install' && event.args[1] === '-g' && event.args[2] === '@github/copilot'));
+  const copilotCall = events.find((event) => event.command === 'copilot' && event.args[0] === '-s');
+  assert.ok(copilotCall);
+  assert.deepEqual(copilotCall.args.slice(0,3),['-s','--no-ask-user','-p']);
 });
 
 test('Elite fails closed when Copilot is absent', async () => {
