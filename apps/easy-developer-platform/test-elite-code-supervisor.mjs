@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import test from 'node:test';
+import { tmpdir } from 'node:os';
 import { ask } from './autonomous-coder.mjs';
 import { scanWorkspaceSecrets } from './elite-engine.mjs';
 
