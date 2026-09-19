@@ -51,3 +51,7 @@ A rejection is retained in `evolution/negative-knowledge.jsonl` and linked to th
 ## Operational rule
 
 Promotion is evidence-driven and fail-closed. If the system cannot establish the required evidence, it must record the failure and stop rather than convert uncertainty into a completion claim.
+
+## Evaluation integrity
+
+A PR check is evidence about the exact checked revision only. Stale merge refs or failed checks are never treated as verification of a newer branch head. The coordinator must bind conclusions to the checked commit SHA and rerun after a revision change.
