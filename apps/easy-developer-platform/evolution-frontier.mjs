@@ -12,14 +12,15 @@ function run(cmd,args,cwd,timeout=300000){return new Promise(res=>{const p=spawn
 export async function runEvolution({workspace='.',projectId,experimentId='evolution-run',candidateCount=4,outputDir='evolution',config=process.env}){
   const root=resolve(workspace);
   const temp=await mkdtemp(join(tmpdir(),'evolution-frontier-'));
-  const report=await discoverGaps(root,projectId,experimentId);
+  let report=null;
   const reportPath=join(temp,'gap-report.json');
   const manifestPath=join(temp,'manifest.json');
   const evidencePath=join(temp,'evidence.json');
   const independentPath=join(temp,'independent.json');
   const ledger=resolve(root,outputDir,'negative-knowledge.jsonl');
-  await writeFile(reportPath,JSON.stringify(report,null,2));
   try{
+    report=await discoverGaps(root,projectId,experimentId);
+    await writeFile(reportPath,JSON.stringify(report,null,2));
     const generated=await generateCandidates({gapReport:report,projectId,baselineRevision:report.baseline_revision,candidateCount,config});
     const manifest={...generated,experiment_id:experimentId,tests:[{name:'git-diff-check',cmd:'git',args:['diff','--check']}],attacks:[{name:'workflow-boundary',cmd:'git',args:['diff','--name-only']}],workspace:root,output:evidencePath};
     await writeFile(manifestPath,JSON.stringify(manifest,null,2));
@@ -38,7 +39,7 @@ export async function runEvolution({workspace='.',projectId,experimentId='evolut
     await writeFile(resolve(root,outputDir,experimentId+'-result.json'),JSON.stringify(result,null,2));
     return result;
   }catch(error){
-    await recordNegativeKnowledge(ledger,{project_id:projectId,experiment_id:experimentId,type:'evolution-run-rejection',reason:error.message,gaps:report.gaps});
+    await recordNegativeKnowledge(ledger,{project_id:projectId,experiment_id:experimentId,type:'evolution-run-rejection',reason:error.message,gaps:report?.gaps||[]});
     throw error;
   }finally{await rm(temp,{recursive:true,force:true})}
 }
