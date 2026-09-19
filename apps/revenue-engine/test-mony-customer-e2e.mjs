@@ -10,7 +10,7 @@ try {
   assert.equal(workbench.status, 200); const html = await workbench.text();
   for (const marker of ['MONY — AI Workbench', 'Product Content', 'Voice Studio', 'Client Offer']) assert.match(html, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   const link = await (await fetch(`http://127.0.0.1:${port}/api/revenue/affiliate-link`)).json();
-  assert.equal(link.provider, 'mony'); assert.equal(link.trackingUrl, '/api/revenue/mony/workbench'); assert.match(link.partnerTrackingUrl, /^https:\/\//);
+  assert.equal(link.provider, 'mony'); assert.match(link.trackingUrl, /^https:\/\//); assert.equal(link.partnerTrackingUrl, link.trackingUrl); assert.equal(link.workbenchUrl, '/api/revenue/mony/workbench');
   const nonCash = await fetch(`http://127.0.0.1:${port}/api/revenue/partnerstack/test-secret`, { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({event:'reward.created',data:{key:'pending-1',amount:1000,reward_status:'pending'}}) });
   assert.equal((await nonCash.json()).status, 'ignored');
   const cash = await fetch(`http://127.0.0.1:${port}/api/revenue/partnerstack/test-secret`, { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({event:'reward.created',data:{key:'paid-1',amount:1250,reward_status:'paid'}}) });
