@@ -154,7 +154,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "2b1384ad40bff564b6d846e4669bf0a418d986ba"
+          "commit": "0554047da5493d86213e3bba6b9e0ec62af3dfff"
         },
         {
           "kind": "action",
@@ -183,7 +183,7 @@
         }
       ],
       "scope": "apps/easy-developer-platform/defects",
-      "updatedAt": "2026-09-19T09:01:56.980Z"
+      "updatedAt": "2026-09-19T13:03:50.317Z"
     },
     "elite.ci-contract-closure": {
       "status": "BLOCKED",
@@ -3463,6 +3463,43 @@
       ],
       "scope": "apps/easy-developer-platform/defects",
       "at": "2026-09-19T09:01:56.980Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "0554047da5493d86213e3bba6b9e0ec62af3dfff"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "09",
+            "soldier": "test-qa",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:spawn E2BIG",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.defect-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/defects",
+      "at": "2026-09-19T13:03:50.317Z"
     }
   ]
 }
