@@ -20,8 +20,11 @@ function validateManifest(manifest,evidence){
   if(typeof manifest.baseline_revision!=='string'||!/^[a-f0-9]{40}$/.test(manifest.baseline_revision))throw new Error('invalid_baseline_revision');
   const ids=new Set();
   for(const c of manifest.candidates){if(!c||typeof c.id!=='string'||!c.id||ids.has(c.id))throw new Error('invalid_candidate_identity');ids.add(c.id);if(!Array.isArray(c.changes)||!c.changes.length)throw new Error('invalid_candidate_changes');const paths=new Set();for(const change of c.changes){validate(change);if(paths.has(change.path))throw new Error('duplicate_candidate_path:'+change.path);paths.add(change.path)}}
-  if(!evidence||typeof evidence.survivor!=='string'||!Array.isArray(evidence.results))throw new Error('invalid_evidence');
-  if(!HEX64.test(String(evidence.results.find(x=>x?.id===evidence.survivor)?.diff_hash||'')))throw new Error('invalid_recorded_diff_hash');
+  if(!evidence||typeof evidence.survivor!=='string'||!Array.isArray(evidence.results)||typeof evidence.manifest_hash!=='string'||!HEX64.test(evidence.manifest_hash))throw new Error('invalid_evidence');
+  const resultIds=new Set();
+  for(const result of evidence.results){if(!result||typeof result.id!=='string'||resultIds.has(result.id))throw new Error('invalid_evidence_result_identity');resultIds.add(result.id);}
+  const matching=evidence.results.filter(x=>x.id===evidence.survivor);
+  if(matching.length!==1||!HEX64.test(String(matching[0]?.diff_hash||'')))throw new Error('invalid_recorded_diff_hash');
 }
 function validateCheckCommand(t){
   if(!t||typeof t!=='object'||typeof t.name!=='string'||!t.name)throw new Error('invalid_test_definition');
@@ -40,6 +43,7 @@ async function apply(dir,candidate){for(const c of candidate.changes){validate(c
 async function checks(dir,tests=[]){const results=[];for(const t of tests){validateCheckCommand(t);const r=await run(t.cmd,t.args||[],dir,t.timeout||120000);results.push({name:t.name,ok:r.ok,code:r.code,timeout:r.timeout===true,stdout:r.stdout.slice(-3000),stderr:r.stderr.slice(-3000)});if(!r.ok)break}return results}
 export async function independentlyVerify({workspace,manifest,evidence}){
   validateManifest(manifest,evidence);
+  if(evidence.manifest_hash!==hash(manifest))throw new Error('manifest_evidence_mismatch');
   const root=resolve(workspace), temp=await mkdtemp(join(tmpdir(),'evolution-independent-'));
   try{
     const clone=await run('git',['clone','--no-hardlinks',root,temp],process.cwd(),120000);
