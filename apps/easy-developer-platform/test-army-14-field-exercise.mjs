@@ -4,6 +4,11 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { runArmy14 } from './army-14-practical-runner.mjs';
 
+test('ARMY-14 rejects traversal run IDs before creating evidence paths', async () => {
+  await assert.rejects(() => runArmy14('security regression', { runId: '../escape' }), /army14_run_id_invalid/);
+  await assert.rejects(() => runArmy14('security regression', { runId: 'a/../b' }), /army14_run_id_invalid/);
+});
+
 test('ARMY-14 integrated field exercise verifies the pipeline without conflating it with task completion', async () => {
   const manifest = await runArmy14('MONY revenue-engine end-to-end field exercise', {
     runId: `test-${Date.now()}`,
