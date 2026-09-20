@@ -55,10 +55,14 @@ test("no frontier is explicit, not fake success", async () => {
 });
 
 test("missing verification evidence fails closed", async () => {
-  await assert.rejects(
-    () => executeFrontier({ id: "bad", project: "agent-skills", nextAction: "x" }, { ...handlers([]), verify: async () => ({ evidence: [] }) }),
-    /execution_verification_requires_evidence/,
+  const result = await executeFrontier(
+    { id: "bad", project: "agent-skills", nextAction: "x" },
+    { ...handlers([]), verify: async () => ({ evidence: [] }) },
   );
+  assert.equal(result.status, "FAILED");
+  assert.equal(result.phase, "FAILED");
+  assert.match(result.error, /execution_verification_requires_evidence/);
+  assert.ok(result.evidence.some((item) => item.source === "independent-verifier" && item.result === "failed"));
 });
 
 
