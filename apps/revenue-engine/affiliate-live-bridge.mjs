@@ -1,5 +1,5 @@
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
-import { mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, rmSync, statSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createServer } from 'node:http';
 import { createEngine } from './revenue-engine.mjs';
@@ -19,7 +19,7 @@ async function ensureLedger() { await mkdir(dirname(ledgerPath), { recursive: tr
 async function appendLedger(record) { await ensureLedger(); await appendFile(ledgerPath, `${JSON.stringify(record)}\n`, 'utf8'); }
 function processStartToken(pid=process.pid) { try { const stat=readFileSync(`/proc/${pid}/stat`,'utf8'); return stat.slice(stat.lastIndexOf(')')+2).trim().split(/\\s+/)[19]||null; } catch { return null; } }
 function lockOwnerAlive(owner) { if (!owner || Number(owner.pid)<=0 || !owner.startToken) return false; return processStartToken(Number(owner.pid))===String(owner.startToken); }
-function acquireLedgerLock() { mkdirSync(dirname(ledgerLockPath),{recursive:true}); for(let i=0;i<100;i+=1){ try { mkdirSync(ledgerLockPath,{mode:0o700}); writeFileSync(`${ledgerLockPath}/owner`,JSON.stringify({pid:process.pid,startToken:processStartToken(),createdAt:Date.now()}),{mode:0o600}); return; } catch(error) { if(error.code!=='EEXIST') throw error; try { const owner=JSON.parse(readFileSync(`${ledgerLockPath}/owner`,'utf8')); const age=Date.now()-Number(owner.createdAt); if(age>ledgerLockStaleMs&&!lockOwnerAlive(owner)) rmSync(ledgerLockPath,{recursive:true,force:true}); } catch { try { rmSync(ledgerLockPath,{recursive:true,force:true}); } catch {} } } } throw new Error('mony_ledger_lock_timeout'); }
+function acquireLedgerLock() { mkdirSync(dirname(ledgerLockPath),{recursive:true}); for(let i=0;i<100;i+=1){ try { mkdirSync(ledgerLockPath,{mode:0o700}); writeFileSync(`${ledgerLockPath}/owner`,JSON.stringify({pid:process.pid,startToken:processStartToken(),createdAt:Date.now()}),{mode:0o600}); return; } catch(error) { if(error.code!=='EEXIST') throw error; let recoverable=false; try { const owner=JSON.parse(readFileSync(`${ledgerLockPath}/owner`,'utf8')); const age=Date.now()-Number(owner.createdAt); recoverable=age>ledgerLockStaleMs&&!lockOwnerAlive(owner); } catch { try { const age=Date.now()-statSync(ledgerLockPath).mtimeMs; recoverable=age>ledgerLockStaleMs; } catch {} } if(recoverable) { try { rmSync(ledgerLockPath,{recursive:true,force:true}); } catch {} } } } throw new Error('mony_ledger_lock_timeout'); }
 function releaseLedgerLock() { rmSync(ledgerLockPath,{recursive:true,force:true}); }
 async function readLedger() { try { const raw = await readFile(ledgerPath, 'utf8'); return raw.split('\n').filter(Boolean).map((line) => JSON.parse(line)); } catch (error) { if (error.code === 'ENOENT') return []; throw error; } }
 async function body(req) { let raw=''; for await (const chunk of req) { raw+=chunk; if(raw.length>1_000_000) throw new Error('request_too_large'); } return raw?JSON.parse(raw):{}; }
