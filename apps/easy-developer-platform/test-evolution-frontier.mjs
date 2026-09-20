@@ -19,23 +19,34 @@ test('independent verifier replays a recorded survivor with immutable test bound
   const newBaseline=await git(dir,'rev-parse','HEAD');
   const candidate={id:'winner',changes:[{path:'fixture.txt',content:'winner\n'}]};
   const candidate2={id:'loser',changes:[{path:'other.txt',content:'x\n'}]};
-  const manifest={baseline_revision:newBaseline,candidates:[candidate,candidate2],tests:[{name:'winner-content',cmd:process.execPath,args:['verify-winner.mjs']}],attacks:[{name:'diff-check',cmd:'git',args:['diff','--check']}],workspace:dir};
+  const manifest={run_id:'evolution-test-run-1',baseline_revision:newBaseline,candidates:[candidate,candidate2],tests:[{name:'winner-content',cmd:process.execPath,args:['verify-winner.mjs']}],attacks:[{name:'diff-check',cmd:'git',args:['diff','--check']}],workspace:dir};
   await writeFile(join(dir,'fixture.txt'),'winner\n');
   const d=await run('git',['diff','--binary'],dir); const crypto=await import('node:crypto');
   const diffHash=crypto.createHash('sha256').update(d.stdout).digest('hex');
   const manifestHash=crypto.createHash('sha256').update(JSON.stringify(manifest)).digest('hex');
-  const evidence={survivor:'winner',manifest_hash:manifestHash,results:[{id:'winner',diff_hash:diffHash}]};
+  const evidence={run_id:manifest.run_id,survivor:'winner',manifest_hash:manifestHash,results:[{id:'winner',diff_hash:diffHash}]};
   const result=await independentlyVerify({workspace:dir,manifest,evidence});
   assert.equal(result.status,'INDEPENDENTLY_VERIFIED'); assert.equal(result.diff_hash,diffHash);
 }finally{await rm(dir,{recursive:true,force:true})}});
 test('independent verifier rejects malformed evidence and protected mutation paths',async()=>{const {dir,baseline}=await fixture();try{
   const good={id:'winner',changes:[{path:'fixture.txt',content:'winner\n'}]};
-  const evidence={survivor:'winner',results:[{id:'winner',diff_hash:'a'.repeat(64)}]};
-  await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{baseline_revision:baseline,candidates:[good,good],tests:[],attacks:[]},evidence}),/invalid_candidate_identity/);
-  await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{baseline_revision:baseline,candidates:[{id:'winner',changes:[{path:'test-owned.mjs',content:'exit(0)'}]}],tests:[],attacks:[]},evidence}),/unsafe_candidate_path/);
+  const evidence={run_id:'malformed-run',survivor:'winner',results:[{id:'winner',diff_hash:'a'.repeat(64)}]};
+  await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{run_id:'malformed-run',baseline_revision:baseline,candidates:[good,good],tests:[],attacks:[]},evidence}),/invalid_candidate_identity/);
+  await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{run_id:'malformed-run',baseline_revision:baseline,candidates:[{id:'winner',changes:[{path:'test-owned.mjs',content:'exit(0)'}]}],tests:[],attacks:[]},evidence}),/unsafe_candidate_path/);
   await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{baseline_revision:baseline,candidates:[{id:'winner',changes:[{path:'package.json',content:'{}'}]}],tests:[],attacks:[]},evidence}),/unsafe_candidate_path/);
   await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{baseline_revision:baseline,candidates:[good],tests:[{name:'eval',cmd:process.execPath,args:['-e','process.exit(0)']}],attacks:[]},evidence}),/unsafe_node_invocation/);
   await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{baseline_revision:baseline,candidates:[good],tests:[{name:'shell',cmd:'git',args:['-c','alias.x=!sh -c echo owned','x']}],attacks:[]},evidence}),/unsafe_git_invocation/);
   const outside=join(dir,'outside.txt'); await writeFile(outside,'outside\\n'); await symlink('outside.txt',join(dir,'link.txt')); await git(dir,'add','outside.txt','link.txt'); await git(dir,'commit','-m','add symlink fixture'); const symlinkBaseline=await git(dir,'rev-parse','HEAD');
-  await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{baseline_revision:symlinkBaseline,candidates:[{id:'winner',changes:[{path:'link.txt',content:'owned\\n'}]}],tests:[],attacks:[]},evidence:{survivor:'winner',results:[{id:'winner',diff_hash:'a'.repeat(64)}]} }),/candidate_path_symlink/);
+  await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{run_id:'symlink-run',baseline_revision:symlinkBaseline,candidates:[{id:'winner',changes:[{path:'link.txt',content:'owned\\n'}]}],tests:[],attacks:[]},evidence:{survivor:'winner',results:[{id:'winner',diff_hash:'a'.repeat(64)}]} }),/candidate_path_symlink/);
 }finally{await rm(dir,{recursive:true,force:true})}});
+
+test('independent verifier rejects replay under a different run identity', async () => {
+  const {dir,baseline}=await fixture();
+  try {
+    const candidate={id:'winner',changes:[{path:'fixture.txt',content:'winner\n'}]};
+    const manifest={run_id:'run-a',baseline_revision:baseline,candidates:[candidate],tests:[{name:'diff-check',cmd:'git',args:['diff','--check']}],attacks:[{name:'diff-check',cmd:'git',args:['diff','--check']}],workspace:dir};
+    const manifestHash=(await import('node:crypto')).createHash('sha256').update(JSON.stringify(manifest)).digest('hex');
+    const replayEvidence={run_id:'run-b',survivor:'winner',manifest_hash:manifestHash,results:[{id:'winner',diff_hash:'a'.repeat(64)}]};
+    await assert.rejects(() => independentlyVerify({workspace:dir,manifest,evidence:replayEvidence}), /invalid_evidence/);
+  } finally { await rm(dir,{recursive:true,force:true}); }
+});
