@@ -41,7 +41,7 @@ function validateCheckCommand(t){
 }
 async function assertNoSymlinkPath(dir,relativePath){const parts=relativePath.split('/');let current=dir;for(const part of parts){current=join(current,part);try{const stat=await lstat(current);if(stat.isSymbolicLink())throw new Error('candidate_path_symlink');}catch(error){if(error.code==='ENOENT')break;throw error;}}}
 async function apply(dir,candidate){for(const c of candidate.changes){validate(c);await assertNoSymlinkPath(dir,c.path);const target=join(dir,c.path);await mkdir(resolve(target,'..'),{recursive:true});await assertNoSymlinkPath(dir,c.path);await writeFile(target,c.content,'utf8')}}
-async function checks(dir,tests=[]){const results=[];for(const t of tests){validateCheckCommand(t);const r=await run(t.cmd,t.args||[],dir,t.timeout||120000);results.push({name:t.name,ok:r.ok,code:r.code,timeout:r.timeout===true,stdout:r.stdout.slice(-3000),stderr:r.stderr.slice(-3000)});if(!r.ok)break}return results}
+async function checks(dir,tests=[]){const results=[];for(const t of tests){validateCheckCommand(t);const r=await run(t.cmd,t.args||[],dir,t.timeout||120000);results.push({name:t.name,ok:r.ok,code:r.code,timeout:r.timeout===true,output_limit:r.output_limit===true,stdout:r.stdout.slice(-3000),stderr:r.stderr.slice(-3000)});if(!r.ok)break}return results}
 export async function independentlyVerify({workspace,manifest,evidence}){
   validateManifest(manifest,evidence);
   if(evidence.manifest_hash!==hash(manifest))throw new Error('manifest_evidence_mismatch');
