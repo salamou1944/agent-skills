@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createSoldierRun, transitionSoldierRun, verifySoldierSystem } from './soldier-systems/army-14-systems.mjs';
+import { createSoldierRun, transitionSoldierRun, verifySoldierSystem, snapshotSoldierRun, restoreSoldierRun } from './soldier-systems/army-14-systems.mjs';
 
 const evidence = (runId, evidenceId, kind, ok = true) => ({ runId, evidenceId, kind, ok });
 
@@ -85,4 +85,28 @@ test('ARMY-14 completion cannot be forged by state/checkpoint alone', () => {
   ];
   const forgedWithValidEvidence = { ...r, state: 'completed', checkpoint: 'completed', revision: 3, evidence: validEvidence };
   assert.equal(verifySoldierSystem(forgedWithValidEvidence), false);
+});
+
+test('ARMY-14 run snapshots survive restart and resume without losing identity or history', () => {
+  let r = createSoldierRun({ soldierId: '07', taskId: 'restart', input: { goal: 'test' } });
+  r = transitionSoldierRun(r, 'executing', evidence(r.runId, 'action-1', 'action'), { expectedRevision: 0 });
+  r = transitionSoldierRun(r, 'recovering', evidence(r.runId, 'recovery-1', 'recovery'), { expectedRevision: 1 });
+  const persisted = JSON.stringify(snapshotSoldierRun(r));
+  const restored = restoreSoldierRun(persisted);
+  assert.equal(restored.runId, r.runId);
+  assert.equal(restored.revision, 2);
+  assert.deepEqual(restored.history, r.history);
+  const resumed = transitionSoldierRun(restored, 'executing', evidence(restored.runId, 'action-2', 'action'), { expectedRevision: 2 });
+  assert.equal(resumed.revision, 3);
+  assert.equal(resumed.state, 'executing');
+});
+
+test('ARMY-14 rejects corrupted restart snapshots and cross-run evidence', () => {
+  let r = createSoldierRun({ soldierId: '08', taskId: 'restart-integrity', input: { goal: 'test' } });
+  r = transitionSoldierRun(r, 'executing', evidence(r.runId, 'action-1', 'action'), { expectedRevision: 0 });
+  const snapshot = snapshotSoldierRun(r);
+  const forgedHistory = { ...snapshot, history: [{ ...snapshot.history[0], to: 'executing' }] };
+  assert.throws(() => restoreSoldierRun(forgedHistory), /soldier_run_history_invalid/);
+  const foreign = createSoldierRun({ soldierId: '08', taskId: 'foreign', input: { goal: 'foreign' } });
+  assert.throws(() => restoreSoldierRun({ ...snapshot, evidence: [...snapshot.evidence, evidence(foreign.runId, 'foreign', 'action')] }), /soldier_evidence_run_mismatch/);
 });
