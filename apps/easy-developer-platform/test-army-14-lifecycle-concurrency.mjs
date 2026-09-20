@@ -110,3 +110,13 @@ test('ARMY-14 rejects corrupted restart snapshots and cross-run evidence', () =>
   const foreign = createSoldierRun({ soldierId: '08', taskId: 'foreign', input: { goal: 'foreign' } });
   assert.throws(() => restoreSoldierRun({ ...snapshot, evidence: [...snapshot.evidence, evidence(foreign.runId, 'foreign', 'action')] }), /soldier_evidence_run_mismatch/);
 });
+
+test('ARMY-14 refuses to transition a corrupted restored run', () => {
+  let r = createSoldierRun({ soldierId: '09', taskId: 'corrupt-transition', input: { goal: 'test' } });
+  r = transitionSoldierRun(r, 'executing', evidence(r.runId, 'action-1', 'action'), { expectedRevision: 0 });
+  const corrupted = { ...r, history: [{ ...r.history[0], to: 'executing' }] };
+  assert.throws(
+    () => transitionSoldierRun(corrupted, 'verifying', evidence(r.runId, 'verify-1', 'verification'), { expectedRevision: 1 }),
+    /soldier_run_history_invalid/
+  );
+});
