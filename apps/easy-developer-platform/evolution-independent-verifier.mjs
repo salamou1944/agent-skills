@@ -17,10 +17,11 @@ function validatePath(path){if(typeof path!=='string'||path.startsWith('/')||pat
 function validate(change){if(!change||typeof change!=='object')throw new Error('invalid_candidate_change');validatePath(change.path);if(typeof change.content!=='string')throw new Error('invalid_candidate_content')}
 function validateManifest(manifest,evidence){
   if(!manifest||typeof manifest!=='object'||!Array.isArray(manifest.candidates)||!manifest.candidates.length)throw new Error('invalid_manifest');
+  if(typeof manifest.run_id!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(manifest.run_id))throw new Error('invalid_run_identity');
   if(typeof manifest.baseline_revision!=='string'||!/^[a-f0-9]{40}$/.test(manifest.baseline_revision))throw new Error('invalid_baseline_revision');
   const ids=new Set();
   for(const c of manifest.candidates){if(!c||typeof c.id!=='string'||!c.id||ids.has(c.id))throw new Error('invalid_candidate_identity');ids.add(c.id);if(!Array.isArray(c.changes)||!c.changes.length)throw new Error('invalid_candidate_changes');const paths=new Set();for(const change of c.changes){validate(change);if(paths.has(change.path))throw new Error('duplicate_candidate_path:'+change.path);paths.add(change.path)}}
-  if(!evidence||typeof evidence.survivor!=='string'||!Array.isArray(evidence.results)||typeof evidence.manifest_hash!=='string'||!HEX64.test(evidence.manifest_hash))throw new Error('invalid_evidence');
+  if(!evidence||typeof evidence.survivor!=='string'||!Array.isArray(evidence.results)||typeof evidence.run_id!=='string'||evidence.run_id!==manifest.run_id||typeof evidence.manifest_hash!=='string'||!HEX64.test(evidence.manifest_hash))throw new Error('invalid_evidence');
   const resultIds=new Set();
   for(const result of evidence.results){if(!result||typeof result.id!=='string'||resultIds.has(result.id))throw new Error('invalid_evidence_result_identity');resultIds.add(result.id);}
   const matching=evidence.results.filter(x=>x.id===evidence.survivor);
