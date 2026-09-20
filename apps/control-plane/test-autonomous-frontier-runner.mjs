@@ -88,3 +88,26 @@ test("verification failure becomes explicit FAILED state", async () => {
   assert.equal(result.phase, "FAILED");
   assert.ok(result.evidence.some((item) => item.source === "independent-verifier" && item.result === "failed"));
 });
+
+
+test("continuous runner recomputes discovery after each meaningful result", async () => {
+  const log = [];
+  let discoveryCount = 0;
+  const frontiers = [
+    { id: "f1", project: "agent-skills", nextAction: "first" },
+    { id: "f2", project: "agent-skills", nextAction: "second" },
+  ];
+  const result = await (await import("./autonomous-frontier-runner.mjs")).runContinuousFrontiers({
+    discover: async () => {
+      discoveryCount += 1;
+      return discoveryCount === 1 ? [frontiers[0]] : discoveryCount === 2 ? [frontiers[1]] : [];
+    },
+    select: async (items) => items[0] || null,
+    ...handlers(log),
+  });
+  assert.equal(result.status, "NO_EXECUTABLE_FRONTIER");
+  assert.equal(result.iterations, 3);
+  assert.equal(discoveryCount, 3);
+  assert.equal(result.history[0].result.frontierId, "f1");
+  assert.equal(result.history[1].result.frontierId, "f2");
+});
