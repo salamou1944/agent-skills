@@ -88,12 +88,11 @@ test('practical runner resumes a real persisted soldier after process crash', as
       let stdout='', stderr=''; child.stdout.on('data', d => stdout += d); child.stderr.on('data', d => stderr += d); child.on('close', code => resolve({ code, stdout, stderr })); child.on('error', error => resolve({ code: null, stdout, stderr: error.message }));
     });
     assert.equal(first.code, 86, first.stderr || first.stdout);
-    const persisted = createRunStore(clone, '01:army14-unknown');
     const stateRoot = join(clone, '.elite', 'army-14', 'state');
     const stateFiles = await import('node:fs/promises').then(fs => fs.readdir(stateRoot));
     assert.ok(stateFiles.some(name => name.endsWith('.json')));
     const second = await new Promise(resolve => {
-      const child = spawn(process.execPath, ['apps/easy-developer-platform/army-14-practical-runner.mjs', 'restart integration'], { cwd: clone, env: { ...process.env, ARMY_WORKSPACE: clone, ARMY14_CRASH_AFTER_STATE: '' }, stdio: ['ignore','pipe','pipe'] });
+      const child = spawn(process.execPath, ['apps/easy-developer-platform/army-14-practical-runner.mjs', 'restart integration'], { cwd: clone, env: { ...process.env, ARMY_WORKSPACE: clone, ARMY_RUN_ID: runId, ARMY14_CRASH_AFTER_STATE: '' }, stdio: ['ignore','pipe','pipe'] });
       let stdout='', stderr=''; child.stdout.on('data', d => stdout += d); child.stderr.on('data', d => stderr += d); child.on('close', code => resolve({ code, stdout, stderr })); child.on('error', error => resolve({ code: null, stdout, stderr: error.message }));
     });
     assert.equal(second.code, 0, second.stderr || second.stdout);
