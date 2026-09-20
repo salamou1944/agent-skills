@@ -71,3 +71,28 @@ export async function executeHighestLeverageFrontier({ frontiers, select, ...han
   if (!frontier) return Object.freeze({ status: "NO_EXECUTABLE_FRONTIER", frontierId: null, project: null, blocker: "", phase: null, evidence: [] });
   return executeFrontier(frontier, handlers);
 }
+
+
+/** Recomputes and executes frontiers until discovery produces no executable work or the safety cap is reached. */
+export async function runContinuousFrontiers({ discover, select, maxIterations = 25, ...handlers } = {}) {
+  requiredFunction(discover, "discover");
+  requiredFunction(select, "select");
+  if (!Number.isInteger(maxIterations) || maxIterations < 1 || maxIterations > 1000) {
+    throw new Error("autonomous_runner_max_iterations_invalid");
+  }
+  const history = [];
+  for (let iteration = 0; iteration < maxIterations; iteration += 1) {
+    const discovered = await discover({ iteration, history: Object.freeze([...history]) });
+    if (!Array.isArray(discovered)) throw new Error("autonomous_runner_discovery_array_required");
+    const result = await executeHighestLeverageFrontier({
+      frontiers: discovered,
+      select: (items) => select(items, { iteration, history: Object.freeze([...history]) }),
+      ...handlers,
+    });
+    history.push(Object.freeze({ iteration, result }));
+    if (result.status === "NO_EXECUTABLE_FRONTIER") {
+      return Object.freeze({ status: result.status, iterations: history.length, history: Object.freeze(history) });
+    }
+  }
+  return Object.freeze({ status: "ITERATION_LIMIT_REACHED", iterations: history.length, history: Object.freeze(history) });
+}
