@@ -90,6 +90,7 @@ export function createSoldierRun({ soldierId, taskId, input }) {
 
 export function transitionSoldierRun(run, state, evidence = null, options = {}) {
   if (!run || !SOLDIER_SYSTEMS.some((soldier) => soldier.id === run.soldierId)) throw new Error('soldier_run_unknown');
+  validateSoldierRunShape(run);
   if (!Number.isInteger(run.revision) || run.revision < 0) throw new Error('soldier_revision_invalid');
   if (options.expectedRevision !== undefined && options.expectedRevision !== run.revision) throw new Error('soldier_revision_conflict');
   if (!STATES.includes(state)) throw new Error('soldier_state_invalid');
