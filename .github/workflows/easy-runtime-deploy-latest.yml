@@ -1,0 +1,36 @@
+name: Deploy EASY Runtime Current
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/easy-developer-platform/**"
+      - "apps/army14-evolution-lab/**"
+      - "apps/control-plane/**"
+      - "apps/revenue-engine/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/easy-runtime-deploy-latest.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout exact main commit
+        uses: actions/checkout@v4
+
+      - name: Deploy exact checked-out commit to existing Railway service
+        uses: railwayapp/railway-cli-action@v0
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        with:
+          railway_command: up --service easy-runtime-current --project 4c4c8630-b755-401b-a3e0-42fdd70b7bb2 --environment production --ci --detach
+
+      - name: Verify deployment target commit
+        run: |
+          echo "GitHub commit deployed: $GITHUB_SHA"
