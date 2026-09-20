@@ -83,6 +83,7 @@ export function createSoldierRun({ soldierId, taskId, input }) {
     input,
     revision: 0,
     evidence: [{ kind: 'input', ok: true, runId: `${soldier.id}:${taskId}`, evidenceId: 'input' }],
+    history: [{ from: null, to: 'claimed', revision: 0 }],
     nextAction: 'execute',
   };
 }
@@ -101,7 +102,10 @@ export function transitionSoldierRun(run, state, evidence = null, options = {}) 
   if (state === 'completed' && !evidenceList.some((item) => item.kind === 'verification' && item.ok === true)) {
     throw new Error('soldier_completion_verification_missing');
   }
-  const next = { ...run, state, checkpoint: state, revision: run.revision + 1, evidence: evidenceList };
+  const nextRevision = run.revision + 1;
+  const history = Array.isArray(run.history) ? [...run.history, { from: run.state, to: state, revision: nextRevision }] : null;
+  if (!history) throw new Error('soldier_history_missing');
+  const next = { ...run, state, checkpoint: state, revision: nextRevision, evidence: evidenceList, history };
   next.nextAction = state === 'completed' ? null : state === 'recovering' ? 'repair-or-retry' : state === 'verifying' ? 'verify' : 'execute';
   return next;
 }
@@ -116,6 +120,12 @@ export function verifySoldierSystem(run) {
     run.checkpoint === 'completed' &&
     Number.isInteger(run.revision) &&
     Array.isArray(run.evidence) &&
+    Array.isArray(run.history) &&
+    run.history.length === run.revision + 1 &&
+    run.history[0]?.from === null &&
+    run.history[0]?.to === 'claimed' &&
+    run.history.every((entry, index) => Number.isInteger(entry?.revision) && entry.revision === index && (index === 0 || entry.from === run.history[index - 1]?.to) && STATES.includes(entry.to) && (index === 0 || TRANSITIONS[entry.from]?.has(entry.to))) &&
+    run.history.at(-1)?.to === 'completed' &&
     run.evidence.some((item) => item?.kind === 'input' && item?.ok === true && item?.runId === run.runId) &&
     run.evidence.some((item) => item?.kind === 'action' && item?.ok === true && item?.runId === run.runId) &&
     run.evidence.some((item) => item?.kind === 'verification' && item?.ok === true && item?.runId === run.runId),
