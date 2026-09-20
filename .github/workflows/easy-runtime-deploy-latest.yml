@@ -24,13 +24,15 @@ jobs:
       - name: Checkout exact main commit
         uses: actions/checkout@v4
 
-      - name: Deploy exact checked-out commit to existing Railway service
-        uses: railwayapp/railway-cli-action@v0
+      - name: Install Railway CLI
+        run: npm install --global @railway/cli
+
+      - name: Deploy exact checked-out source to existing Railway service
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        with:
-          railway_command: up --service easy-runtime-current --project 4c4c8630-b755-401b-a3e0-42fdd70b7bb2 --environment production --ci --detach
-
-      - name: Verify deployment target commit
         run: |
-          echo "GitHub commit deployed: $GITHUB_SHA"
+          test -n "$RAILWAY_TOKEN"
+          railway up --service easy-runtime-current --project 4c4c8630-b755-401b-a3e0-42fdd70b7bb2 --environment production --ci --detach
+
+      - name: Record deployed source
+        run: echo "GitHub source commit: $GITHUB_SHA"
