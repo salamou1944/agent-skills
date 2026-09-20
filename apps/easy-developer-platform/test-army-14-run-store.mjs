@@ -71,3 +71,32 @@ test('two OS processes cannot concurrently own the same run lock', async () => {
     await new Promise(resolve => first.on('close', resolve));
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+
+test('practical runner resumes a real persisted soldier after process crash', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'army14-runner-restart-'));
+  try {
+    const clone = join(root, 'repo');
+    const cloneResult = await new Promise(resolve => {
+      const child = spawn('git', ['clone', '--no-hardlinks', process.cwd(), clone], { stdio: ['ignore','pipe','pipe'] });
+      let stderr=''; child.stderr.on('data', d => stderr += d); child.on('close', code => resolve({ code, stderr })); child.on('error', error => resolve({ code: null, stderr: error.message }));
+    });
+    assert.equal(cloneResult.code, 0, cloneResult.stderr);
+    const runId = 'crash-restart-integration';
+    const first = await new Promise(resolve => {
+      const child = spawn(process.execPath, ['apps/easy-developer-platform/army-14-practical-runner.mjs', 'restart integration'], { cwd: clone, env: { ...process.env, ARMY14_CRASH_AFTER_STATE: 'executing', ARMY_WORKSPACE: clone }, stdio: ['ignore','pipe','pipe'] });
+      let stdout='', stderr=''; child.stdout.on('data', d => stdout += d); child.stderr.on('data', d => stderr += d); child.on('close', code => resolve({ code, stdout, stderr })); child.on('error', error => resolve({ code: null, stdout, stderr: error.message }));
+    });
+    assert.equal(first.code, 86, first.stderr || first.stdout);
+    const persisted = createRunStore(clone, '01:army14-unknown');
+    const stateRoot = join(clone, '.elite', 'army-14', 'state');
+    const stateFiles = await import('node:fs/promises').then(fs => fs.readdir(stateRoot));
+    assert.ok(stateFiles.some(name => name.endsWith('.json')));
+    const second = await new Promise(resolve => {
+      const child = spawn(process.execPath, ['apps/easy-developer-platform/army-14-practical-runner.mjs', 'restart integration'], { cwd: clone, env: { ...process.env, ARMY_WORKSPACE: clone, ARMY14_CRASH_AFTER_STATE: '' }, stdio: ['ignore','pipe','pipe'] });
+      let stdout='', stderr=''; child.stdout.on('data', d => stdout += d); child.stderr.on('data', d => stderr += d); child.on('close', code => resolve({ code, stdout, stderr })); child.on('error', error => resolve({ code: null, stdout, stderr: error.message }));
+    });
+    assert.equal(second.code, 0, second.stderr || second.stdout);
+    assert.match(second.stdout, /PIPELINE_VERIFIED/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
