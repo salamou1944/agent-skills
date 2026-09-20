@@ -43,7 +43,7 @@ test('independent verifier rejects malformed evidence and protected mutation pat
 test('independent verifier fails closed on excessive subprocess output', async () => {
   const {dir,baseline}=await fixture();
   try {
-    await writeFile(join(dir,'noisy.mjs'),"process.stdout.write('x'.repeat(1_100_000));\\n");
+    await writeFile(join(dir,'noisy.mjs'),"process.stdout.write('x'.repeat(1_100_000));\n");
     await git(dir,'add','noisy.mjs'); await git(dir,'commit','-m','add noisy verifier fixture');
     const newBaseline=await git(dir,'rev-parse','HEAD');
     const manifest={run_id:'output-limit-run',baseline_revision:newBaseline,candidates:[{id:'winner',changes:[{path:'fixture.txt',content:'winner\\n'}]}],tests:[{name:'noisy',cmd:process.execPath,args:['noisy.mjs']}],attacks:[{name:'diff-check',cmd:'git',args:['diff','--check']}],workspace:dir};
