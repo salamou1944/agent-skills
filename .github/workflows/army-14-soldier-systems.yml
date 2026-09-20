@@ -9,8 +9,6 @@ on:
       - 'apps/easy-developer-platform/test-army-14-soldier-systems.mjs'
       - 'apps/easy-developer-platform/army-14-run-store.mjs'
       - 'apps/easy-developer-platform/test-army-14-run-store.mjs'
-      - 'apps/easy-developer-platform/army-14-run-store.mjs'
-      - 'apps/easy-developer-platform/test-army-14-run-store.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/army-14-soldier-systems.yml'
