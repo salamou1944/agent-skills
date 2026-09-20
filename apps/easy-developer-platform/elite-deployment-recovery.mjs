@@ -78,7 +78,7 @@ export async function collectServiceFailure(service, options = {}) {
 
 export async function recoverDeploymentFailures({
   root = process.cwd(),
-  services = ['easy-platform-runtime', 'easy-platform-runtime-v2'],
+  services = ['easy-runtime-current', 'easy-platform-runtime', 'easy-platform-runtime-v2'],
   project = process.env.RAILWAY_PROJECT_ID,
   environment = process.env.RAILWAY_ENVIRONMENT_ID || process.env.RAILWAY_ENVIRONMENT,
   env = process.env,
