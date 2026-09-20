@@ -32,7 +32,8 @@ function normalize(h) {
   const deps = Array.isArray(h.dependencies) ? h.dependencies.map(String) : [];
   const blocking = deps.filter((d) => BLOCKING_DEPENDENCIES.has(d));
   const status = String(h.status || "").toUpperCase();
-  const blocked = status === "BLOCKED_EXTERNAL_DEPENDENCY" || blocking.length > 0 && h.externalDependencyBlocked === true;
+  const blocked = status === "BLOCKED_EXTERNAL_DEPENDENCY"
+    || (blocking.length > 0 && h.externalDependencyBlocked === true);
   return {
     ...h,
     id: String(h.id || ""),
@@ -46,12 +47,8 @@ function normalize(h) {
 /**
  * Deterministic frontier selection.
  *
- * The key leverage insight is to reward not only raw upside, but also:
- * - evidence speed (how cheaply uncertainty can be reduced),
- * - reuse and compounding,
- * - information gain (how many future decisions the experiment unlocks).
- *
- * Blocked external dependencies are never converted into success.
+ * Inputs are deliberately normalized to [0,1]. The score is a decision aid,
+ * not a claim about objective value. Hard blockers are excluded separately.
  */
 export function scoreFrontier(hypothesis) {
   const h = normalize(hypothesis);
@@ -61,18 +58,24 @@ export function scoreFrontier(hypothesis) {
   const reusability = clamp01(h.reusability);
   const compounding = clamp01(h.compounding);
   const informationGain = clamp01(h.informationGain);
+  const bottleneckImpact = clamp01(h.bottleneckImpact);
+  const capabilityMultiplication = clamp01(h.capabilityMultiplication);
+  const novelty = clamp01(h.novelty);
   const cost = clamp01(h.cost);
   const fragility = clamp01(h.fragility);
   const policyRisk = clamp01(h.policyRisk);
   const complexity = clamp01(h.operationalComplexity);
 
   const upside =
-    leverage * 0.27 +
-    feasibility * 0.16 +
-    evidenceSpeed * 0.14 +
-    reusability * 0.12 +
-    compounding * 0.16 +
-    informationGain * 0.15;
+    leverage * 0.20 +
+    feasibility * 0.11 +
+    evidenceSpeed * 0.11 +
+    reusability * 0.10 +
+    compounding * 0.12 +
+    informationGain * 0.12 +
+    bottleneckImpact * 0.08 +
+    capabilityMultiplication * 0.08 +
+    novelty * 0.08;
 
   const drag =
     cost * 0.08 +
@@ -99,6 +102,7 @@ export function rankFrontiers(hypotheses) {
     .sort((a, b) =>
       b.score - a.score ||
       b.informationGain - a.informationGain ||
+      b.bottleneckImpact - a.bottleneckImpact ||
       b.evidenceSpeed - a.evidenceSpeed ||
       String(a.id).localeCompare(String(b.id))
     );
@@ -123,13 +127,16 @@ export function buildDiscoveryRecord({
   result = "UNKNOWN",
   nextAction = "",
   provenance = [],
+  failureClass = "",
+  repairStrategy = "",
+  regressionTest = "",
   timestamp = new Date().toISOString(),
 }) {
   if (!id || !project || !hypothesis || !capability || !mechanism || !experiment) {
     throw new Error("frontier_record_required_field_missing");
   }
   const record = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id,
     project,
     hypothesis,
@@ -143,6 +150,9 @@ export function buildDiscoveryRecord({
     result,
     nextAction,
     provenance: [...provenance],
+    failureClass,
+    repairStrategy,
+    regressionTest,
     timestamp,
   };
   if (!MATURITY.includes(record.maturity)) throw new Error("frontier_maturity_invalid");
@@ -150,7 +160,21 @@ export function buildDiscoveryRecord({
   if (record.result === "SUCCESS" && evidence.length === 0) {
     throw new Error("frontier_success_requires_evidence");
   }
+  if (record.result === "SUCCESS" && evidence.length > 0 && !record.provenance.length) {
+    throw new Error("frontier_success_requires_provenance");
+  }
+  if (record.result === "FAILURE" && !failureClass) {
+    throw new Error("frontier_failure_requires_classification");
+  }
+  if (record.result === "FAILURE" && !regressionTest && !nextAction) {
+    throw new Error("frontier_failure_requires_learning_action");
+  }
   return Object.freeze(record);
 }
 
-export { MATURITY };
+export {
+  MATURITY,
+  BLOCKING_DEPENDENCIES,
+  evidenceIndex,
+  normalize,
+};
