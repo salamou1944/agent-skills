@@ -62,10 +62,12 @@ export function getSoldierSystem(id) {
   return SOLDIER_SYSTEMS.find((soldier) => soldier.id === String(id)) ?? null;
 }
 
-function assertEvidence(evidence) {
+function assertEvidence(evidence, runId) {
   if (!evidence || typeof evidence !== 'object' || typeof evidence.kind !== 'string' || evidence.kind.length === 0) {
     throw new Error('soldier_evidence_invalid');
   }
+  if (evidence.runId !== runId) throw new Error('soldier_evidence_run_mismatch');
+  if (typeof evidence.evidenceId !== 'string' || evidence.evidenceId.length === 0) throw new Error('soldier_evidence_id_invalid');
 }
 
 export function createSoldierRun({ soldierId, taskId, input }) {
@@ -79,26 +81,72 @@ export function createSoldierRun({ soldierId, taskId, input }) {
     state: 'claimed',
     checkpoint: 'claimed',
     input,
-    evidence: [{ kind: 'input', ok: true }],
+    revision: 0,
+    evidence: [{ kind: 'input', ok: true, runId: `${soldier.id}:${taskId}`, evidenceId: 'input' }],
+    history: [{ from: null, to: 'claimed', revision: 0 }],
     nextAction: 'execute',
   };
 }
 
-export function transitionSoldierRun(run, state, evidence = null) {
+export function transitionSoldierRun(run, state, evidence = null, options = {}) {
   if (!run || !SOLDIER_SYSTEMS.some((soldier) => soldier.id === run.soldierId)) throw new Error('soldier_run_unknown');
+  validateSoldierRunShape(run);
+  if (!Number.isInteger(run.revision) || run.revision < 0) throw new Error('soldier_revision_invalid');
+  if (options.expectedRevision !== undefined && options.expectedRevision !== run.revision) throw new Error('soldier_revision_conflict');
   if (!STATES.includes(state)) throw new Error('soldier_state_invalid');
   if (!TRANSITIONS[run.state]?.has(state)) throw new Error('soldier_transition_invalid');
-  if (evidence !== null) assertEvidence(evidence);
+  if (evidence !== null) assertEvidence(evidence, run.runId);
+  if (evidence && run.evidence.some((item) => item.evidenceId === evidence.evidenceId)) {
+    throw new Error('soldier_evidence_duplicate');
+  }
   const evidenceList = evidence ? [...run.evidence, evidence] : run.evidence;
   if (state === 'completed' && !evidenceList.some((item) => item.kind === 'verification' && item.ok === true)) {
     throw new Error('soldier_completion_verification_missing');
   }
-  const next = { ...run, state, checkpoint: state, evidence: evidenceList };
+  const nextRevision = run.revision + 1;
+  const history = Array.isArray(run.history) ? [...run.history, { from: run.state, to: state, revision: nextRevision }] : null;
+  if (!history) throw new Error('soldier_history_missing');
+  const next = { ...run, state, checkpoint: state, revision: nextRevision, evidence: evidenceList, history };
   next.nextAction = state === 'completed' ? null : state === 'recovering' ? 'repair-or-retry' : state === 'verifying' ? 'verify' : 'execute';
   return next;
 }
 
+function validateSoldierRunShape(run) {
+  const soldier = getSoldierSystem(run?.soldierId);
+  if (!soldier || run.contract !== ARMY_14_SYSTEM_CONTRACT || typeof run.taskId !== 'string' || !run.taskId) throw new Error('soldier_run_snapshot_invalid');
+  if (typeof run.runId !== 'string' || run.runId !== `${run.soldierId}:${run.taskId}`) throw new Error('soldier_run_identity_invalid');
+  if (!STATES.includes(run.state) || !STATES.includes(run.checkpoint)) throw new Error('soldier_run_state_invalid');
+  if (run.checkpoint !== run.state || !Number.isInteger(run.revision) || run.revision < 0) throw new Error('soldier_run_revision_invalid');
+  if (!Array.isArray(run.evidence) || !Array.isArray(run.history) || run.history.length !== run.revision + 1) throw new Error('soldier_run_history_invalid');
+  const evidenceIds = new Set();
+  for (const item of run.evidence) {
+    assertEvidence(item, run.runId);
+    if (evidenceIds.has(item.evidenceId)) throw new Error('soldier_evidence_duplicate');
+    evidenceIds.add(item.evidenceId);
+  }
+  if (run.history[0]?.from !== null || run.history[0]?.to !== 'claimed' || run.history[0]?.revision !== 0) throw new Error('soldier_run_history_invalid');
+  for (let index = 1; index < run.history.length; index += 1) {
+    const entry = run.history[index];
+    const previous = run.history[index - 1];
+    if (entry?.revision !== index || entry?.from !== previous?.to || !STATES.includes(entry?.to) || !TRANSITIONS[entry.from]?.has(entry.to)) throw new Error('soldier_run_history_invalid');
+  }
+  if (run.history.at(-1)?.to !== run.state) throw new Error('soldier_run_history_state_mismatch');
+  return true;
+}
+
+export function snapshotSoldierRun(run) {
+  validateSoldierRunShape(run);
+  return JSON.parse(JSON.stringify(run));
+}
+
+export function restoreSoldierRun(snapshot) {
+  const restored = typeof snapshot === 'string' ? JSON.parse(snapshot) : JSON.parse(JSON.stringify(snapshot));
+  validateSoldierRunShape(restored);
+  return restored;
+}
+
 export function verifySoldierSystem(run) {
+  try { validateSoldierRunShape(run); } catch { return false; }
   const soldier = getSoldierSystem(run?.soldierId);
   return Boolean(
     soldier &&
@@ -106,10 +154,17 @@ export function verifySoldierSystem(run) {
     typeof run.taskId === 'string' &&
     run.state === 'completed' &&
     run.checkpoint === 'completed' &&
+    Number.isInteger(run.revision) &&
     Array.isArray(run.evidence) &&
-    run.evidence.some((item) => item?.kind === 'input' && item?.ok === true) &&
-    run.evidence.some((item) => item?.kind === 'action' && item?.ok === true) &&
-    run.evidence.some((item) => item?.kind === 'verification' && item?.ok === true),
+    Array.isArray(run.history) &&
+    run.history.length === run.revision + 1 &&
+    run.history[0]?.from === null &&
+    run.history[0]?.to === 'claimed' &&
+    run.history.every((entry, index) => Number.isInteger(entry?.revision) && entry.revision === index && (index === 0 || entry.from === run.history[index - 1]?.to) && STATES.includes(entry.to) && (index === 0 || TRANSITIONS[entry.from]?.has(entry.to))) &&
+    run.history.at(-1)?.to === 'completed' &&
+    run.evidence.some((item) => item?.kind === 'input' && item?.ok === true && item?.runId === run.runId) &&
+    run.evidence.some((item) => item?.kind === 'action' && item?.ok === true && item?.runId === run.runId) &&
+    run.evidence.some((item) => item?.kind === 'verification' && item?.ok === true && item?.runId === run.runId),
   );
 }
 
