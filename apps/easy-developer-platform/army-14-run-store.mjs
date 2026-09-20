@@ -11,6 +11,7 @@ export function createRunStore(root, runId) {
   const dir = join(root, '.elite', 'army-14', 'state');
   const file = join(dir, `${runId}.json`);
   const lock = `${file}.lock`;
+  const ownerToken = `${process.pid}-${Date.now()}-${runId}`;
   async function save(run) {
     assertRunId(run.runId);
     if (run.runId !== runId) throw new Error('army14_run_identity_mismatch');
@@ -31,8 +32,11 @@ export function createRunStore(root, runId) {
     while (true) {
       try {
         await mkdir(lock);
-        await writeFile(join(lock, 'owner'), JSON.stringify({ pid: process.pid, startedAt: Date.now() }), { flag: 'wx' });
-        return async () => { await rm(lock, { recursive: true, force: true }); };
+        await writeFile(join(lock, 'owner'), JSON.stringify({ pid: process.pid, startedAt: Date.now(), ownerToken }), { flag: 'wx' });
+        return async () => {
+          const owner = await readFile(join(lock, 'owner'), 'utf8').then(JSON.parse).catch(() => null);
+          if (owner?.ownerToken === ownerToken) await rm(lock, { recursive: true, force: true });
+        };
       } catch (error) {
         if (error?.code !== 'EEXIST') throw error;
         const age = await stat(lock).then(s => Date.now() - s.mtimeMs).catch(() => 0);
