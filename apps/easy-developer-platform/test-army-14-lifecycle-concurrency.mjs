@@ -77,4 +77,12 @@ test('ARMY-14 completion cannot be forged by state/checkpoint alone', () => {
   const forged = { ...r, state: 'completed', checkpoint: 'completed', revision: 1 };
   assert.equal(verifySoldierSystem(forged), false);
   assert.throws(() => transitionSoldierRun(r, 'completed', null, { expectedRevision: 0 }), /soldier_transition_invalid/);
+
+  const validEvidence = [
+    { kind: 'input', ok: true, runId: r.runId, evidenceId: 'input' },
+    { kind: 'action', ok: true, runId: r.runId, evidenceId: 'action-forged' },
+    { kind: 'verification', ok: true, runId: r.runId, evidenceId: 'verify-forged' },
+  ];
+  const forgedWithValidEvidence = { ...r, state: 'completed', checkpoint: 'completed', revision: 3, evidence: validEvidence };
+  assert.equal(verifySoldierSystem(forgedWithValidEvidence), false);
 });
