@@ -40,6 +40,23 @@ test('independent verifier rejects malformed evidence and protected mutation pat
   await assert.rejects(()=>independentlyVerify({workspace:dir,manifest:{run_id:'symlink-run',baseline_revision:symlinkBaseline,candidates:[{id:'winner',changes:[{path:'link.txt',content:'owned\\n'}]}],tests:[],attacks:[]},evidence:{survivor:'winner',results:[{id:'winner',diff_hash:'a'.repeat(64)}]} }),/candidate_path_symlink/);
 }finally{await rm(dir,{recursive:true,force:true})}});
 
+test('independent verifier fails closed on excessive subprocess output', async () => {
+  const {dir,baseline}=await fixture();
+  try {
+    await writeFile(join(dir,'noisy.mjs'),"process.stdout.write('x'.repeat(1_100_000));\\n");
+    await git(dir,'add','noisy.mjs'); await git(dir,'commit','-m','add noisy verifier fixture');
+    const newBaseline=await git(dir,'rev-parse','HEAD');
+    const manifest={run_id:'output-limit-run',baseline_revision:newBaseline,candidates:[{id:'winner',changes:[{path:'fixture.txt',content:'winner\\n'}]}],tests:[{name:'noisy',cmd:process.execPath,args:['noisy.mjs']}],attacks:[{name:'diff-check',cmd:'git',args:['diff','--check']}],workspace:dir};
+    const crypto=await import('node:crypto');
+    const manifestHash=crypto.createHash('sha256').update(JSON.stringify(manifest)).digest('hex');
+    const evidence={run_id:manifest.run_id,survivor:'winner',manifest_hash:manifestHash,results:[{id:'winner',diff_hash:'a'.repeat(64)}]};
+    const result=await independentlyVerify({workspace:dir,manifest,evidence});
+    assert.equal(result.status,'REJECTED');
+    assert.equal(result.tests[0].ok,false);
+    assert.equal(result.tests[0].output_limit,true);
+  } finally { await rm(dir,{recursive:true,force:true}); }
+});
+
 test('independent verifier rejects replay under a different run identity', async () => {
   const {dir,baseline}=await fixture();
   try {
