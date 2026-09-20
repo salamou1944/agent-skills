@@ -57,3 +57,24 @@ test('ARMY-14 verification ignores mismatched evidence even when state is forged
   };
   assert.equal(verifySoldierSystem(forged), false);
 });
+
+
+test('ARMY-14 recovery requires an explicit recovery transition and preserves evidence history', () => {
+  let r = createSoldierRun({ soldierId: '05', taskId: 'recovery', input: { goal: 'test' } });
+  r = transitionSoldierRun(r, 'executing', evidence(r.runId, 'action-1', 'action'), { expectedRevision: 0 });
+  r = transitionSoldierRun(r, 'recovering', evidence(r.runId, 'recovery-1', 'recovery'), { expectedRevision: 1 });
+  assert.equal(r.state, 'recovering');
+  assert.equal(r.checkpoint, 'recovering');
+  assert.equal(r.revision, 2);
+  assert.equal(r.evidence.at(-1).evidenceId, 'recovery-1');
+  const retried = transitionSoldierRun(r, 'executing', evidence(r.runId, 'action-2', 'action'), { expectedRevision: 2 });
+  assert.equal(retried.revision, 3);
+  assert.equal(retried.evidence.length, 4);
+});
+
+test('ARMY-14 completion cannot be forged by state/checkpoint alone', () => {
+  const r = createSoldierRun({ soldierId: '06', taskId: 'completion', input: { goal: 'test' } });
+  const forged = { ...r, state: 'completed', checkpoint: 'completed', revision: 1 };
+  assert.equal(verifySoldierSystem(forged), false);
+  assert.throws(() => transitionSoldierRun(r, 'completed', null, { expectedRevision: 0 }), /soldier_transition_invalid/);
+});
