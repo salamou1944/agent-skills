@@ -17,5 +17,14 @@ try {
   assert.equal((await cash.json()).status, 'recorded');
   const ledger = await (await fetch(`http://127.0.0.1:${port}/api/revenue/ledger`)).json();
   assert.equal(ledger.count, 1); assert.equal(ledger.total, 12.5);
+
+  const racePayload = JSON.stringify({event:'reward.created',data:{key:'race-1',amount:775,reward_status:'paid',partnership_key:'campaign-a'}});
+  const raceResults = await Promise.all([0,1].map(() => fetch(`http://127.0.0.1:${port}/api/revenue/partnerstack/test-secret`, { method:'POST', headers:{'content-type':'application/json'}, body:racePayload }).then(async r => ({status:r.status, body:await r.json()}))));
+  assert.deepEqual(raceResults.map(x=>x.body.status).sort(), ['already_recorded','recorded']);
+  const afterRace = await (await fetch(`http://127.0.0.1:${port}/api/revenue/ledger`)).json();
+  assert.equal(afterRace.count, 2); assert.equal(afterRace.total, 20.25);
+
+  const conflict = await fetch(`http://127.0.0.1:${port}/api/revenue/partnerstack/test-secret`, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({event:'reward.updated',data:{key:'race-1',amount:999,reward_status:'paid',partnership_key:'campaign-a'}}) });
+  assert.equal(conflict.status, 422); assert.equal((await conflict.json()).reason, 'reward_event_conflict');
   console.log('mony-customer-e2e: passed');
 } finally { child.kill('SIGTERM'); }
