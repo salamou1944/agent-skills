@@ -110,7 +110,42 @@ export function transitionSoldierRun(run, state, evidence = null, options = {}) 
   return next;
 }
 
+function validateSoldierRunShape(run) {
+  const soldier = getSoldierSystem(run?.soldierId);
+  if (!soldier || run.contract !== ARMY_14_SYSTEM_CONTRACT || typeof run.taskId !== 'string' || !run.taskId) throw new Error('soldier_run_snapshot_invalid');
+  if (typeof run.runId !== 'string' || run.runId !== `${run.soldierId}:${run.taskId}`) throw new Error('soldier_run_identity_invalid');
+  if (!STATES.includes(run.state) || !STATES.includes(run.checkpoint)) throw new Error('soldier_run_state_invalid');
+  if (run.checkpoint !== run.state || !Number.isInteger(run.revision) || run.revision < 0) throw new Error('soldier_run_revision_invalid');
+  if (!Array.isArray(run.evidence) || !Array.isArray(run.history) || run.history.length !== run.revision + 1) throw new Error('soldier_run_history_invalid');
+  const evidenceIds = new Set();
+  for (const item of run.evidence) {
+    assertEvidence(item, run.runId);
+    if (evidenceIds.has(item.evidenceId)) throw new Error('soldier_evidence_duplicate');
+    evidenceIds.add(item.evidenceId);
+  }
+  if (run.history[0]?.from !== null || run.history[0]?.to !== 'claimed' || run.history[0]?.revision !== 0) throw new Error('soldier_run_history_invalid');
+  for (let index = 1; index < run.history.length; index += 1) {
+    const entry = run.history[index];
+    const previous = run.history[index - 1];
+    if (entry?.revision !== index || entry?.from !== previous?.to || !STATES.includes(entry?.to) || !TRANSITIONS[entry.from]?.has(entry.to)) throw new Error('soldier_run_history_invalid');
+  }
+  if (run.history.at(-1)?.to !== run.state) throw new Error('soldier_run_history_state_mismatch');
+  return true;
+}
+
+export function snapshotSoldierRun(run) {
+  validateSoldierRunShape(run);
+  return JSON.parse(JSON.stringify(run));
+}
+
+export function restoreSoldierRun(snapshot) {
+  const restored = typeof snapshot === 'string' ? JSON.parse(snapshot) : JSON.parse(JSON.stringify(snapshot));
+  validateSoldierRunShape(restored);
+  return restored;
+}
+
 export function verifySoldierSystem(run) {
+  try { validateSoldierRunShape(run); } catch { return false; }
   const soldier = getSoldierSystem(run?.soldierId);
   return Boolean(
     soldier &&
