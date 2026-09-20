@@ -3,6 +3,7 @@ import test from 'node:test';
 import { mkdtemp, rm, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { spawn } from 'node:child_process';
 import { createSoldierRun, transitionSoldierRun } from './soldier-systems/army-14-systems.mjs';
 import { createRunStore } from './army-14-run-store.mjs';
 
@@ -54,5 +55,19 @@ test('stale lock can be recovered but fresh lock fails closed', async () => {
     assert.equal(typeof recovered, 'function');
     await recovered();
     await release3();
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('two OS processes cannot concurrently own the same run lock', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'army14-process-lock-'));
+  try {
+    const script = "import { createRunStore } from './apps/easy-developer-platform/army-14-run-store.mjs'; const s=createRunStore(process.argv[2], 'shared'); s.acquireLock({timeoutMs:500,retryMs:10,staleMs:60000}).then(async release=>{console.log('ACQUIRED'); await new Promise(r=>setTimeout(r,250)); await release();}).catch(e=>{console.error(e.message); process.exitCode=2;});";
+    const first = spawn(process.execPath, ['--input-type=module', '-e', script, root], { stdio: ['ignore','pipe','pipe'] });
+    await new Promise((resolve, reject) => { let out=''; const t=setTimeout(()=>reject(new Error('child_lock_timeout')),2000); first.stdout.on('data',d=>{out+=d;if(out.includes('ACQUIRED')){clearTimeout(t);resolve();}}); first.on('error',reject); });
+    const second = spawn(process.execPath, ['--input-type=module', '-e', script, root], { stdio: ['ignore','pipe','pipe'] });
+    const secondResult = await new Promise(resolve => { let out=''; let err=''; second.stdout.on('data',d=>out+=d); second.stderr.on('data',d=>err+=d); second.on('close',(code)=>resolve({code,out,err})); });
+    assert.equal(secondResult.code, 2);
+    assert.match(secondResult.err, /army14_state_lock_timeout/);
+    await new Promise(resolve => first.on('close', resolve));
   } finally { await rm(root, { recursive: true, force: true }); }
 });
