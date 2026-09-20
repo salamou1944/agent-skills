@@ -61,7 +61,7 @@ test('stale lock can be recovered but fresh lock fails closed', async () => {
 test('two OS processes cannot concurrently own the same run lock', async () => {
   const root = await mkdtemp(join(tmpdir(), 'army14-process-lock-'));
   try {
-    const script = "import { createRunStore } from './apps/easy-developer-platform/army-14-run-store.mjs'; const s=createRunStore(process.argv[2], 'shared'); s.acquireLock({timeoutMs:500,retryMs:10,staleMs:60000}).then(async release=>{console.log('ACQUIRED'); await new Promise(r=>setTimeout(r,250)); await release();}).catch(e=>{console.error(e.message); process.exitCode=2;});";
+    const script = "import { createRunStore } from './apps/easy-developer-platform/army-14-run-store.mjs'; const s=createRunStore(process.argv[1], 'shared'); s.acquireLock({timeoutMs:500,retryMs:10,staleMs:60000}).then(async release=>{console.log('ACQUIRED'); await new Promise(r=>setTimeout(r,250)); await release();}).catch(e=>{console.error(e.message); process.exitCode=2;});";
     const first = spawn(process.execPath, ['--input-type=module', '-e', script, root], { stdio: ['ignore','pipe','pipe'] });
     await new Promise((resolve, reject) => { let out=''; const t=setTimeout(()=>reject(new Error('child_lock_timeout')),2000); first.stdout.on('data',d=>{out+=d;if(out.includes('ACQUIRED')){clearTimeout(t);resolve();}}); first.on('error',reject); });
     const second = spawn(process.execPath, ['--input-type=module', '-e', script, root], { stdio: ['ignore','pipe','pipe'] });
