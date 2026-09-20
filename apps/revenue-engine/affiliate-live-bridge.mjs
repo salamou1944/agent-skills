@@ -9,6 +9,7 @@ const port = Number(process.env.MONY_REVENUE_PORT || 8796);
 const ledgerPath = process.env.MONY_REVENUE_LEDGER_PATH || '.easy/mony/revenue-ledger.jsonl';
 const ledgerLockPath = `${ledgerPath}.lock`;
 const ledgerLockStaleMs = 120_000;
+let heldLedgerLockToken = null;
 const postbackSecret = String(process.env.MONY_PARTNERSTACK_POSTBACK_SECRET || '').trim();
 const apiKey = String(process.env.EASY_OPENAI_API_KEY || '').trim();
 const textModel = String(process.env.MONY_TEXT_MODEL || 'gpt-4.1-mini').trim();
@@ -20,7 +21,7 @@ async function appendLedger(record) { await ensureLedger(); await appendFile(led
 function processStartToken(pid=process.pid) { try { const stat=readFileSync(`/proc/${pid}/stat`,'utf8'); return stat.slice(stat.lastIndexOf(')')+2).trim().split(/\\s+/)[19]||null; } catch { return null; } }
 function lockOwnerAlive(owner) { if (!owner || Number(owner.pid)<=0 || !owner.startToken) return false; return processStartToken(Number(owner.pid))===String(owner.startToken); }
 function acquireLedgerLock() { mkdirSync(dirname(ledgerLockPath),{recursive:true}); for(let i=0;i<100;i+=1){ try { mkdirSync(ledgerLockPath,{mode:0o700}); writeFileSync(`${ledgerLockPath}/owner`,JSON.stringify({pid:process.pid,startToken:processStartToken(),createdAt:Date.now()}),{mode:0o600}); return; } catch(error) { if(error.code!=='EEXIST') throw error; let recoverable=false; try { const owner=JSON.parse(readFileSync(`${ledgerLockPath}/owner`,'utf8')); const age=Date.now()-Number(owner.createdAt); recoverable=age>ledgerLockStaleMs&&!lockOwnerAlive(owner); } catch { try { const age=Date.now()-statSync(ledgerLockPath).mtimeMs; recoverable=age>ledgerLockStaleMs; } catch {} } if(recoverable) { try { rmSync(ledgerLockPath,{recursive:true,force:true}); } catch {} } } } throw new Error('mony_ledger_lock_timeout'); }
-function releaseLedgerLock() { rmSync(ledgerLockPath,{recursive:true,force:true}); }
+function releaseLedgerLock() { if(!heldLedgerLockToken)return; try { const owner=JSON.parse(readFileSync(`${ledgerLockPath}/owner`,'utf8')); if(owner?.token===heldLedgerLockToken)rmSync(ledgerLockPath,{recursive:true,force:true}); } catch {} heldLedgerLockToken=null; }
 async function readLedger() { try { const raw = await readFile(ledgerPath, 'utf8'); return raw.split('\n').filter(Boolean).map((line) => JSON.parse(line)); } catch (error) { if (error.code === 'ENOENT') return []; throw error; } }
 async function body(req) { let raw=''; for await (const chunk of req) { raw+=chunk; if(raw.length>1_000_000) throw new Error('request_too_large'); } return raw?JSON.parse(raw):{}; }
 function json(res,status,value,extraHeaders={}) { res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff',...extraHeaders}); res.end(JSON.stringify(value)); }
