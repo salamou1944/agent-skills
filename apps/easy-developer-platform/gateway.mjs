@@ -1,3 +1,4 @@
+/* railway-autodeploy-probe: current-main-human-trial */
 import http from 'node:http';
 import process from 'node:process';
 const port=Number(process.env.GATEWAY_PORT||8789);
