@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { fixtureProvider, runCreativeJob } from './creative-orchestrator.mjs';
 import { openAICreativeProvider, openAICreativeProviderStatus } from './openai-creative-provider.mjs';
+import { localCreativeProvider, localCreativeProviderStatus } from './creative-local-provider.mjs';
 
 const port = Number(process.env.EASY_CREATIVE_JOB_PORT || 8794);
 const send = (res, status, data) => { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' }); res.end(JSON.stringify(data)); };
@@ -13,7 +14,8 @@ http.createServer(async (req,res)=>{
   try {
     if (req.method === 'GET' && u.pathname === '/api/creative-job/health') {
       const provider = openAICreativeProviderStatus();
-      return send(res,200,{ok:true,service:'easy-creative-orchestrator',version:'0.2.0',provider:provider.provider,visionProvider:provider.visionProvider,generationEnabled:provider.generationEnabled,integrityEnabled:provider.integrityEnabled,status:provider.status,reason:provider.reason});
+      const local = localCreativeProviderStatus();
+      return send(res,200,{ok:true,service:'easy-creative-orchestrator',version:'0.3.0',provider:provider.provider,visionProvider:provider.visionProvider,generationEnabled:provider.generationEnabled,integrityEnabled:provider.integrityEnabled,status:provider.status,reason:provider.reason,localProvider:local});
     }
     if (req.method === 'GET' && u.pathname === '/api/creative-job/self-test') {
       if (!selfTestEnabled()) return send(res,404,{error:'not_found'});
@@ -30,7 +32,8 @@ http.createServer(async (req,res)=>{
     if (req.method !== 'POST' || u.pathname !== '/api/creative-job/run') return send(res,404,{error:'not_found'});
     const input = await body(req);
     const mode = input.mode || 'disabled';
-    const provider = mode === 'fixture' ? fixtureProvider() : mode === 'openai' ? openAICreativeProvider() : null;
+    const provider = mode === 'fixture' ? fixtureProvider() : mode === 'openai' ? openAICreativeProvider() : mode === 'local' ? localCreativeProvider() : null;
+    if (mode === 'local' && !input.asset?.dataUrl && !input.dataUrl) return send(res,400,{error:'source_asset_required',code:'asset_bytes_missing'});
     return send(res,200,await runCreativeJob(input, provider));
   } catch(error) { return send(res,error.status||400,{error:error.message||'request_failed',code:error.code||'request_failed'}); }
 }).listen(port,'127.0.0.1',()=>console.log(`EASY Creative Orchestrator listening on ${port}`));
