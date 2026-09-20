@@ -23,7 +23,8 @@ test('independent verifier replays a recorded survivor with immutable test bound
   await writeFile(join(dir,'fixture.txt'),'winner\n');
   const d=await run('git',['diff','--binary'],dir); const crypto=await import('node:crypto');
   const diffHash=crypto.createHash('sha256').update(d.stdout).digest('hex');
-  const evidence={survivor:'winner',results:[{id:'winner',diff_hash:diffHash}]};
+  const manifestHash=crypto.createHash('sha256').update(JSON.stringify(manifest)).digest('hex');
+  const evidence={survivor:'winner',manifest_hash:manifestHash,results:[{id:'winner',diff_hash:diffHash}]};
   const result=await independentlyVerify({workspace:dir,manifest,evidence});
   assert.equal(result.status,'INDEPENDENTLY_VERIFIED'); assert.equal(result.diff_hash,diffHash);
 }finally{await rm(dir,{recursive:true,force:true})}});
