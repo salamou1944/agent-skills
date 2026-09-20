@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile, mkdir, lstat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -35,7 +35,8 @@ function validateCheckCommand(t){
   } else if(args.length!==1||args[0].startsWith('-')||args[0].includes('..')||args[0].startsWith('/')||FORBIDDEN.test(args[0])||PROTECTED.test(args[0])||!ALLOWED.test(args[0]))throw new Error('unsafe_node_invocation');
   if(t.timeout!==undefined&&(!Number.isInteger(t.timeout)||t.timeout<1||t.timeout>120000))throw new Error('invalid_test_timeout')
 }
-async function apply(dir,candidate){for(const c of candidate.changes){validate(c);const target=join(dir,c.path);await mkdir(resolve(target,'..'),{recursive:true});await writeFile(target,c.content,'utf8')}}
+async function assertNoSymlinkPath(dir,relativePath){const parts=relativePath.split('/');let current=dir;for(const part of parts){current=join(current,part);try{const stat=await lstat(current);if(stat.isSymbolicLink())throw new Error('candidate_path_symlink');}catch(error){if(error.code==='ENOENT')break;throw error;}}}
+async function apply(dir,candidate){for(const c of candidate.changes){validate(c);await assertNoSymlinkPath(dir,c.path);const target=join(dir,c.path);await mkdir(resolve(target,'..'),{recursive:true});await assertNoSymlinkPath(dir,c.path);await writeFile(target,c.content,'utf8')}}
 async function checks(dir,tests=[]){const results=[];for(const t of tests){validateCheckCommand(t);const r=await run(t.cmd,t.args||[],dir,t.timeout||120000);results.push({name:t.name,ok:r.ok,code:r.code,timeout:r.timeout===true,stdout:r.stdout.slice(-3000),stderr:r.stderr.slice(-3000)});if(!r.ok)break}return results}
 export async function independentlyVerify({workspace,manifest,evidence}){
   validateManifest(manifest,evidence);
