@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { restoreSoldierRun, snapshotSoldierRun } from './soldier-systems/army-14-systems.mjs';
 
-const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 function assertRunId(runId) {
   if (typeof runId !== 'string' || !SAFE_ID.test(runId) || runId.includes('..')) throw new Error('army14_run_id_invalid');
 }
