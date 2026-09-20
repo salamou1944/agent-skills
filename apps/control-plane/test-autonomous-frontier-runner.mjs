@@ -60,3 +60,31 @@ test("missing verification evidence fails closed", async () => {
     /execution_verification_requires_evidence/,
   );
 });
+
+
+test("invalid external blocker state is rejected instead of producing fake blocked success", async () => {
+  await assert.rejects(
+    () => executeFrontier({ id: "bad-blocker", project: "EASY", nextAction: "x", externalDependencyBlocked: true }, handlers([])),
+    /autonomous_runner_external_blocker_invalid/,
+  );
+});
+
+test("executor failure becomes explicit FAILED state with persisted failure evidence", async () => {
+  const result = await executeFrontier(
+    { id: "executor-fail", project: "agent-skills", nextAction: "x" },
+    { ...handlers([]), execute: async () => { throw new Error("boom"); } },
+  );
+  assert.equal(result.status, "FAILED");
+  assert.equal(result.phase, "FAILED");
+  assert.ok(result.evidence.some((item) => item.source === "executor" && item.result === "failed"));
+});
+
+test("verification failure becomes explicit FAILED state", async () => {
+  const result = await executeFrontier(
+    { id: "verify-fail", project: "agent-skills", nextAction: "x" },
+    { ...handlers([]), verify: async () => { throw new Error("verify-boom"); } },
+  );
+  assert.equal(result.status, "FAILED");
+  assert.equal(result.phase, "FAILED");
+  assert.ok(result.evidence.some((item) => item.source === "independent-verifier" && item.result === "failed"));
+});
