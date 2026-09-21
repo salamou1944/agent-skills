@@ -65,3 +65,21 @@ test("does not use deployment health as provenance", () => {
   assert.equal(result.status, STATUS.UNATTRIBUTED);
   assert.equal(result.verified, false);
 });
+
+
+test("fails closed when deployment or snapshot identity is missing", () => {
+  const { deploymentId, ...withoutDeployment } = base;
+  const result1 = verifyRuntimeProvenance({ expected: base, actual: withoutDeployment });
+  assert.equal(result1.status, STATUS.UNATTRIBUTED);
+  const { snapshotId, ...withoutSnapshot } = base;
+  const result2 = verifyRuntimeProvenance({ expected: base, actual: withoutSnapshot });
+  assert.equal(result2.status, STATUS.UNATTRIBUTED);
+});
+
+test("fails closed when expected provenance identity is incomplete", () => {
+  const { snapshotId, ...incompleteExpected } = base;
+  const result = verifyRuntimeProvenance({ expected: incompleteExpected, actual: base });
+  assert.equal(result.status, STATUS.INCOMPLETE);
+  assert.equal(result.verified, false);
+  assert.equal(buildProvenanceRecoveryRequirement(result).required, true);
+});
