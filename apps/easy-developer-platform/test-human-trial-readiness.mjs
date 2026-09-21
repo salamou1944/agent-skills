@@ -9,7 +9,7 @@ const common = {
   creativeSelfTest:{status:200,body:{status:'PASS'}},
   customerHealth:{status:200,body:{persistent:true}},
   revenueHealth:{status:200,body:{ok:true}},
-  runtimeIdentity:{runtimeCommit:'a'.repeat(40),deploymentId:'dep-1'},
+  runtimeIdentity:{runtimeCommit:'a'.repeat(40),deploymentId:'dep-1',snapshotId:'snap-1',source:'salamou1944/agent-skills',branch:'main'},
   humanTrialAuthorized:true
 };
 
@@ -42,3 +42,5 @@ assert.equal(
 );
 
 console.log('human-trial-evidence-gate: passed');
+
+assert.equal(evaluateHumanTrialReadiness({...common, runtimeIdentity:{runtimeCommit:'a'.repeat(40),deploymentId:'dep-1'}}).decision,'VERIFICATION_FAILED');
