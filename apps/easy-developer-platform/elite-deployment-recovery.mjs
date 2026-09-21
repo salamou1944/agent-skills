@@ -19,6 +19,14 @@ export function parseJsonLines(value) {
     });
 }
 
+export function validateRecoveryConfig(config = {}) {
+  const services = Array.isArray(config.services) ? config.services.map(String) : [];
+  if (!services.includes('easy-runtime-current')) throw new Error('active_easy_runtime_missing');
+  if (!services.includes('easy-runtime')) throw new Error('legacy_easy_runtime_missing');
+  if (config.deploy === true && config.requireVerification !== true) throw new Error('deployment_requires_verification');
+  return { ok: true, services, deploymentGuard: config.deploy === true ? 'verification_required' : 'analysis_only' };
+}
+
 export function classifyDeploymentFailure(logText) {
   const text = String(logText ?? '').toLowerCase();
   const rules = [
