@@ -14,7 +14,7 @@ const base = {
   action: "implement",
   newEvidence: "source implementation exists",
   verifier: "independent-ci",
-  timestamp: "2026-09-21T03:00:00.000Z",
+  timestamp: "2026-01-01T00:00:00.000Z",
   source: "salamou1944/agent-skills",
   commit: "abc123",
   environment: "ci",
@@ -137,7 +137,15 @@ test("rejects non-canonical timestamps", () => {
     /timestamp_invalid/,
   );
   assert.throws(
-    () => validateEvidenceTransition({ ...base, timestamp: "2026-09-21T03:00:00Z" }),
+    () => validateEvidenceTransition({ ...base, timestamp: "2026-01-01T00:00:00Z" }),
     /timestamp_invalid/,
+  );
+});
+
+
+test("rejects future timestamps", () => {
+  assert.throws(
+    () => validateEvidenceTransition({ ...base, timestamp: "2999-01-01T00:00:00.000Z" }),
+    /timestamp_in_future/,
   );
 });
