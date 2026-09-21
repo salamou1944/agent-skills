@@ -38,7 +38,19 @@ export function verifyRuntimeProvenance({ expected = {}, actual = {} } = {}) {
   const runtime = normalize(actual);
   const mismatches = [];
 
-  if (!runtime.commit || !runtime.source || !runtime.branch || !runtime.environment) {
+  if (REQUIRED_FIELDS.some((field) => !source[field])) {
+    return Object.freeze({
+      status: STATUS.INCOMPLETE,
+      verified: false,
+      expected: source,
+      actual: runtime,
+      mismatches: Object.freeze([
+        mismatch("identity", source, runtime, "expected_identity_incomplete"),
+      ]),
+    });
+  }
+
+  if (REQUIRED_FIELDS.some((field) => !runtime[field])) {
     return Object.freeze({
       status: STATUS.UNATTRIBUTED,
       verified: false,
