@@ -91,3 +91,5 @@ A failed gate stops progression. The platform never claims an external Agent, Gi
 ## Runtime resilience
 
 Railway E2E smoke checks are diagnostic in the hosted runtime: a smoke mismatch is logged and surfaced without terminating the application before the platform healthcheck can report service availability.
+
+Runtime source sync marker: 2026-09-21.
