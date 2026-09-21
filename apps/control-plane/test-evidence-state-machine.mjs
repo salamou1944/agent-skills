@@ -130,3 +130,14 @@ test("supports maturity comparisons without ranking projects", () => {
   assert.equal(isAtLeast("HARDENED", "OBSERVED"), true);
   assert.equal(isAtLeast("RUNTIME_VERIFIED", "E2E_VERIFIED"), false);
 });
+
+test("rejects non-canonical timestamps", () => {
+  assert.throws(
+    () => validateEvidenceTransition({ ...base, timestamp: "not-a-timestamp" }),
+    /timestamp_invalid/,
+  );
+  assert.throws(
+    () => validateEvidenceTransition({ ...base, timestamp: "2026-09-21T03:00:00Z" }),
+    /timestamp_invalid/,
+  );
+});
