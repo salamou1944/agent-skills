@@ -24,7 +24,7 @@ export function evaluateHumanTrialReadiness({
     { name: 'creative-provider-e2e', pass: creativeSelfTest?.status === 200 && creativeSelfTest?.body?.status === 'PASS' },
     { name: 'customer-health', pass: customerHealth?.status === 200 && customerHealth?.body?.persistent === true },
     { name: 'revenue-health', pass: revenueHealth?.status === 200 && revenueHealth?.body?.ok === true },
-    { name: 'runtime-identity', pass: Boolean(runtimeIdentity?.runtimeCommit || runtimeIdentity?.deploymentId) },
+    { name: 'runtime-identity', pass: Boolean(runtimeIdentity?.runtimeCommit && runtimeIdentity?.deploymentId && runtimeIdentity?.snapshotId && runtimeIdentity?.source && runtimeIdentity?.branch) },
     { name: 'human-trial-authorization', pass: humanTrialAuthorized === true }
   ];
 
