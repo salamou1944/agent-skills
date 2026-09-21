@@ -24,6 +24,16 @@ jobs:
       - name: Checkout exact main commit
         uses: actions/checkout@v4
 
+      - name: Syntax preflight for runtime-critical modules
+        run: |
+          node --check apps/easy-developer-platform/gateway.mjs
+          node --check apps/easy-developer-platform/runtime.mjs
+          node --check apps/easy-developer-platform/elite-deployment-recovery.mjs
+          node --check apps/easy-developer-platform/elite-engine.mjs
+          node --check apps/easy-developer-platform/army-14-railway-worker.mjs
+          node --check apps/control-plane/control-plane.mjs
+          node --check apps/revenue-engine/revenue-engine.mjs
+
       - name: Install Railway CLI
         run: npm install --global @railway/cli
 
