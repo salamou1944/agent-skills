@@ -43,7 +43,15 @@ function assertKnownState(state) {
 
 function assertNonEmpty(value, name) {
   if (value === undefined || value === null || String(value).trim() === "") {
-    throw new Error(`${name}_required`);
+    throw new Error(name + "_required");
+  }
+}
+
+function assertTimestamp(value) {
+  assertNonEmpty(value, "timestamp");
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed) || new Date(parsed).toISOString() !== value) {
+    throw new Error("timestamp_invalid");
   }
 }
 
@@ -54,6 +62,7 @@ export function evidenceStates() {
 export function validateEvidenceTransition(record) {
   if (!record || typeof record !== "object") throw new Error("evidence_transition_required");
   for (const field of REQUIRED_EVIDENCE_FIELDS) assertNonEmpty(record[field], field);
+  assertTimestamp(record.timestamp);
   assertKnownState(record.oldState);
   assertKnownState(record.newState);
 
