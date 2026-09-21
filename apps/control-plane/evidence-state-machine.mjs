@@ -53,6 +53,7 @@ function assertTimestamp(value) {
   if (!Number.isFinite(parsed) || new Date(parsed).toISOString() !== value) {
     throw new Error("timestamp_invalid");
   }
+  if (parsed > Date.now()) throw new Error("timestamp_in_future");
 }
 
 export function evidenceStates() {
