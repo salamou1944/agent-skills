@@ -45,6 +45,7 @@
     "test:army14:practical": "node apps/easy-developer-platform/army-14-practical-runner.mjs \"Verify all 14 soldier systems end-to-end\"",
     "test:autonomy-security": "node scripts/autonomy-security-gate.mjs",
     "test:control-plane": "node --test apps/control-plane/test-control-plane.mjs",
+    "test:provenance": "node --test apps/control-plane/test-provenance-contract.mjs",
     "supervisor": "node apps/easy-developer-platform/operator-worker.mjs",
     "test:value-offer": "node apps/easy-developer-platform/test-value-offer-contract.mjs",
     "test:elite:evidence": "node --test apps/easy-developer-platform/test-independent-evidence-gate.mjs",
