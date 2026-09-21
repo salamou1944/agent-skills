@@ -152,9 +152,16 @@ test("fails closed on stale evidence instead of silently reusing it", () => {
   );
 });
 
-test("supports maturity comparisons without treating qualifiers as maturity", () => {
-  assert.equal(isAtLeast("BUSINESS_FLOW_VERIFIED", "OBSERVED"), false);
+test("rejects qualifiers when used as maturity comparison inputs", () => {
+  assert.throws(
+    () => isAtLeast("BUSINESS_FLOW_VERIFIED", "OBSERVED"),
+    /unknown_evidence_maturity:OBSERVED/,
+  );
+});
+
+test("supports valid maturity comparisons", () => {
   assert.equal(isAtLeast("BUSINESS_FLOW_VERIFIED", "E2E_VERIFIED"), true);
+  assert.equal(isAtLeast("E2E_VERIFIED", "BUSINESS_FLOW_VERIFIED"), false);
 });
 
 test("rejects non-canonical timestamps", () => {
