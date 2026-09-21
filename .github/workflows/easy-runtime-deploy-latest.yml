@@ -38,3 +38,4 @@ jobs:
         run: echo "GitHub source commit: $GITHUB_SHA"
 
 # Human-ready closure automation: deploy the exact checked-out main commit.
+# Provenance gate: this workflow must deploy the exact GitHub commit checked out above.
