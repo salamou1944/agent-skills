@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const STATES = Object.freeze([
+const MATURITY_STATES = Object.freeze([
   "DISCOVERED",
   "IMPLEMENTED",
   "UNIT_VERIFIED",
@@ -9,13 +9,17 @@ const STATES = Object.freeze([
   "PROVIDER_VERIFIED",
   "E2E_VERIFIED",
   "BUSINESS_FLOW_VERIFIED",
-  "OBSERVED",
-  "PERSISTED",
-  "HARDENED",
-  "HUMAN_READY",
 ]);
 
-const INDEX = new Map(STATES.map((state, index) => [state, index]));
+const EVIDENCE_QUALIFIERS = Object.freeze([
+  "OBSERVED",
+  "PERSISTED",
+  "TRACEABLE",
+  "REPRODUCIBLE",
+  "HARDENED",
+]);
+
+const INDEX = new Map(MATURITY_STATES.map((state, index) => [state, index]));
 const IDENTITY_FIELDS = Object.freeze([
   "source",
   "commit",
@@ -37,8 +41,14 @@ const REQUIRED_EVIDENCE_FIELDS = Object.freeze([
   "newState",
 ]);
 
-function assertKnownState(state) {
-  if (!INDEX.has(state)) throw new Error(`unknown_evidence_state:${state}`);
+function assertKnownMaturity(state) {
+  if (!INDEX.has(state)) throw new Error(`unknown_evidence_maturity:${state}`);
+}
+
+function assertKnownQualifier(qualifier) {
+  if (!EVIDENCE_QUALIFIERS.includes(qualifier)) {
+    throw new Error(`unknown_evidence_qualifier:${qualifier}`);
+  }
 }
 
 function assertNonEmpty(value, name) {
@@ -56,16 +66,25 @@ function assertTimestamp(value) {
   if (parsed > Date.now()) throw new Error("timestamp_in_future");
 }
 
+export function evidenceMaturityStates() {
+  return [...MATURITY_STATES];
+}
+
+export function evidenceQualifiers() {
+  return [...EVIDENCE_QUALIFIERS];
+}
+
+// Backward-compatible name: this returns maturity only, never qualifiers.
 export function evidenceStates() {
-  return [...STATES];
+  return evidenceMaturityStates();
 }
 
 export function validateEvidenceTransition(record) {
   if (!record || typeof record !== "object") throw new Error("evidence_transition_required");
   for (const field of REQUIRED_EVIDENCE_FIELDS) assertNonEmpty(record[field], field);
   assertTimestamp(record.timestamp);
-  assertKnownState(record.oldState);
-  assertKnownState(record.newState);
+  assertKnownMaturity(record.oldState);
+  assertKnownMaturity(record.newState);
 
   const oldIndex = INDEX.get(record.oldState);
   const newIndex = INDEX.get(record.newState);
@@ -82,6 +101,11 @@ export function validateEvidenceTransition(record) {
   if (provenance.commit !== record.commit) throw new Error("provenance_commit_mismatch");
   if (provenance.environment !== record.environment) throw new Error("provenance_environment_mismatch");
 
+  if (record.qualifiers !== undefined) {
+    if (!Array.isArray(record.qualifiers)) throw new Error("evidence_qualifiers_must_be_array");
+    for (const qualifier of record.qualifiers) assertKnownQualifier(qualifier);
+  }
+
   return true;
 }
 
@@ -95,10 +119,13 @@ export function transitionEvidence({
   commit,
   environment,
   provenance,
+  qualifiers = [],
 }) {
-  assertKnownState(oldState);
+  assertKnownMaturity(oldState);
   const nextIndex = INDEX.get(oldState) + 1;
-  if (nextIndex >= STATES.length) throw new Error("evidence_already_human_ready");
+  if (nextIndex >= MATURITY_STATES.length) {
+    throw new Error("evidence_maturity_already_maximum");
+  }
 
   const record = {
     oldState,
@@ -110,7 +137,8 @@ export function transitionEvidence({
     commit,
     environment,
     provenance,
-    newState: STATES[nextIndex],
+    qualifiers,
+    newState: MATURITY_STATES[nextIndex],
   };
 
   validateEvidenceTransition(record);
@@ -123,12 +151,8 @@ export function invalidateEvidenceOnIdentityChange(previous, current) {
   return {
     stale: changedFields.length > 0,
     changedFields,
-    reason: changedFields.length
-      ? "EVIDENCE_IDENTITY_CHANGED"
-      : null,
-    requiredAction: changedFields.length
-      ? "INVALIDATE_AND_REVALIDATE"
-      : "NO_INVALIDATION",
+    reason: changedFields.length ? "EVIDENCE_IDENTITY_CHANGED" : null,
+    requiredAction: changedFields.length ? "INVALIDATE_AND_REVALIDATE" : "NO_INVALIDATION",
   };
 }
 
@@ -143,7 +167,7 @@ export function assertEvidenceUsable(evidence, currentIdentity) {
 }
 
 export function isAtLeast(state, minimum) {
-  assertKnownState(state);
-  assertKnownState(minimum);
+  assertKnownMaturity(state);
+  assertKnownMaturity(minimum);
   return INDEX.get(state) >= INDEX.get(minimum);
 }
