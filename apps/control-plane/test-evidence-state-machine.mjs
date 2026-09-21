@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   evidenceStates,
+  evidenceMaturityStates,
+  evidenceQualifiers,
   transitionEvidence,
   validateEvidenceTransition,
   invalidateEvidenceOnIdentityChange,
@@ -27,8 +29,8 @@ const base = {
   newState: "IMPLEMENTED",
 };
 
-test("defines the complete ordered evidence ladder", () => {
-  assert.deepEqual(evidenceStates(), [
+test("defines the canonical evidence maturity ladder only", () => {
+  const expected = [
     "DISCOVERED",
     "IMPLEMENTED",
     "UNIT_VERIFIED",
@@ -37,10 +39,18 @@ test("defines the complete ordered evidence ladder", () => {
     "PROVIDER_VERIFIED",
     "E2E_VERIFIED",
     "BUSINESS_FLOW_VERIFIED",
+  ];
+  assert.deepEqual(evidenceMaturityStates(), expected);
+  assert.deepEqual(evidenceStates(), expected);
+});
+
+test("defines qualifiers independently from maturity", () => {
+  assert.deepEqual(evidenceQualifiers(), [
     "OBSERVED",
     "PERSISTED",
+    "TRACEABLE",
+    "REPRODUCIBLE",
     "HARDENED",
-    "HUMAN_READY",
   ]);
 });
 
@@ -48,10 +58,24 @@ test("accepts a valid adjacent transition with matching provenance", () => {
   assert.equal(validateEvidenceTransition(base), true);
 });
 
+test("accepts independent evidence qualifiers without turning them into maturity states", () => {
+  assert.equal(validateEvidenceTransition({
+    ...base,
+    qualifiers: ["OBSERVED", "PERSISTED", "TRACEABLE"],
+  }), true);
+});
+
 test("rejects skipped evidence levels", () => {
   assert.throws(
     () => validateEvidenceTransition({ ...base, newState: "RUNTIME_VERIFIED" }),
     /invalid_evidence_transition/,
+  );
+});
+
+test("rejects unknown qualifiers", () => {
+  assert.throws(
+    () => validateEvidenceTransition({ ...base, qualifiers: ["HUMAN_READY"] }),
+    /unknown_evidence_qualifier/,
   );
 });
 
@@ -65,7 +89,7 @@ test("rejects provenance commit mismatch", () => {
   );
 });
 
-test("transitionEvidence computes only the next state", () => {
+test("transitionEvidence computes only the next maturity state", () => {
   const result = transitionEvidence({
     oldState: "UNIT_VERIFIED",
     action: "integrate",
@@ -75,15 +99,17 @@ test("transitionEvidence computes only the next state", () => {
     commit: base.commit,
     environment: base.environment,
     provenance: base.provenance,
+    qualifiers: ["OBSERVED"],
   });
   assert.equal(result.newState, "INTEGRATION_VERIFIED");
+  assert.deepEqual(result.qualifiers, ["OBSERVED"]);
 });
 
-test("cannot transition beyond HUMAN_READY", () => {
+test("cannot advance beyond the maximum maturity level", () => {
   assert.throws(
     () => transitionEvidence({
-      oldState: "HUMAN_READY",
-      action: "reopen",
+      oldState: "BUSINESS_FLOW_VERIFIED",
+      action: "advance",
       newEvidence: "n/a",
       verifier: "none",
       source: base.source,
@@ -91,7 +117,7 @@ test("cannot transition beyond HUMAN_READY", () => {
       environment: base.environment,
       provenance: base.provenance,
     }),
-    /evidence_already_human_ready/,
+    /evidence_maturity_already_maximum/,
   );
 });
 
@@ -126,9 +152,9 @@ test("fails closed on stale evidence instead of silently reusing it", () => {
   );
 });
 
-test("supports maturity comparisons without ranking projects", () => {
-  assert.equal(isAtLeast("HARDENED", "OBSERVED"), true);
-  assert.equal(isAtLeast("RUNTIME_VERIFIED", "E2E_VERIFIED"), false);
+test("supports maturity comparisons without treating qualifiers as maturity", () => {
+  assert.equal(isAtLeast("BUSINESS_FLOW_VERIFIED", "OBSERVED"), false);
+  assert.equal(isAtLeast("BUSINESS_FLOW_VERIFIED", "E2E_VERIFIED"), true);
 });
 
 test("rejects non-canonical timestamps", () => {
@@ -141,7 +167,6 @@ test("rejects non-canonical timestamps", () => {
     /timestamp_invalid/,
   );
 });
-
 
 test("rejects future timestamps", () => {
   assert.throws(
