@@ -115,7 +115,7 @@ async function verify({ root, changes, prediction }) {
 
 const WORKSPACE_SCAN_EXTENSIONS = /\.(mjs|js|cjs|json|yml|yaml|md)$/i;
 const WORKSPACE_SCAN_SECRET_PATTERNS = [
-  /(?:api[_-]?key|secret|token|password)\s*[:=]\s*["'][^"']{12,}["']/i,
+  /(?:api[_-]?key|secret|token|password)[ \\t]*[:=][ \\t]*["'][^"'\\r\\n]{12,}["']/i,
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i,
   /gh[pousr]_[A-Za-z0-9_]{20,}/,
   /sk-[A-Za-z0-9]{20,}/
