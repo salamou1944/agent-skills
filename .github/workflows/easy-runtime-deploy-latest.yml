@@ -37,5 +37,5 @@ jobs:
       - name: Record deployed source
         run: echo "GitHub source commit: $GITHUB_SHA"
 
-# Human-ready closure automation: deploy the exact checked-out main commit.
-# Provenance gate: this workflow must deploy the exact GitHub commit checked out above.
+# Provenance gate: deploy only the exact GitHub main commit checked out by this run.
+# Trigger marker: 2026-09-22 — force registration/execution after repository secret setup.
