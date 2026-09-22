@@ -11,7 +11,7 @@ const revenue = String(process.env.MONY_REVENUE_URL || 'http://127.0.0.1:8796').
 const send = (res, status, body, type = 'application/json; charset=utf-8') => {
   res.writeHead(status, {
     'content-type': type,
-    'cache-control': 'no-store',
+    'cache-control': type.startsWith('text/plain') ? 'public, max-age=300' : 'no-store',
     'x-content-type-options': 'nosniff'
   });
   res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
@@ -71,6 +71,12 @@ const server = http.createServer(async (req, res) => {
     const body = await serviceStatus();
     const healthy = Object.entries(body).filter(([key]) => key.endsWith('Online')).every(([, value]) => value === true);
     return send(res, healthy ? 200 : 503, { ...body, healthy });
+  }
+  if (req.method === 'GET' && url.pathname === '/robots.txt') {
+    return send(res, 200, 'User-agent: *\nAllow: /\nSitemap: /sitemap.xml\n', 'text/plain; charset=utf-8');
+  }
+  if (req.method === 'GET' && url.pathname === '/sitemap.xml') {
+    return send(res, 200, '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>/</loc></url><url><loc>/customer</loc></url><url><loc>/creative</loc></url><url><loc>/operator</loc></url></urlset>', 'application/xml; charset=utf-8');
   }
   if (req.method === 'GET' && url.pathname === '/') return send(res, 200, home, 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/customer') return send(res, 200, home, 'text/html; charset=utf-8');
