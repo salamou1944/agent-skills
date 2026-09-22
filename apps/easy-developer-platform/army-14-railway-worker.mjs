@@ -77,7 +77,7 @@ const server = createServer((req, res) => {
 });
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(JSON.stringify({ event: 'army14-worker-started', port, intervalMs, goal, deployedCommit }));
+  console.log(JSON.stringify({ event: 'army14-worker-started', port, intervalMs, goal, deployedCommit, agentSource: process.env.ARMY_AGENT_SOURCE || '.github/agents', runtimeSourcePolicy: 'tracked-agent-profiles' }));
   void cycle();
   setInterval(() => void cycle(), intervalMs).unref();
 });
