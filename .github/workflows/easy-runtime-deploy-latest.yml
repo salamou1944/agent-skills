@@ -10,6 +10,7 @@ on:
       - "apps/revenue-engine/**"
       - "package.json"
       - "package-lock.json"
+      - ".dockerignore"
       - ".github/workflows/easy-runtime-deploy-latest.yml"
   workflow_dispatch:
 
