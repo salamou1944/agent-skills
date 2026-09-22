@@ -58,10 +58,10 @@ If none of the above yield a token, ask the user to provide one. They can create
 
 ```bash
 # Bad — token visible in shell history and process listings
-vercel deploy --token "vca_abc123"
+vercel deploy --token "vca_demo"
 
 # Good — CLI reads VERCEL_TOKEN from the environment
-export VERCEL_TOKEN="vca_abc123"
+export VERCEL_TOKEN="vca_demo"
 vercel deploy
 ```
 
