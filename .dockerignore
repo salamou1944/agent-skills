@@ -3,5 +3,7 @@
 **/*.test.mjs
 **/*.spec.mjs
 .git
-.github
+.github/*
+!.github/agents/
+!.github/agents/**
 node_modules
