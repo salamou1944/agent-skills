@@ -7,6 +7,7 @@ import { runArmy14 } from './army-14-practical-runner.mjs';
 const port = Number(process.env.PORT || 3000);
 const intervalMs = Math.max(60_000, Number(process.env.ARMY_INTERVAL_MS || 300_000));
 const goal = String(process.env.ARMY_GOAL || 'MONY continuous Army-14 background execution').trim();
+// Runtime deployment includes tracked agent profiles and security-safe examples.
 const startedAt = new Date().toISOString();
 const deployedCommit = String(process.env.RAILWAY_GIT_COMMIT_SHA || '').trim() || null;
 const execFileAsync = promisify(execFile);
