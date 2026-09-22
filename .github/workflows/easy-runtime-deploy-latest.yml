@@ -11,6 +11,7 @@ on:
       - "package.json"
       - "package-lock.json"
       - ".dockerignore"
+      - "skills/**"
       - ".github/workflows/easy-runtime-deploy-latest.yml"
   workflow_dispatch:
 
