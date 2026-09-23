@@ -138,10 +138,18 @@ export function validateCreativeOutput(dna, output = {}) {
 
 export function providerStatus() {
   return {
-    status: 'DISABLED',
-    provider: null,
-    generationEnabled: false,
-    reason: 'external-generation-provider-not-selected',
+    status: 'READY',
+    provider: 'local-safe-presenter',
+    generationEnabled: true,
+    integrityEnabled: true,
+    externalProviderRequired: false,
+    externalProvider: {
+      status: 'DISABLED',
+      provider: null,
+      generationEnabled: false,
+      reason: 'external-generation-provider-not-selected',
+    },
+    reason: null,
     contract: ['analyzeAsset', 'generateCreative', 'validateOutput'],
   };
 }
