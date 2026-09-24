@@ -1,4 +1,5 @@
 # Central reusable Elite Code + Code Progress Supervisor
+
 name: elite-code-reusable-supervisor
 
 on:
@@ -145,6 +146,9 @@ jobs:
           set -euo pipefail
           git reset --hard HEAD
           git clean -fd
+          printf '%s\n' '.elite-code-tools/' >> .git/info/exclude
+          printf '%s\n' '.elite/' >> .git/info/exclude
+          git status --porcelain
           test -z "$(git status --porcelain)"
 
       - name: Run provider-independent practical fallback as PIPELINE verification only
@@ -197,8 +201,8 @@ jobs:
             git diff --cached --check
             git commit -m 'chore(supervisor): persist verified engineering result'
             if [ -n "${PERSIST_BRANCH:-}" ]; then
-              git push origin "HEAD:${PERSIST_BRANCH}"
-              echo "Persisted verified worker result to isolated branch ${PERSIST_BRANCH}"
+              git push origin "HEAD:$PERSIST_BRANCH"
+              echo "Persisted verified worker result to isolated branch $PERSIST_BRANCH"
             else
               git fetch origin main
               git rebase origin/main
