@@ -28,7 +28,6 @@ on:
 permissions:
   contents: write
   id-token: write
-  models: read
   copilot-requests: write
 
 jobs:
