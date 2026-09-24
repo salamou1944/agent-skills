@@ -49,3 +49,12 @@ node apps/revenue-engine/revenue-operator.mjs live-probe
 ## First milestone
 
 The first milestone is intentionally not a giant UI. It is a tested operating core that can be connected to real discovery, affiliate, publishing, payment, and analytics providers without rewriting the business logic.
+
+
+### MONY entry-link contract
+
+`GET /api/revenue/affiliate-link` returns two distinct links:
+- `trackingUrl`: the MONY-owned internal workbench entry path (`/api/revenue/mony/workbench`).
+- `partnerTrackingUrl`: the external affiliate-provider tracking URL.
+
+The customer remains inside MONY first; the external partner URL is an optional disclosed handoff. Revenue is recorded only from confirmed qualifying reward events.
