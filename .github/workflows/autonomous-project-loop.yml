@@ -82,3 +82,4 @@ jobs:
       - name: Fail only on a real execution failure
         if: steps.loop.outcome == 'failure'
         run: exit 1
+# Generated .easy/build-monitor state is intentionally ignored by repository persistence.
