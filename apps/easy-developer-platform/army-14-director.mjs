@@ -28,7 +28,7 @@ export function buildSoldierRun(task, baseline, assignmentOrIndex = 0) {
     : assignSoldier(task, assignmentOrIndex);
   const contract = createTaskContract(task, baseline);
   let run = createSoldierRun({ soldierId:assignment.soldierId, taskId:task.id, input:{ goal:task.goal, contract } });
-  run = transitionSoldierRun(run,'executing',{runId:run.runId,kind:'action',ok:true,action:'assigned-and-started',soldier:assignment.soldier});
+  run = transitionSoldierRun(run,'executing',{runId:run.runId,evidenceId:'assigned',kind:'action',ok:true,action:'assigned-and-started',soldier:assignment.soldier});
   return { assignment, contract, run };
 }
 
@@ -36,14 +36,14 @@ export function closeSoldierRun(run, result) {
   const gate = validateTaskResult(result.contract ?? run.input?.contract, result);
   if (!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
   let current = run;
-  if (current.state === 'executing') current = transitionSoldierRun(current,'verifying',{runId:current.runId,kind:'verification',ok:result.verification?.passed === true,summary:result.verification?.summary ?? null});
+  if (current.state === 'executing') current = transitionSoldierRun(current,'verifying',{runId:current.runId,evidenceId:'verification',kind:'verification',ok:result.verification?.passed === true,summary:result.verification?.summary ?? null});
   if (result.status === 'VERIFIED') {
-    current = transitionSoldierRun(current,'completed',{runId:current.runId,kind:'result',ok:true,status:result.status});
+    current = transitionSoldierRun(current,'completed',{runId:current.runId,evidenceId:'result',kind:'result',ok:true,status:result.status});
     if (!verifySoldierSystem(current)) throw new Error('soldier_verification_incomplete');
     return current;
   }
-  if (result.status === 'BLOCKED') return transitionSoldierRun(current,'blocked',{runId:current.runId,kind:'result',ok:false,reason:'blocked-with-evidence'});
-  if (result.status === 'FAILED') return transitionSoldierRun(current,'recovering',{runId:current.runId,kind:'result',ok:false,reason:'failed-with-recovery-path'});
+  if (result.status === 'BLOCKED') return transitionSoldierRun(current,'blocked',{runId:current.runId,evidenceId:'blocked',kind:'result',ok:false,reason:'blocked-with-evidence'});
+  if (result.status === 'FAILED') return transitionSoldierRun(current,'recovering',{runId:current.runId,evidenceId:'recovery',kind:'result',ok:false,reason:'failed-with-recovery-path'});
   return transitionSoldierRun(current,'completed',{runId:current.runId,kind:'result',ok:true,status:result.status});
 }
 
