@@ -70,7 +70,23 @@ export async function runArmy14(goal,{workspace=root,runId=process.env.ARMY_RUN_
     }
     return { ok: failures.length === 0, failures, evidence: { status: taskResult?.status || null, taskVerified: taskResult?.taskVerified === true, changedFiles: taskResult?.changedFiles || [], gitDiffCheck: diff.ok } };
   });
-  const taskResult = await executeRealTask({ goal, workspace });
+  let taskResult;
+  try {
+    taskResult = await executeRealTask({ goal, workspace });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/llm_provider_not_configured|provider_not_configured|missing.*provider|provider.*unavailable/i.test(message)) {
+      taskResult = {
+        status: 'BLOCKED_EXTERNAL_DEPENDENCY',
+        taskVerified: false,
+        changedFiles: [],
+        summary: message,
+        providerAccess: 'unavailable'
+      };
+    } else {
+      throw error;
+    }
+  }
   const taskVerification = await verifyRealTask({ goal, workspace, result: taskResult });
   manifest.taskExecution = { status: taskResult?.status || 'UNKNOWN', changedFiles: taskResult?.changedFiles || [], summary: taskResult?.summary || null, providerAccess: taskResult?.providerAccess || null, verification: taskVerification };
   manifest.taskVerified = taskVerification.ok && taskResult?.taskVerified === true;
