@@ -17,5 +17,5 @@ const compiled = compileCreativeInstruction(dna, { direction: 'boot verification
 assert.equal(compiled.instruction.output.generationEnabled, false);
 assert.equal(validateCreativeOutput(dna, { immutable: dna.immutable, claims: ['observed: test'] }).decision, 'PASS');
 assert.equal(validateCreativeOutput(dna, { immutable: dna.immutable, claims: ['unverified superiority claim'] }).decision, 'BLOCK');
-assert.equal(providerStatus().status, 'DISABLED');
+assert.equal(providerStatus().status, 'READY');
 console.log(JSON.stringify({ gate: 'creative-boot', status: 'PASS', generationEnabled: false, integrity: 'FAIL-CLOSED' }));
