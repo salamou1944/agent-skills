@@ -130,7 +130,7 @@ export async function scanWorkspaceSecrets(root) {
       if (entry.name === '.git' || entry.name === 'node_modules' || ['test','tests','__tests__','fixtures'].includes(entry.name)) continue;
       const path = join(dir, entry.name);
       if (entry.isDirectory()) await walk(path);
-      else if (WORKSPACE_SCAN_EXTENSIONS.test(entry.name) && !/\.(test|spec)\.(?:mjs|js|cjs|ts|tsx|jsx)$/i.test(entry.name)) {
+      else if (WORKSPACE_SCAN_EXTENSIONS.test(entry.name) && !/(?:^test(?:[-.]|$)|\.(?:test|spec)\.)/i.test(entry.name)) {
         let body = '';
         try { body = await readFile(path, 'utf8'); } catch { continue; }
         if (WORKSPACE_SCAN_SECRET_PATTERNS.some(pattern => pattern.test(body))) findings.push(path.slice(root.length + 1));
