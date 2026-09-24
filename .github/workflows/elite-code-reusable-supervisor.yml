@@ -139,6 +139,14 @@ jobs:
           git diff --check
           node --check .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs
 
+      - name: Reset unverified worker changes before fallback
+        if: steps.elite.outcome != 'success'
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          git clean -fd
+          test -z "$(git status --porcelain)"
+
       - name: Run provider-independent practical fallback as PIPELINE verification only
         id: fallback
         if: steps.elite.outcome != 'success'
