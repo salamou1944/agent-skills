@@ -11,7 +11,7 @@ try {
   assert.equal(workbench.status, 200); const html = await workbench.text();
   for (const marker of ['MONY — AI Workbench', 'Product Content', 'Voice Studio', 'Client Offer']) assert.match(html, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   const link = await (await fetch(`http://127.0.0.1:${port}/api/revenue/affiliate-link`)).json();
-  assert.equal(link.provider, 'mony'); assert.match(link.trackingUrl, /^https:\/\//); assert.equal(link.partnerTrackingUrl, link.trackingUrl); assert.equal(link.workbenchUrl, '/api/revenue/mony/workbench');
+  assert.equal(link.provider, 'mony'); assert.equal(link.trackingUrl, '/api/revenue/mony/workbench'); assert.match(link.partnerTrackingUrl, /^https:\/\//); assert.notEqual(link.partnerTrackingUrl, link.trackingUrl); assert.equal(link.workbenchUrl, '/api/revenue/mony/workbench');
   const freshOwnerlessLock = '.easy/mony/test-customer-e2e.jsonl.lock';
   await mkdir(freshOwnerlessLock, { recursive: true });
   try {
