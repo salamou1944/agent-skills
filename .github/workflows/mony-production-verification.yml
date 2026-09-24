@@ -40,8 +40,10 @@ jobs:
           curl --fail --silent --show-error "$BASE/api/revenue/affiliate-link" | tee affiliate-link.json
           node - <<'NODE'
           const x=require('./affiliate-link.json');
-          if (!x.provider) throw new Error('affiliate_provider_missing');
-          if (!/^https:\/\//.test(String(x.trackingUrl || ''))) throw new Error('tracking_url_not_https');
+          if (x.provider !== 'mony') throw new Error('affiliate_provider_invalid');
+          if (x.trackingUrl !== '/api/revenue/mony/workbench') throw new Error('internal_tracking_entry_invalid');
+          if (!/^https:\/\//.test(String(x.partnerTrackingUrl || ''))) throw new Error('partner_tracking_url_not_https');
+          if (x.partnerTrackingUrl === x.trackingUrl) throw new Error('tracking_links_not_separated');
           NODE
 
           curl --fail --silent --show-error "$BASE/api/revenue/ledger" | tee ledger.json
