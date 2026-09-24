@@ -22,7 +22,38 @@ async function ensureLedger() { await mkdir(dirname(ledgerPath), { recursive: tr
 async function appendLedger(record) { await ensureLedger(); await appendFile(ledgerPath, `${JSON.stringify(record)}\n`, 'utf8'); }
 function processStartToken(pid=process.pid) { try { const stat=readFileSync(`/proc/${pid}/stat`,'utf8'); return stat.slice(stat.lastIndexOf(')')+2).trim().split(/\\s+/)[19]||null; } catch { return null; } }
 function lockOwnerAlive(owner) { if (!owner || Number(owner.pid)<=0 || !owner.startToken) return false; return processStartToken(Number(owner.pid))===String(owner.startToken); }
-function acquireLedgerLock() { mkdirSync(dirname(ledgerLockPath),{recursive:true}); for(let i=0;i<1000;i+=1){ try { mkdirSync(ledgerLockPath,{mode:0o700}); const owner={pid:process.pid,startToken:processStartToken(),createdAt:Date.now(),token:`${process.pid}-${Date.now()}-${randomUUID()}`}; writeFileSync(`${ledgerLockPath}/owner`,JSON.stringify(owner),{mode:0o600}); heldLedgerLockToken=owner.token; return; } catch(error) { if(error.code!=='EEXIST') throw error; const waitBuffer=new Int32Array(new SharedArrayBuffer(4)); Atomics.wait(waitBuffer,0,0,1); let recoverable=false; try { const owner=JSON.parse(readFileSync(`${ledgerLockPath}/owner`,'utf8')); const age=Date.now()-Number(owner.createdAt); recoverable=age>ledgerLockStaleMs&&!lockOwnerAlive(owner); } catch { try { const age=Date.now()-statSync(ledgerLockPath).mtimeMs; recoverable=age>ledgerLockStaleMs; } catch {} } if(recoverable) { try { const stalePath=`${ledgerLockPath}.stale-${process.pid}-${Date.now()}-${randomUUID()}`; rmSync(stalePath,{recursive:true,force:true}); renameSync(ledgerLockPath,stalePath); rmSync(stalePath,{recursive:true,force:true}); } catch {} } } } throw new Error('mony_ledger_lock_timeout'); }
+async function acquireLedgerLock() {
+  mkdirSync(dirname(ledgerLockPath),{recursive:true});
+  for(let i=0;i<1000;i+=1){
+    try {
+      mkdirSync(ledgerLockPath,{mode:0o700});
+      const owner={pid:process.pid,startToken:processStartToken(),createdAt:Date.now(),token:`${process.pid}-${Date.now()}-${randomUUID()}`};
+      writeFileSync(`${ledgerLockPath}/owner`,JSON.stringify(owner),{mode:0o600});
+      heldLedgerLockToken=owner.token;
+      return;
+    } catch(error) {
+      if(error.code!=='EEXIST') throw error;
+      await new Promise(resolve=>setTimeout(resolve,1));
+      let recoverable=false;
+      try {
+        const owner=JSON.parse(readFileSync(`${ledgerLockPath}/owner`,'utf8'));
+        const age=Date.now()-Number(owner.createdAt);
+        recoverable=age>ledgerLockStaleMs&&!lockOwnerAlive(owner);
+      } catch {
+        try { const age=Date.now()-statSync(ledgerLockPath).mtimeMs; recoverable=age>ledgerLockStaleMs; } catch {}
+      }
+      if(recoverable) {
+        try {
+          const stalePath=`${ledgerLockPath}.stale-${process.pid}-${Date.now()}-${randomUUID()}`;
+          rmSync(stalePath,{recursive:true,force:true});
+          renameSync(ledgerLockPath,stalePath);
+          rmSync(stalePath,{recursive:true,force:true});
+        } catch {}
+      }
+    }
+  }
+  throw new Error('mony_ledger_lock_timeout');
+}
 function releaseLedgerLock() { if(!heldLedgerLockToken)return; try { const owner=JSON.parse(readFileSync(`${ledgerLockPath}/owner`,'utf8')); if(owner?.token===heldLedgerLockToken)rmSync(ledgerLockPath,{recursive:true,force:true}); } catch {} heldLedgerLockToken=null; }
 async function readLedger() { try { const raw = await readFile(ledgerPath, 'utf8'); return raw.split('\n').filter(Boolean).map((line) => JSON.parse(line)); } catch (error) { if (error.code === 'ENOENT') return []; throw error; } }
 async function body(req) { let raw=''; for await (const chunk of req) { raw+=chunk; if(raw.length>1_000_000) throw new Error('request_too_large'); } return raw?JSON.parse(raw):{}; }
@@ -30,7 +61,7 @@ function json(res,status,value,extraHeaders={}) { res.writeHead(status,{'content
 function html(res,status,value) { res.writeHead(status,{'content-type':'text/html; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}); res.end(value); }
 function authorizedPostback(pathname) { return Boolean(postbackSecret)&&pathname===`/api/revenue/partnerstack/${encodeURIComponent(postbackSecret)}`; }
 function rewardIsCashEligible(data={}) { const rewardStatus=String(data.reward_status||'').toLowerCase(); const paymentStatus=String(data.payment_status||'').toLowerCase(); return rewardStatus==='paid'||paymentStatus==='available'||paymentStatus==='withdrawn'; }
-async function handleReward(event) { if(!event||!['reward.created','reward.updated'].includes(event.event)) return {status:'ignored',reason:'unsupported_event'}; const data=event.data||{}; if(!rewardIsCashEligible(data)) return {status:'ignored',reason:'reward_not_cash_eligible',rewardStatus:data.reward_status||null,paymentStatus:data.payment_status||null}; const amountCents=Number(data.amount); if(!Number.isFinite(amountCents)||amountCents<=0)return{status:'rejected',reason:'invalid_reward_amount'}; const externalEventId=String(data.key||'').trim(); if(!externalEventId)return{status:'rejected',reason:'missing_reward_key'}; acquireLedgerLock(); try { const existing=(await readLedger()).find((record)=>record.externalEventId===externalEventId); if(existing){const sameAmount=Number(existing.amount)*100===amountCents;const sameCurrency=String(existing.currency||'USD').toUpperCase()==='USD';const sameProvider=existing.provider==='elevenlabs-affiliate';if(!sameAmount||!sameCurrency||!sameProvider)return{status:'rejected',reason:'reward_event_conflict',record:existing};return{status:'already_recorded',record:existing};} const recorded=engine.recordRevenue({confirmed:true,provider:'elevenlabs-affiliate',path:'affiliate',amount:amountCents/100,currency:'USD',externalEventId}); if(recorded.status!=='recorded')return recorded; const record={...recorded,rewardStatus:data.reward_status||null,paymentStatus:data.payment_status||null,source:data.source||null,partnershipKey:data.partnership_key||null,companyKey:data.company?.key||null}; await appendLedger(record); return record; } finally { releaseLedgerLock(); } }
+async function handleReward(event) { if(!event||!['reward.created','reward.updated'].includes(event.event)) return {status:'ignored',reason:'unsupported_event'}; const data=event.data||{}; if(!rewardIsCashEligible(data)) return {status:'ignored',reason:'reward_not_cash_eligible',rewardStatus:data.reward_status||null,paymentStatus:data.payment_status||null}; const amountCents=Number(data.amount); if(!Number.isFinite(amountCents)||amountCents<=0)return{status:'rejected',reason:'invalid_reward_amount'}; const externalEventId=String(data.key||'').trim(); if(!externalEventId)return{status:'rejected',reason:'missing_reward_key'}; await acquireLedgerLock(); try { const existing=(await readLedger()).find((record)=>record.externalEventId===externalEventId); if(existing){const sameAmount=Number(existing.amount)*100===amountCents;const sameCurrency=String(existing.currency||'USD').toUpperCase()==='USD';const sameProvider=existing.provider==='elevenlabs-affiliate';if(!sameAmount||!sameCurrency||!sameProvider)return{status:'rejected',reason:'reward_event_conflict',record:existing};return{status:'already_recorded',record:existing};} const recorded=engine.recordRevenue({confirmed:true,provider:'elevenlabs-affiliate',path:'affiliate',amount:amountCents/100,currency:'USD',externalEventId}); if(recorded.status!=='recorded')return recorded; const record={...recorded,rewardStatus:data.reward_status||null,paymentStatus:data.payment_status||null,source:data.source||null,partnershipKey:data.partnership_key||null,companyKey:data.company?.key||null}; await appendLedger(record); return record; } finally { releaseLedgerLock(); } }
 function rateLimitKey(req){const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();return forwarded||String(req.socket.remoteAddress||'local');}
 function checkRateLimit(req){const key=rateLimitKey(req),now=Date.now(),windowMs=60_000;const current=requestWindow.get(key)||{started:now,count:0};if(now-current.started>=windowMs){current.started=now;current.count=0;}current.count+=1;requestWindow.set(key,current);if(current.count>12)return Math.ceil((windowMs-(now-current.started))/1000);return 0;}
 async function openAIJson(system,user,schema){
