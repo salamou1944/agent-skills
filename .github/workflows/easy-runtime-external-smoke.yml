@@ -19,7 +19,7 @@ jobs:
       - name: Resolve runtime endpoint
         id: endpoint
         env:
-          BASE: ${{ vars.EASY_RUNTIME_BASE_URL || 'https://easy-runtime-current-production.up.railway.app' }}
+          BASE: ${{ vars.EASY_RUNTIME_BASE_URL || 'https://easy-platform-runtime-v3-production.up.railway.app' }}
         run: echo "base=$BASE" >> "$GITHUB_OUTPUT"
 
       - name: Check public gateway
