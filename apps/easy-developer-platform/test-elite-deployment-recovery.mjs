@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { classifyDeploymentFailure, parseJsonLines } from './elite-deployment-recovery.mjs';
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 function runNodeCheck(file) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, ['--check', file]);
+    const child = spawn(process.execPath, ['--check', fileURLToPath(file)]);
     let stderr = '';
     child.stderr.on('data', chunk => { stderr += chunk; });
     child.on('close', code => resolve({ code, stderr }));
