@@ -226,7 +226,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "4ca9042b621b204edc1f6f4a9d28909d9cecefd8"
+          "commit": "aebae585f9d2689764f5407158c973dc82983125"
         },
         {
           "kind": "action",
@@ -248,14 +248,14 @@
         },
         {
           "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 4453:1A9A0A:57E3AC:5DB9F0:6AB53809)\n",
           "errorClass": "all_providers_exhausted",
           "task": "elite.release-evidence",
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
-      "updatedAt": "2026-09-18T22:03:34.861Z"
+      "updatedAt": "2026-09-24T14:47:39.030Z"
     },
     "mony.pipeline-live-readiness": {
       "status": "BLOCKED",
@@ -4166,6 +4166,43 @@
       ],
       "scope": "apps/easy-developer-platform/ci-contracts",
       "at": "2026-09-24T14:46:49.926Z"
+    },
+    {
+      "id": "elite.release-evidence",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "aebae585f9d2689764f5407158c973dc82983125"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "12",
+            "soldier": "deployment-ops",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 4453:1A9A0A:57E3AC:5DB9F0:6AB53809)\n",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.release-evidence",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/release-evidence",
+      "at": "2026-09-24T14:47:39.030Z"
     }
   ]
 }
