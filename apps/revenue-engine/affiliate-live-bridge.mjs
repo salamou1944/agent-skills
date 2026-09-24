@@ -1,3 +1,4 @@
+// MONY customer-entry contract: trackingUrl is always the internal workbench; partnerTrackingUrl is external.
 import { appendFile, mkdir, readFile } from 'node:fs/promises';
 import { mkdirSync, readFileSync, writeFileSync, rmSync, statSync, renameSync } from 'node:fs';
 import { dirname } from 'node:path';
