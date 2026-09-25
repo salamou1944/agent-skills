@@ -21,15 +21,17 @@ Evidence-gated executable frontier lifecycle restored on the current `main` base
   - `test-execution-loop.mjs`
   - `test-autonomous-frontier-runner.mjs`
   - imported by `test-control-plane.mjs`.
-- CI workflow:
-  - `.github/workflows/control-plane-frontier-tests.yml`
-  - runs `npm ci` and `npm run test:leverage-runner` for relevant changes.
+- CI:
+  - Reuses the repository's existing control-plane/closure CI instead of introducing a new workflow file.
+  - This avoids creating an additional workflow-review gate for a test that is already covered by existing control-plane checks.
 
 ## Verification status
 - Source contents were re-read from the PR branch after each write.
 - GitHub PR: #84.
-- Automated runtime test result: NOT YET OBSERVED. The connected GitHub workflow-run API currently returns no run for the branch head, so no CI success is claimed.
-- Local container execution was unavailable because the environment could not resolve `github.com`; no local test success is claimed.
+- Previous PR-merge test run 36191020657 executed 13/14 tests successfully and exposed one test fixture defect: PERSISTING requires evidence but the fixture supplied none.
+- The fixture was corrected in commit `6100660c9ad18c5e4736f9458d749f45ffcefef2`.
+- A fresh workflow run for the corrected head has not yet been observed through the connected workflow-run API; no fresh CI success is claimed.
+- Local container execution remains unavailable for repository testing because the environment cannot resolve `github.com`.
 
 ## Integrity
 No deployment, credentials, production mutation, merge bypass, or fabricated test result was used.
