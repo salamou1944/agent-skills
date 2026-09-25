@@ -54,8 +54,13 @@ assert.equal(outputBlock.decision, 'BLOCK');
 assert.deepEqual(outputBlock.inventedClaims, ['best shoe in Algeria']);
 
 const provider = providerStatus();
-assert.equal(provider.status, 'DISABLED');
-assert.equal(provider.generationEnabled, false);
+assert.equal(provider.status, 'READY');
+assert.equal(provider.provider, 'local-safe-presenter');
+assert.equal(provider.generationEnabled, true);
+assert.equal(provider.integrityEnabled, true);
+assert.equal(provider.externalProviderRequired, false);
+assert.equal(provider.externalProvider.status, 'DISABLED');
+assert.equal(provider.externalProvider.generationEnabled, false);
 assert.deepEqual(provider.contract, ['analyzeAsset', 'generateCreative', 'validateOutput']);
 
 console.log(JSON.stringify({
@@ -66,4 +71,5 @@ console.log(JSON.stringify({
   instructionCompiler: 'PASS',
   outputValidation: 'PASS',
   providerBoundary: 'PASS',
+  localProvider: 'PASS',
 }));
