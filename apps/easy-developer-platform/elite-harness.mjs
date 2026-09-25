@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, appendFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { classifyFailure, stageEvidence, buildRepairContext } from './repair-acceleration.mjs';
 
 const DEFAULTS = Object.freeze({ maxSteps: 24, maxRepairs: 5, maxWallMs: 15 * 60_000, maxContextBytes: 900_000 });
 const SAFE_ACTIONS = new Set(['inspect', 'plan', 'implement', 'test', 'review', 'repair', 'verify', 'checkpoint']);
@@ -79,7 +80,7 @@ function normalizeResult(result) { if (!result || typeof result !== 'object') re
 
 export async function runEliteTask(goal, deps = {}) {
   const root = resolve(deps.root || process.cwd()), policy = createPolicy(deps.policy), journal = deps.journal || createJournal(deps.journalPath), started = Date.now();
-  const state = { phase: 'inspect', steps: 0, repairs: 0, completed: false, verified: false, evidence: [], planHash: null };
+  const state = { phase: 'inspect', steps: 0, repairs: 0, completed: false, verified: false, evidence: [], stageEvidence: [], planHash: null };
   const provider = deps.provider;
   const inspect = deps.inspect || (async () => ({ summary: 'No inspector configured', context: '' }));
   const execute = deps.execute || (async () => ({ ok: true }));
@@ -90,7 +91,9 @@ export async function runEliteTask(goal, deps = {}) {
   if (typeof provider !== 'function') throw new EliteHarnessError('provider_required', 'An inference provider is required');
   const step = async (phase, payload, fn) => { if (++state.steps > policy.maxSteps) throw new EliteHarnessError('step_budget_exhausted', 'Maximum task steps exceeded'); if (Date.now() - started > policy.maxWallMs) throw new EliteHarnessError('wall_clock_budget_exhausted', 'Maximum task duration exceeded'); state.phase = phase; await journal.append(phase, payload); return fn(); };
   try {
+    state.stageEvidence.push(stageEvidence('detect', { goalHash: hash(goal) }));
     const inspected = await step('inspect', { goalHash: hash(goal) }, () => inspect({ root, goal, maxContextBytes: policy.maxContextBytes }));
+    state.stageEvidence.push(stageEvidence('inspect', { contextHash: hash(String(inspected?.context || '')) }, [state.stageEvidence.at(-1).evidenceId]));
     const context = String(inspected?.context || '').slice(0, policy.maxContextBytes);
     let plan = normalizePlan(await step('plan', { contextHash: hash(context) }, () => provider({ role: 'planner', goal, context, constraints: { requireVerification: policy.requireVerification, protectedPaths: [...policy.forbidden] } })));
     state.planHash = hash(JSON.stringify(plan));
@@ -98,19 +101,28 @@ export async function runEliteTask(goal, deps = {}) {
       const changes = validateChanges(root, plan.changes, policy), originals = await snapshot(changes);
       try {
         const implementation = await step('implement', { planHash: state.planHash, changeCount: changes.length }, () => execute({ root, changes, goal }));
+        state.stageEvidence.push(stageEvidence('patch', { planHash: state.planHash, changedFiles: changes.map(x => x.path).sort() }, [state.stageEvidence.at(-1).evidenceId]));
         const tested = await step('test', { implementation: normalizeResult(implementation) }, () => test({ root, goal, changes }));
+        state.stageEvidence.push(stageEvidence('regression', { passed: normalizeResult(tested).ok, result: normalizeResult(tested) }, [state.stageEvidence.at(-1).evidenceId]));
         if (!normalizeResult(tested).ok) throw new EliteHarnessError('test_failed', tested.reason || tested.summary || 'Tests failed');
         if (policy.requireReview) { const reviewed = await step('review', { test: normalizeResult(tested) }, () => review({ root, goal, changes })); if (!normalizeResult(reviewed).ok) throw new EliteHarnessError('review_failed', reviewed.reason || reviewed.summary || 'Review failed'); }
-        if (policy.requireVerification) { const verified = await step('verify', { review: true }, () => verify({ root, goal, changes })); if (!normalizeResult(verified).ok) throw new EliteHarnessError('verification_failed', verified.reason || verified.summary || 'Verification failed'); state.verified = true; state.evidence.push(verified.evidence || verified.summary || 'verified'); }
+        if (policy.requireVerification) { const verified = await step('verify', { review: true }, () => verify({ root, goal, changes })); if (!normalizeResult(verified).ok) throw new EliteHarnessError('verification_failed', verified.reason || verified.summary || 'Verification failed'); state.stageEvidence.push(stageEvidence('verify', { result: normalizeResult(verified) }, [state.stageEvidence.at(-1).evidenceId])); state.verified = true; state.evidence.push(verified.evidence || verified.summary || 'verified'); }
         state.completed = true;
-        await journal.append('complete', { status: state.verified ? 'verified' : 'tested', steps: state.steps, repairs: state.repairs, planHash: state.planHash });
-        return { status: state.verified ? 'verified' : 'tested', taskId: journal.taskId, goal, steps: state.steps, repairs: state.repairs, changedFiles: changes.map((x) => x.path), evidence: state.evidence };
+        const status = state.verified ? 'TASK_VERIFIED' : 'FAILED';
+        state.stageEvidence.push(stageEvidence('persist', { status, taskId: journal.taskId, planHash: state.planHash }, [state.stageEvidence.at(-1)?.evidenceId].filter(Boolean)));
+        await journal.append('complete', { status, steps: state.steps, repairs: state.repairs, planHash: state.planHash });
+        return { status, taskId: journal.taskId, goal, steps: state.steps, repairs: state.repairs, changedFiles: changes.map((x) => x.path), evidence: [...state.evidence, ...state.stageEvidence] };
       } catch (error) {
         await rollback(changes, originals);
         if (state.repairs >= policy.maxRepairs) throw error;
         state.repairs += 1;
-        await journal.append('repair', { repair: state.repairs, error: error.message, code: error.code || 'unknown' });
-        plan = normalizePlan(await provider({ role: 'repair', goal, failedPlan: plan, failure: { code: error.code || 'unknown', message: error.message }, context }));
+        const failure = { code: error.code || 'unknown', message: error.message };
+        const classification = classifyFailure(failure);
+        const rootCause = stageEvidence('root_cause', classification, [state.stageEvidence.at(-1)?.evidenceId].filter(Boolean));
+        const reproduce = stageEvidence('reproduce', { failure: classification }, [rootCause.evidenceId]);
+        state.stageEvidence.push(reproduce, rootCause);
+        await journal.append('repair', { repair: state.repairs, error: error.message, code: error.code || 'unknown', classification });
+        plan = normalizePlan(await provider({ role: 'repair', goal, failedPlan: plan, failure: buildRepairContext({ goal, failure, previousPlan: plan, inspectContext: context, attempt: state.repairs }), context }));
         state.planHash = hash(JSON.stringify(plan));
       }
     }
