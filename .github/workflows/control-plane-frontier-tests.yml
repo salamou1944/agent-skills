@@ -1,0 +1,25 @@
+name: control-plane-frontier-tests
+
+on:
+  push:
+    paths:
+      - 'apps/control-plane/**'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'apps/control-plane/**'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  frontier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:leverage-runner
