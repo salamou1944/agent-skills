@@ -165,7 +165,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
   const taskVerified = ['TASK_VERIFIED', 'VERIFIED', 'VERIFIED_NOOP', 'NOOP_VERIFIED'].includes(result.status);
-  const patch = Object.fromEntries((result.changedFiles || []).map(path => [path, null]));
+  const patch = Array.isArray(result.patch) ? result.patch : Object.fromEntries((result.changedFiles || []).map(path => [path, null]));
   const evidenceCheck = taskVerified && result.changedFiles.length
     ? validateEvidence({ ...result, agentId: 'elite-engine', patch, patchFingerprint: fingerprintPatch(patch) })
     : { ok: taskVerified, errors: taskVerified ? [] : ['task_not_verified'] };
