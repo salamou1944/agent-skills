@@ -54,7 +54,7 @@ test('failed verification rolls back before bounded repair and then succeeds', a
     review: async () => ({ ok: true }),
     verify: async ({ changes }) => { verifies += 1; if (verifies === 1) return { ok: false, reason: 'verification caught defect' }; return { ok: true, evidence: 'repaired-and-verified' }; },
   });
-  assert.equal(result.status, 'verified');
+  assert.equal(result.status, 'TASK_VERIFIED');
   assert.equal(result.repairs, 1);
   assert.equal(plans, 2);
   assert.equal(verifies, 2);
