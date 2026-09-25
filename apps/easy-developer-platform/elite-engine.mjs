@@ -170,7 +170,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
     ? validateEvidence({ ...result, agentId: 'elite-engine', patch, patchFingerprint: fingerprintPatch(patch) })
     : { ok: taskVerified, errors: taskVerified ? [] : ['task_not_verified'] };
   const verification = evidenceCheck.ok ? { ok: true, evidence: evidenceCheck } : { ok: false, evidence: evidenceCheck };
-  const completion = stopAndExplain({ result, proof, verification });
+  const completion = stopAndExplain({ result, proof, verification, required: ['TASK_VERIFIED', 'VERIFIED', 'VERIFIED_NOOP', 'NOOP_VERIFIED'] });
   const evolution = evolutionEvent({ taskId: result.taskId, goal, status: result.status, changedFiles: result.changedFiles, proofHash: proof.proofHash });
   if (policy.evolutionPath) await appendEvolution(policy.evolutionPath, evolution);
   const crossProject = crossProjectSignal({ project: policy.project || 'default', kind: 'verified_task', value: result.taskId || goal });
