@@ -118,7 +118,7 @@ export async function runEliteTask(goal, deps = {}) {
         }
         state.stageEvidence.push(stageEvidence('persist', { status, taskId: journal.taskId, planHash: state.planHash }, [state.stageEvidence.at(-1)?.evidenceId].filter(Boolean)));
         await journal.append('complete', { status, steps: state.steps, repairs: state.repairs, planHash: state.planHash });
-        return { status, taskId: journal.taskId, goal, steps: state.steps, repairs: state.repairs, changedFiles: changes.map((x) => x.path), evidence: [...state.evidence, ...state.stageEvidence] };
+        return { status, taskId: journal.taskId, goal, steps: state.steps, repairs: state.repairs, changedFiles: changes.map((x) => x.path), patch: changes.map(({ path, content }) => ({ path, content })), evidence: [...state.evidence, ...state.stageEvidence] };
       } catch (error) {
         await rollback(changes, originals);
         if (state.repairs >= policy.maxRepairs) throw error;
