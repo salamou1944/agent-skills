@@ -25,7 +25,7 @@ test('integrated Elite engine executes isolated lifecycle and promotes only veri
   const root = await mkdtemp(join(tmpdir(), 'elite-engine-'));
   await gitInit(root);
   const result = await runEliteEngine('create a safe module', { root, provider: providerForPlan(), policy: { maxSteps: 12, maxRepairs: 1 } });
-  assert.equal(result.status, 'verified');
+  assert.equal(result.status, 'TASK_VERIFIED');
   assert.equal(result.isolated, true);
   assert.ok(result.steps >= 6);
   assert.equal(await readFile(join(root, 'feature.mjs'), 'utf8'), 'export const answer = 42;\n');
@@ -36,7 +36,7 @@ test('engine entry point verifies a no-op task without a provider network call',
   await gitInit(root);
   const provider = async ({ role }) => role === 'reviewer' || role === 'correctness' || role === 'security' || role === 'regression' || role === 'final' ? { approved: true } : { summary: 'noop', changes: [] };
   const result = await runEliteEngine('confirm repository is safe', { root, provider });
-  assert.equal(result.status, 'verified');
+  assert.equal(result.status, 'TASK_VERIFIED');
   assert.deepEqual(result.changedFiles, []);
 });
 
