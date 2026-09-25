@@ -38,6 +38,14 @@ jobs:
           curl --fail --silent --show-error --max-time 15 "$BASE/api/operator/health" | tee operator.json
           node -e 'const x=require("./operator.json"); if(x.ok!==true) process.exit(1)'
 
+      - name: Check deployed runtime provenance
+        env:
+          BASE: ${{ steps.endpoint.outputs.base }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 15 "$BASE/api/gateway/provenance" | tee provenance.json
+          node -e 'const x=require("./provenance.json"); if(!x || typeof x!=="object") process.exit(1); if(x.runtimeIdentity===undefined && x.deploymentId===undefined && x.commitSha===undefined) process.exit(1); console.log(JSON.stringify({provenanceVerified:true}))'
+
       - name: Create and execute safe operator task
         env:
           BASE: ${{ steps.endpoint.outputs.base }}
