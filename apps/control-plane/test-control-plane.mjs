@@ -1,3 +1,4 @@
+import "./test-autonomous-frontier-runner.mjs";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRegistry, validateRegistry, authorize, createTask, health } from './control-plane.mjs';
