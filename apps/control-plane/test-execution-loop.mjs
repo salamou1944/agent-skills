@@ -19,16 +19,17 @@ test('verification requires evidence', () => {
   assert.throws(() => transitionExecution(state, 'VERIFYING'), /execution_verification_requires_evidence/);
 });
 
-test('evidence persists through completion', () => {
+test('evidence persists through every evidence-gated completion boundary', () => {
   let state = createExecutionState({ id:'run-2', project:'agent-skills', frontierId:'frontier-2', phase:'SELECTED' });
   state = transitionExecution(state, 'EXECUTING');
   state = transitionExecution(state, 'TESTING', { evidence:['test-output'] });
   state = transitionExecution(state, 'VERIFYING', { evidence:['independent-check'] });
   state = transitionExecution(state, 'OBSERVING');
-  state = transitionExecution(state, 'PERSISTING');
-  state = transitionExecution(state, 'COMPLETED');
+  state = transitionExecution(state, 'PERSISTING', { evidence:['persistence-check'] });
+  state = transitionExecution(state, 'COMPLETED', { evidence:['completion-check'] });
   assert.equal(state.phase, 'COMPLETED');
-  assert.equal(state.evidence.length, 2);
+  assert.equal(state.evidence.length, 4);
+  assert.deepEqual(state.evidence, ['test-output', 'independent-check', 'persistence-check', 'completion-check']);
 });
 
 test('illegal transitions are rejected', () => {
