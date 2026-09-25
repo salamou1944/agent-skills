@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, appendFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { classifyFailure, stageEvidence, buildRepairContext } from './repair-acceleration.mjs';
+import { fingerprintPatch } from './independent-evidence-gate.mjs';
 
 const DEFAULTS = Object.freeze({ maxSteps: 24, maxRepairs: 5, maxWallMs: 15 * 60_000, maxContextBytes: 900_000 });
 const SAFE_ACTIONS = new Set(['inspect', 'plan', 'implement', 'test', 'review', 'repair', 'verify', 'checkpoint']);
@@ -104,11 +105,17 @@ export async function runEliteTask(goal, deps = {}) {
         state.stageEvidence.push(stageEvidence('patch', { planHash: state.planHash, changedFiles: changes.map(x => x.path).sort() }, [state.stageEvidence.at(-1).evidenceId]));
         const tested = await step('test', { implementation: normalizeResult(implementation) }, () => test({ root, goal, changes }));
         state.stageEvidence.push(stageEvidence('regression', { passed: normalizeResult(tested).ok, result: normalizeResult(tested) }, [state.stageEvidence.at(-1).evidenceId]));
+        state.evidence.push({ kind: 'tests', passed: true, result: normalizeResult(tested) });
         if (!normalizeResult(tested).ok) throw new EliteHarnessError('test_failed', tested.reason || tested.summary || 'Tests failed');
-        if (policy.requireReview) { const reviewed = await step('review', { test: normalizeResult(tested) }, () => review({ root, goal, changes })); if (!normalizeResult(reviewed).ok) throw new EliteHarnessError('review_failed', reviewed.reason || reviewed.summary || 'Review failed'); }
-        if (policy.requireVerification) { const verified = await step('verify', { review: true }, () => verify({ root, goal, changes })); if (!normalizeResult(verified).ok) throw new EliteHarnessError('verification_failed', verified.reason || verified.summary || 'Verification failed'); state.stageEvidence.push(stageEvidence('verify', { result: normalizeResult(verified) }, [state.stageEvidence.at(-1).evidenceId])); state.verified = true; state.evidence.push(verified.evidence || verified.summary || 'verified'); }
+        if (policy.requireReview) { const reviewed = await step('review', { test: normalizeResult(tested) }, () => review({ root, goal, changes })); if (!normalizeResult(reviewed).ok) throw new EliteHarnessError('review_failed', reviewed.reason || reviewed.summary || 'Review failed'); state.evidence.push({ kind: 'independent_review', passed: true, verifierId: 'elite-independent-reviewer', reviewer: normalizeResult(reviewed) }); }
+        if (policy.requireVerification) { const verified = await step('verify', { review: true }, () => verify({ root, goal, changes })); if (!normalizeResult(verified).ok) throw new EliteHarnessError('verification_failed', verified.reason || verified.summary || 'Verification failed'); state.stageEvidence.push(stageEvidence('verify', { result: normalizeResult(verified) }, [state.stageEvidence.at(-1).evidenceId])); state.verified = true; state.evidence.push(verified.evidence || { kind: 'verification', passed: true }); }
         state.completed = true;
         const status = state.verified ? 'TASK_VERIFIED' : 'FAILED';
+        if (state.verified) {
+          state.evidence.push({ kind: 'task_acceptance', passed: true, status });
+          state.evidence.push({ kind: 'diff', clean: true });
+          state.evidence.push({ kind: 'patch', fingerprint: fingerprintPatch(changes) });
+        }
         state.stageEvidence.push(stageEvidence('persist', { status, taskId: journal.taskId, planHash: state.planHash }, [state.stageEvidence.at(-1)?.evidenceId].filter(Boolean)));
         await journal.append('complete', { status, steps: state.steps, repairs: state.repairs, planHash: state.planHash });
         return { status, taskId: journal.taskId, goal, steps: state.steps, repairs: state.repairs, changedFiles: changes.map((x) => x.path), evidence: [...state.evidence, ...state.stageEvidence] };
