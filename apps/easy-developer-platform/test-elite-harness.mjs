@@ -29,7 +29,7 @@ test('harness completes only after implementation, tests, review, and verificati
     review: async () => ({ ok: true, summary: 'adversarial review passed' }),
     verify: async () => ({ ok: true, summary: 'integration verification passed', evidence: 'verified-test-double' }),
   });
-  assert.equal(result.status, 'verified');
+  assert.equal(result.status, 'TASK_VERIFIED');
   assert.deepEqual(calls, ['planner']);
   assert.deepEqual(await readFile(join(root, 'feature.mjs'), 'utf8'), 'export const answer = 42;\n');
   const journal = await readFile(journalPath, 'utf8');
