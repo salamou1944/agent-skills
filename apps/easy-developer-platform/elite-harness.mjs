@@ -114,7 +114,7 @@ export async function runEliteTask(goal, deps = {}) {
         if (state.verified) {
           state.evidence.push({ kind: 'task_acceptance', passed: true, status });
           state.evidence.push({ kind: 'diff', clean: true });
-          state.evidence.push({ kind: 'patch', fingerprint: fingerprintPatch(changes) });
+          state.evidence.push({ kind: 'patch', fingerprint: fingerprintPatch(changes.map(({ path, content }) => ({ path, content }))) });
         }
         state.stageEvidence.push(stageEvidence('persist', { status, taskId: journal.taskId, planHash: state.planHash }, [state.stageEvidence.at(-1)?.evidenceId].filter(Boolean)));
         await journal.append('complete', { status, steps: state.steps, repairs: state.repairs, planHash: state.planHash });
