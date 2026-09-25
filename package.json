@@ -65,7 +65,10 @@
     "test:lab:luna-frontier": "node --test apps/army14-evolution-lab/test-luna-frontier-experiments.mjs",
     "test:lab:luna-meta": "node --test apps/army14-evolution-lab/test-luna-meta-evolution.mjs",
     "test:lab:luna-unknown": "node --test apps/army14-evolution-lab/test-luna-unknown-capability-discovery.mjs",
-    "test:army14:worker-health": "node --test apps/easy-developer-platform/test-army-14-railway-worker-health.mjs"
+    "test:army14:worker-health": "node --test apps/easy-developer-platform/test-army-14-railway-worker-health.mjs",
+    "test:frontier": "node --test apps/control-plane/test-frontier-engine.mjs",
+    "test:evidence-graph": "node --test apps/control-plane/test-evidence-graph.mjs",
+    "test:leverage-lab": "node --test apps/control-plane/test-frontier-engine.mjs apps/control-plane/test-evidence-graph.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
