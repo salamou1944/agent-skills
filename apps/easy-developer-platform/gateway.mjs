@@ -67,6 +67,23 @@ const serviceStatus = async () => ({
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (req.method === 'GET' && url.pathname === '/api/gateway/provenance') {
+    const runtimeCommit = process.env.RAILWAY_GIT_COMMIT_SHA || null;
+    const deploymentId = process.env.RAILWAY_DEPLOYMENT_ID || null;
+    const snapshotId = process.env.RAILWAY_SNAPSHOT_ID || null;
+    const branch = process.env.RAILWAY_GIT_BRANCH || null;
+    const repoOwner = process.env.RAILWAY_GIT_REPO_OWNER || null;
+    const repoName = process.env.RAILWAY_GIT_REPO_NAME || null;
+    return send(res, 200, {
+      source: repoOwner && repoName ? `${repoOwner}/${repoName}` : null,
+      branch,
+      runtimeCommit,
+      deploymentId,
+      snapshotId,
+      attributable: Boolean(runtimeCommit || deploymentId),
+      sourceKind: runtimeCommit ? 'railway-github-trigger' : (deploymentId ? 'railway-deployment' : 'unknown')
+    });
+  }
   if (req.method === 'GET' && url.pathname === '/api/gateway/status') {
     const body = await serviceStatus();
     const healthy = Object.entries(body).filter(([key]) => key.endsWith('Online')).every(([, value]) => value === true);
