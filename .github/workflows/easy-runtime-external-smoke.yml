@@ -28,15 +28,7 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --max-time 15 "$BASE/api/gateway/status" | tee gateway.json
-          node -e 'const x=require("./gateway.json"); if(!x.platformOnline || !x.operatorOnline) process.exit(1)'
-
-      - name: Check public platform health
-        env:
-          BASE: ${{ steps.endpoint.outputs.base }}
-        run: |
-          set -euo pipefail
-          curl --fail --silent --show-error --max-time 15 "$BASE/api/platform/health" | tee platform.json
-          node -e 'const x=require("./platform.json"); if(x.ok!==true) process.exit(1)'
+          node -e 'const x=require("./gateway.json"); const required=["platformOnline","operatorOnline","creativeOnline","creativeJobOnline","customerOnline","revenueOnline"]; if(required.some(k=>x[k]!==true)) process.exit(1)'
 
       - name: Check public operator health
         env:
