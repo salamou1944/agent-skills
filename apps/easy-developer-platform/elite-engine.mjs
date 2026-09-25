@@ -15,6 +15,7 @@ import { remember } from './elite-memory.mjs';
 import { withIsolatedWorktree, workspaceStatus } from './elite-worktree.mjs';
 import { buildEngineeringDNA, predictImpact, recordAttempt, readAttemptLedger, rejectRepeatedStrategy, createProof, shadowDelta } from './elite-dna.mjs';
 import { generateCounterfactuals, chooseCounterfactual, immuneGate, adversarialProbe, appendEvolution, evolutionEvent, projectScope, crossProjectSignal, stopAndExplain, integritySummary } from './elite-unique-intelligence.mjs';
+import { validateEvidence, fingerprintPatch } from './independent-evidence-gate.mjs';
 
 const execFileAsync = promisify(execFile);
 function trim(value, max = 8000) { return String(value ?? '').slice(0, max); }
@@ -163,7 +164,12 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   const counterfactual = inspectResult.counterfactual;
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
-  const verification = result.status === 'verified' ? { ok: true } : { ok: false };
+  const taskVerified = ['TASK_VERIFIED', 'VERIFIED', 'VERIFIED_NOOP', 'NOOP_VERIFIED'].includes(result.status);
+  const patch = Object.fromEntries((result.changedFiles || []).map(path => [path, null]));
+  const evidenceCheck = taskVerified && result.changedFiles.length
+    ? validateEvidence({ ...result, agentId: 'elite-engine', patch, patchFingerprint: fingerprintPatch(patch) })
+    : { ok: taskVerified, errors: taskVerified ? [] : ['task_not_verified'] };
+  const verification = evidenceCheck.ok ? { ok: true, evidence: evidenceCheck } : { ok: false, evidence: evidenceCheck };
   const completion = stopAndExplain({ result, proof, verification });
   const evolution = evolutionEvent({ taskId: result.taskId, goal, status: result.status, changedFiles: result.changedFiles, proofHash: proof.proofHash });
   if (policy.evolutionPath) await appendEvolution(policy.evolutionPath, evolution);
@@ -184,7 +190,7 @@ export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, 
   if (!status.clean) { const error = new Error('workspace_dirty_refusing_isolated_execution'); error.code = 'workspace_dirty'; throw error; }
   return withIsolatedWorktree(root, `task-${Date.now()}`, async (worktree, { promote }) => {
     const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics });
-    if (result.status === 'verified' && result.changedFiles.length) await promote(result.changedFiles);
+    if (result.status === 'TASK_VERIFIED' && result.changedFiles.length) await promote(result.changedFiles);
     return result;
   });
 }
