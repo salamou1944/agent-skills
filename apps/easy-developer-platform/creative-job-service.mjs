@@ -8,7 +8,7 @@ const send = (res, status, data) => { res.writeHead(status, { 'content-type': 'a
 async function body(req) { let raw=''; for await (const chunk of req) { raw += chunk; if (raw.length > 2_000_000) throw Object.assign(new Error('body_too_large'), {status:413}); } try { return raw ? JSON.parse(raw) : {}; } catch { throw Object.assign(new Error('invalid_json'), {status:400}); } }
 const selfTestEnabled = () => String(process.env.EASY_CREATIVE_SELF_TEST || '').trim().toLowerCase() === 'true';
 const isRecoverableExternalFailure = (result) =>
-  result?.status === 'FAILED' && ['provider_http_402','provider_http_429','provider_http_500','provider_http_502','provider_http_503','provider_http_504'].includes(String(result.reason || '').toLowerCase());
+  result?.status === 'FAILED' && ['provider_credentials_missing','provider_http_401','provider_http_402','provider_http_403','provider_http_429','provider_http_500','provider_http_502','provider_http_503','provider_http_504'].includes(String(result.reason || '').toLowerCase());
 
 export async function runCreativeJobWithFallback(input = {}) {
   const requestedMode = String(input.mode || 'auto').trim().toLowerCase();
