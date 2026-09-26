@@ -3,7 +3,7 @@ import {runCua} from './adapters/cua-adapter.mjs';
 import {verifyCuaResult} from './verifiers/cua-verifier.mjs';
 
 process.env.OPERATOR_CUA_URL='https://cua.invalid';
-assert.throws(()=>runCua({action:'health',task:{taskId:'t',allowedActions:[]}},process.env),/health/);
+await assert.rejects(()=>runCua({action:'list_apps',task:{taskId:'t',allowedActions:[]}},process.env),/cua_read_not_authorized/);
 
 const verified=verifyCuaResult({result:{executionId:'e',action:'health',status:200,ok:true}});
 assert.equal(verified.passed,true);
