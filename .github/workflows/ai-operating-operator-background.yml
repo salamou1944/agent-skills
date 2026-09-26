@@ -1,5 +1,8 @@
 name: AI Operating Operator background worker
 on:
+  push:
+    paths:
+      - 'apps/ai-operating-operator/runtime/tasks/**'
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
