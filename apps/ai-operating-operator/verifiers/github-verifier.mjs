@@ -1,0 +1,1 @@
+export function verifyGitHubResult({result}={}){const passed=!!result&&result.ok===true&&Number(result.status)>=200&&Number(result.status)<300;return {verifierId:'github-independent-verifier-v1',passed,errors:passed?[]:['github_response_not_successful'],executionId:result?.executionId||null};}
