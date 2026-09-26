@@ -1,8 +1,39 @@
 {
   "taskId": "background-github-smoke-2026-09-26-j",
-  "state": "FAILED",
-  "failure": {
-    "class": "worker_error",
-    "message": "github_repo_not_allowlisted::salamou1944/agent-skills"
+  "state": "EVIDENCE_CAPTURED",
+  "evidence": [
+    {
+      "evidenceId": "e37340cc-1ddb-4da0-ab76-ee7ec739364c",
+      "kind": "action",
+      "capturedAt": "2026-09-26T18:29:23.648Z",
+      "adapter": "platform.github",
+      "executionId": "b38b2ef8-c984-40c8-b0a2-431133e6de1b"
+    },
+    {
+      "evidenceId": "66b81461-8c80-47eb-bfdc-929747383e27",
+      "kind": "verification",
+      "capturedAt": "2026-09-26T18:29:23.648Z",
+      "verifierId": "github-independent-verifier-v1",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "evidenceId": "0abeb655-2b41-4615-824c-066baf9294dc",
+      "kind": "independent_verification",
+      "capturedAt": "2026-09-26T18:29:23.648Z",
+      "verifierId": "github-independent-verifier-v1",
+      "passed": true,
+      "errors": []
+    }
+  ],
+  "verification": {
+    "verifierId": "github-independent-verifier-v1",
+    "passed": true,
+    "errors": [],
+    "executionId": "b38b2ef8-c984-40c8-b0a2-431133e6de1b"
+  },
+  "completion": {
+    "ok": true,
+    "errors": []
   }
 }

@@ -1,26 +1,26 @@
 {
-  "taskId": "background-github-smoke-2026-09-26-d",
+  "taskId": "background-github-smoke-2026-09-26-n",
   "state": "EVIDENCE_CAPTURED",
   "evidence": [
     {
-      "evidenceId": "112e0c5a-f0c9-46e9-9363-9d9d9fe5caa3",
+      "evidenceId": "14b81f8b-5140-451f-8722-20a7f0ce33c6",
       "kind": "action",
-      "capturedAt": "2026-09-26T18:29:22.259Z",
+      "capturedAt": "2026-09-26T18:29:24.473Z",
       "adapter": "platform.github",
-      "executionId": "b30735f1-9af5-4d61-b8ee-cfe851824b03"
+      "executionId": "bbdd0e59-1279-428a-af64-6740bba1a7d1"
     },
     {
-      "evidenceId": "fbfd76e9-d4ac-45dd-9962-34a753637323",
+      "evidenceId": "c790faf1-b56a-4dcf-b32a-4af45f73ca7a",
       "kind": "verification",
-      "capturedAt": "2026-09-26T18:29:22.261Z",
+      "capturedAt": "2026-09-26T18:29:24.473Z",
       "verifierId": "github-independent-verifier-v1",
       "passed": true,
       "errors": []
     },
     {
-      "evidenceId": "fbe453d3-8c10-4752-b119-14b051771f42",
+      "evidenceId": "125b73aa-8f16-44d4-9536-2300deb28bc8",
       "kind": "independent_verification",
-      "capturedAt": "2026-09-26T18:29:22.261Z",
+      "capturedAt": "2026-09-26T18:29:24.473Z",
       "verifierId": "github-independent-verifier-v1",
       "passed": true,
       "errors": []
@@ -30,7 +30,7 @@
     "verifierId": "github-independent-verifier-v1",
     "passed": true,
     "errors": [],
-    "executionId": "b30735f1-9af5-4d61-b8ee-cfe851824b03"
+    "executionId": "bbdd0e59-1279-428a-af64-6740bba1a7d1"
   },
   "completion": {
     "ok": true,
