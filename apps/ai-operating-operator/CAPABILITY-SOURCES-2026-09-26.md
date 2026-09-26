@@ -47,3 +47,5 @@ A source becomes an Operator capability only after:
 Never equate a catalog entry, star count, README claim or Top Five membership with operational capability.
 
 - multica-ai/multica — agent workspace/runtime/task-routing patterns: agent identity, runtime separation, durable runs, review gates, skills, access scopes, autopilot scheduling. Source inspection completed; license boundary requires exact LICENSE review before code reuse.
+
+- rohitg00/ai-engineering-from-scratch — 20-phase AI engineering curriculum, 523 lessons, runnable artifacts, focused MCP/Agent Skills routes, agent-assisted engineering, production AI, safety, and capstone implementations. MIT license verified from LICENSE. Use as a knowledge/pattern source; do not equate curriculum completion with operational capability.
