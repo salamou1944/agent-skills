@@ -1,0 +1,8 @@
+{
+  "taskId": "background-github-smoke-2026-09-26-e",
+  "state": "FAILED",
+  "failure": {
+    "class": "worker_error",
+    "message": "github_repo_not_allowlisted"
+  }
+}
