@@ -17,3 +17,4 @@ jobs:
       - run: node --test apps/ai-operating-operator/test-operator-core.mjs
       - run: node apps/ai-operating-operator/test-capability-registry.mjs
       - run: node apps/ai-operating-operator/adapters/test-nmap-adapter.mjs
+      - run: node apps/ai-operating-operator/test-skill-router.mjs
