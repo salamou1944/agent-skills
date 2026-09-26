@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "agents": {
+    "ai-operator": {
+      "role": "background-execution-agent",
+      "mediator": "chatgpt",
+      "skillsSource": ".agents/skills",
+      "defaultRuntime": "operator-runtime",
+      "access": "owner-only",
+      "projects": ["agent-skills","Easy-","MONY","Salamou-31","ASTRA","AI_operating_memory","Project-","Astra-","Files-"],
+      "reviewPolicy": "mutation-review",
+      "maxConcurrentRuns": 3
+    }
+  }
+}
