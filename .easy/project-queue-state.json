@@ -262,7 +262,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "bea03110bc0871bb6aa20ec158f11cc61cbc4d39"
+          "commit": "ad5eab3be36ad4ec559b3fdcb787883e12a56f95"
         },
         {
           "kind": "action",
@@ -284,14 +284,14 @@
         },
         {
           "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 600A:17A31C:D2EC18:E671BE:6AB6DD2F)\n",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 900A:1644D0:2CAC8A1:359FFFD:6AB806A5)\n",
           "errorClass": "all_providers_exhausted",
           "task": "mony.pipeline-live-readiness",
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
       "scope": "apps/revenue-engine/live-readiness",
-      "updatedAt": "2026-09-25T20:44:32.342Z"
+      "updatedAt": "2026-09-26T17:53:43.467Z"
     }
   },
   "history": [
@@ -5905,6 +5905,43 @@
       ],
       "scope": "apps/easy-developer-platform/defects",
       "at": "2026-09-26T17:52:53.669Z"
+    },
+    {
+      "id": "mony.pipeline-live-readiness",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "ad5eab3be36ad4ec559b3fdcb787883e12a56f95"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "07",
+            "soldier": "integration",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 900A:1644D0:2CAC8A1:359FFFD:6AB806A5)\n",
+          "errorClass": "all_providers_exhausted",
+          "task": "mony.pipeline-live-readiness",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/revenue-engine/live-readiness",
+      "at": "2026-09-26T17:53:43.467Z"
     }
   ]
 }
