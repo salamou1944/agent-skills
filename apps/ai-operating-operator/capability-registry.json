@@ -110,8 +110,8 @@
         "retrieve",
         "cite"
       ],
-      "verification": "source URL/revision + retrieval evidence",
-      "status": "DISCOVERY"
+      "verification": "source URL + retrieval response + independent verifier",
+      "status": "ADAPTER_READY"
     },
     "research.crawl": {
       "class": "research",
@@ -128,11 +128,12 @@
       "operations": [
         "navigate",
         "inspect",
-        "interact",
+        "screenshot",
+        "extract",
         "verify"
       ],
-      "verification": "browser evidence + target state",
-      "status": "DISCOVERY"
+      "verification": "browser response + independent verifier + permission manifest",
+      "status": "ADAPTER_READY"
     },
     "documents.ocr": {
       "class": "documents",
@@ -243,6 +244,27 @@
       "status": "ADAPTER_READY",
       "adapter": "platform.http",
       "description": "Allowlisted HTTPS API execution with bounded methods and bearer-token environment references"
+    },
+    "research.read": {
+      "class": "research",
+      "operations": [
+        "read",
+        "extract",
+        "cite"
+      ],
+      "verification": "source URL + retrieval response + independent verifier",
+      "status": "ADAPTER_READY"
+    },
+    "ai.local.ollama": {
+      "class": "ai",
+      "operations": [
+        "health",
+        "models",
+        "chat",
+        "embed"
+      ],
+      "verification": "model/runtime response + independent verifier",
+      "status": "ADAPTER_READY"
     }
   }
 }
