@@ -1,0 +1,25 @@
+{
+  "version":1,
+  "name":"ai-operating-operator",
+  "mediator":"chatgpt",
+  "orchestrator":"salamou1944/agent-skills",
+  "canonicalState":"salamou1944/AI_operating_memory",
+  "knowledgeSources":[
+    {"name":"Project-","role":"collection-index-and-research"},
+    {"name":"Astra-","role":"ASTRA-knowledge","separate":true},
+    {"name":"Files-","role":"collected-artifacts","separate":true},
+    {"name":"Weekly Top Five","role":"discovery","verification":"source-evidence-required"},
+    {"name":"mnfst/awesome-free-llm-apis","role":"free-llm-provider-discovery","verification":"docs-and-live-api-required"}
+  ],
+  "projects":["agent-skills","Easy-","MONY","Salamou-31","ASTRA","Astra-","AI_operating_memory"],
+  "adapters":{
+    "github":{"credentialEnv":"GITHUB_TOKEN","requiresAuthorization":true},
+    "railway":{"credentialEnv":"RAILWAY_TOKEN","requiresAuthorization":true},
+    "vercel":{"credentialEnv":"VERCEL_TOKEN","requiresAuthorization":true},
+    "supabase":{"credentialEnv":"SUPABASE_ACCESS_TOKEN","requiresAuthorization":true},
+    "browser":{"credentialEnv":"OPERATOR_BROWSER_SESSION","requiresAuthorization":true},
+    "http":{"credentialEnv":"OPERATOR_HTTP_ALLOWLIST","requiresAuthorization":false},
+    "local":{"credentialEnv":"OPERATOR_WORKSPACE","requiresAuthorization":true}
+  },
+  "invariants":["projects_remain_separate","credentials_runtime_only","no_secrets_in_evidence","discovery_is_not_capability","no_completion_without_independent_evidence","no_auth_bypass","external_dependency_fail_closed","revenue_requires_real_event_evidence"]
+}
