@@ -3,6 +3,6 @@
   "state": "FAILED",
   "failure": {
     "class": "worker_error",
-    "message": "github_repo_not_allowlisted"
+    "message": "github_repo_not_allowlisted::salamou1944/agent-skills"
   }
 }
