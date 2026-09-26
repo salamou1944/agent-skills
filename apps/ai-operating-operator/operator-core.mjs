@@ -34,7 +34,7 @@ export function evidence(kind,details={}){
 }
 function sanitize(v){
   if(v==null||typeof v==='number'||typeof v==='boolean')return v;
-  if(typeof v==='string')return v.replace(/Bearer\\s+[^\\s]+/gi,'Bearer [REDACTED]');
+  if(typeof v==='string')return v.replace(/Bearer\s+[^\s]+/gi,'Bearer [REDACTED]');
   if(Array.isArray(v))return v.map(sanitize);
   const o={};for(const[k,x]of Object.entries(v)){o[k]=/token|secret|password|api.?key|private.?key|credential/i.test(k)?'[REDACTED]':sanitize(x)}return o;
 }
