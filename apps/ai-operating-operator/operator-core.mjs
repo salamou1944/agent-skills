@@ -10,7 +10,7 @@ export function createTask(input={}){
 
 export function assessCapabilities(task,capabilities={}){
   const required=task.requestedCapabilities.length?task.requestedCapabilities:['local'];
-  const results=required.map(name=>{const c=capabilities[name];if(!c)return{name,status:'BLOCKED_PERMISSION',reason:'capability_not_registered'};if(c.authorized!==true)return{name,status:'BLOCKED_PERMISSION',reason:'not_authorized'};if(c.reachable!==true)return{name,status:'BLOCKED_EXTERNAL_DEPENDENCY',reason:'not_reachable'};return{name,status:'AVAILABLE',authorized:true,reachable:true,read:!!c.canRead,write:!!c.canWrite,deploy:!!c.canDeploy}});
+  const results=required.map(name=>{const c=capabilities[name];if(!c)return{name,status:'BLOCKED_PERMISSION',reason:'capability_not_registered'};if(c.authorized!==true)return{name,status:'BLOCKED_PERMISSION',reason:'not_authorized'};if(c.reachable!==true)return{name,status:'BLOCKED_EXTERNAL_DEPENDENCY',reason:'not_reachable'};return{name,status:'AVAILABLE',authorized:true,reachable:true,canRead:!!c.canRead,canWrite:!!c.canWrite,canDeploy:!!c.canDeploy}});
   return {ok:results.every(x=>x.status==='AVAILABLE'),results};
 }
 
