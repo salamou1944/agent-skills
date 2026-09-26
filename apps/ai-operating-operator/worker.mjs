@@ -12,6 +12,13 @@ async function main(){
   await fs.mkdir(queue,{recursive:true});await fs.mkdir(results,{recursive:true});
   const files=(await fs.readdir(queue)).filter(x=>x.endsWith('.json')).sort();
   const caps=await probeAccounts();
+  // GitHub Actions' built-in token is scoped to the workflow repository; /user is not a valid probe for it.
+  if(process.env.GITHUB_ACTIONS==='true' && process.env.GITHUB_REPOSITORY){
+    const allowed=String(process.env.OPERATOR_GITHUB_REPOS||'').split(',').map(x=>x.trim()).filter(Boolean);
+    if(allowed.includes(process.env.GITHUB_REPOSITORY)){
+      caps.github={configured:true,authorized:true,reachable:true,canRead:true,canWrite:false,canDeploy:false,source:'github-actions-workflow-scope'};
+    }
+  }
   const adapters={
     'platform.github':{status:'ADAPTER_READY'}
   };
