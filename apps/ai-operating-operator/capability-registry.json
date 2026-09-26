@@ -206,6 +206,38 @@
       ],
       "verification": "API response + independent verifier + repository allowlist",
       "status": "ADAPTER_READY"
+    },
+    "platform.railway": {
+      "class": "platform",
+      "operations": [
+        "inspect",
+        "deploy",
+        "rollback"
+      ],
+      "verification": "Railway API response + deployment health + independent verifier",
+      "status": "DISCOVERY"
+    },
+    "platform.vercel": {
+      "class": "platform",
+      "operations": [
+        "inspect",
+        "deploy",
+        "promote",
+        "rollback"
+      ],
+      "verification": "Vercel API response + deployment health + independent verifier",
+      "status": "DISCOVERY"
+    },
+    "platform.supabase": {
+      "class": "platform",
+      "operations": [
+        "inspect",
+        "query",
+        "migrate",
+        "deploy"
+      ],
+      "verification": "Supabase API/database evidence + independent verifier",
+      "status": "DISCOVERY"
     }
   }
 }
