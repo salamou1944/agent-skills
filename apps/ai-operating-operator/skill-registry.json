@@ -2,7 +2,7 @@
   "version": 2,
   "source": "salamou1944/agent-skills/.agents/skills",
   "sourceRef": "feat/ai-operating-operator-v1",
-  "registeredCount": 160,
+  "registeredCount": 80,
   "loadingPolicy": "load metadata first; inspect SKILL.md on trigger; execute only after capability/permission checks",
   "promotion": [
     "SOURCE_REGISTERED",
