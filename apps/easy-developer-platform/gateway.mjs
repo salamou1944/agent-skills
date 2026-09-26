@@ -1,4 +1,7 @@
 import http from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const port = Number(process.env.GATEWAY_PORT || 8080);
 const platform = String(process.env.EASY_PLATFORM_URL || 'http://127.0.0.1:8790').replace(/\/$/, '');
@@ -7,6 +10,8 @@ const creative = String(process.env.EASY_CREATIVE_URL || 'http://127.0.0.1:8793'
 const creativeJob = String(process.env.EASY_CREATIVE_JOB_URL || 'http://127.0.0.1:8794').replace(/\/$/, '');
 const customer = String(process.env.EASY_CUSTOMER_URL || 'http://127.0.0.1:8795').replace(/\/$/, '');
 const revenue = String(process.env.MONY_REVENUE_URL || 'http://127.0.0.1:8796').replace(/\/$/, '');
+const root = fileURLToPath(new URL('.', import.meta.url));
+const publicFile = (name) => readFile(join(root, 'public', name), 'utf8');
 
 const send = (res, status, body, type = 'application/json; charset=utf-8') => {
   res.writeHead(status, {
@@ -79,8 +84,8 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>/</loc></url><url><loc>/customer</loc></url><url><loc>/creative</loc></url><url><loc>/operator</loc></url></urlset>', 'application/xml; charset=utf-8');
   }
   if (req.method === 'GET' && url.pathname === '/') return send(res, 200, home, 'text/html; charset=utf-8');
-  if (req.method === 'GET' && url.pathname === '/customer') return send(res, 200, home, 'text/html; charset=utf-8');
-  if (req.method === 'GET' && url.pathname === '/creative') return send(res, 200, home, 'text/html; charset=utf-8');
+  if (req.method === 'GET' && url.pathname === '/customer') return send(res, 200, await publicFile('customer.html'), 'text/html; charset=utf-8');
+  if (req.method === 'GET' && url.pathname === '/creative') return send(res, 200, await publicFile('creative.html'), 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/operator') return send(res, 200, home, 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/integration') return proxy(req, res, platform, '/');
   if (url.pathname.startsWith('/api/revenue/')) return proxy(req, res, revenue, url.pathname + url.search);
