@@ -2,7 +2,7 @@ name: EASY Human-Ready Flow Check
 
 on:
   push:
-    branches: ["feat/easy-human-ready-customer-creative-flow"]
+    branches: ["main", "feat/easy-human-ready-customer-creative-flow"]
     paths:
       - "apps/easy-developer-platform/gateway.mjs"
       - "apps/easy-developer-platform/public/customer.html"
