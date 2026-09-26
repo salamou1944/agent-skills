@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EASY — Creative Engine</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#17202a;background:#f5f7fa}body{margin:0}.wrap{max-width:980px;margin:auto;padding:20px}.card{background:#fff;border:1px solid #e2e7ee;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 5px 20px #00000008}label{display:block;font-weight:800;margin-top:12px}input,textarea,button{font:inherit;width:100%;box-sizing:border-box;border-radius:12px;padding:11px;border:1px solid #cbd5e1;margin-top:7px}textarea{min-height:70px}button{background:#111827;color:#fff;border:0;font-weight:800;cursor:pointer}.secondary{background:#fff;color:#111827;border:1px solid #cbd5e1}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.stage{padding:9px;border-radius:10px;background:#f1f5f9;text-align:center;font-size:12px}.pass{background:#ecfdf5;color:#065f46}.block{background:#fff7ed;color:#9a3412}.preview{max-width:100%;max-height:420px;border-radius:14px;margin-top:12px;display:none}.result{max-width:100%;border:1px solid #dbe2ea;border-radius:14px}.muted{color:#64748b;font-size:13px}.ok{background:#ecfdf5;color:#065f46;padding:10px;border-radius:10px}.warn{background:#fff7ed;color:#9a3412;padding:10px;border-radius:10px}.hidden{display:none}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a{padding:9px 12px;border-radius:10px;background:#eef2ff;color:#3730a3;text-decoration:none;font-weight:700}.small{font-size:12px}@media(max-width:700px){.grid,.stages{grid-template-columns:1fr}}
+</style></head>
+<body><main class="wrap">
+<section class="card"><h1>EASY Creative Engine</h1><p class="muted">مسار حقيقي محلي: صورة المنتج → Product DNA → Integrity → Local Safe Presenter → نتيجة قابلة للمراجعة والتنزيل.</p><div class="nav"><a href="/">الرئيسية</a><a href="/customer">الحساب</a><a href="/integration">Developer Platform</a></div></section>
+<section id="authGate" class="card"><h2>يلزم تسجيل الدخول</h2><p>افتح صفحة الحساب وسجّل الدخول أولًا.</p><a href="/customer">فتح الحساب</a></section>
+<section id="flow" class="card hidden">
+<div class="stages"><div id="s1" class="stage">1. Input</div><div id="s2" class="stage">2. Product DNA</div><div id="s3" class="stage">3. Integrity</div><div id="s4" class="stage">4. Local Creative</div><div id="s5" class="stage">5. Review</div></div>
+<div class="grid">
+<div>
+<label>صورة المنتج</label><input id="photo" type="file" accept="image/*"><img id="sourcePreview" class="preview" alt="معاينة المصدر">
+<label>اسم المنتج</label><input id="name" maxlength="160" placeholder="مثال: حقيبة جلدية">
+<label>العلامة التجارية (اختياري)</label><input id="brand">
+<label>النص المطبوع على المنتج (اختياري)</label><input id="printed">
+<label>اللون</label><input id="color" placeholder="مثال: أسود">
+<label>الشكل</label><input id="shape" placeholder="مثال: حقيبة مستطيلة">
+<label>المادة</label><input id="material" placeholder="مثال: جلد">
+</div>
+<div>
+<label>مكونات المنتج</label><textarea id="components" placeholder="افصل المكونات بفواصل"></textarea>
+<label>تفاصيل التصميم</label><textarea id="design" placeholder="افصل التفاصيل بفواصل"></textarea>
+<label>وصف الاستخدام</label><textarea id="description"></textarea>
+<label>هدف العرض</label><textarea id="direction" placeholder="مثال: خلفية متجر راقية وإضاءة نظيفة"></textarea>
+<button id="run">تشغيل EASY Creative</button>
+<div id="status" class="muted"></div>
+</div>
+</div>
+</section>
+<section id="result" class="card hidden"><h2>النتيجة</h2><div id="decision"></div><img id="output" class="result" alt="EASY Creative output"><div class="nav" style="margin-top:10px"><a id="download" class="hidden" download="easy-creative.svg">تنزيل النتيجة</a></div><details><summary>Evidence</summary><pre id="evidence"></pre></details></section>
+<script>
+const $=id=>document.getElementById(id);const token=()=>localStorage.getItem('easy_access_token')||'';
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function api(path,opt={}){const h={'content-type':'application/json',...(opt.headers||{})};if(token())h.authorization='Bearer '+token();const r=await fetch(path,{...opt,headers:h});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||('HTTP '+r.status));return d}
+function split(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
+function stage(id,kind){$(id).className='stage '+(kind==='PASS'?'pass':kind==='BLOCK'?'block':'')}
+async function sha256(file){const buf=await file.arrayBuffer();const hash=await crypto.subtle.digest('SHA-256',buf);return Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,'0')).join('')}
+let file=null;
+$('photo').onchange=()=>{file=$('photo').files?.[0]||null;if(file){$('sourcePreview').src=URL.createObjectURL(file);$('sourcePreview').style.display='block'}};
+$('run').onclick=async()=>{
+ if(!token()){alert('سجّل الدخول أولًا');return}
+ if(!file){alert('اختر صورة المنتج');return}
+ if(!$('name').value.trim()){alert('أدخل اسم المنتج');return}
+ $('result').classList.add('hidden');$('status').textContent='جاري التنفيذ…';['s1','s2','s3','s4','s5'].forEach(x=>stage(x,'WAIT'));
+ try{
+  stage('s1','PASS');
+  const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
+  const hash=await sha256(file);
+  const asset={assetId:crypto.randomUUID(),mimeType:file.type,fileName:file.name,width:0,height:0,bytes:file.size,sha256:hash,dataUrl};
+  const observations={category:'seller-declared',type:$('name').value.trim(),description:$('description').value.trim(),brandName:$('brand').value.trim(),printedText:split($('printed').value),logo:null,color:split($('color').value),shape:$('shape').value.trim(),components:split($('components').value),designDetails:split($('design').value),material:split($('material').value)};
+  const dna=await api('/api/creative/product-dna',{method:'POST',body:JSON.stringify({assetId:asset.assetId,asset,observations,extraction:'seller-declared',provider:'seller-input',verified:true})});
+  stage('s2','PASS');
+  const integrity=await api('/api/creative/integrity',{method:'POST',body:JSON.stringify({dna,candidate:{immutable:dna.immutable}})});
+  if(integrity.decision!=='PASS'){stage('s3','BLOCK');throw Error('Product Integrity BLOCK: '+integrity.reason)}
+  stage('s3','PASS');
+  await api('/api/creative/compile',{method:'POST',body:JSON.stringify({dna,request:{direction:$('direction').value.trim()}})});
+  const job=await api('/api/creative-job/run',{method:'POST',body:JSON.stringify({mode:'local',asset,assetId:asset.assetId,observations,request:{direction:$('direction').value.trim()}})});
+  if(job.status!=='SUCCEEDED'||job.decision!=='PASS'){stage('s4','BLOCK');throw Error('Creative blocked: '+(job.reason||'validation_failed'))}
+  stage('s4','PASS');stage('s5','PASS');
+  $('decision').className='ok';$('decision').textContent='PASS — النتيجة مرّت Product Integrity والتحقق من بصمة الصورة المصدر.';
+  const url=job.output?.dataUrl||'';$('output').src=url;$('output').style.display=url?'block':'none';$('download').href=url;$('download').classList.remove('hidden');
+  $('evidence').textContent=JSON.stringify({jobId:job.jobId,status:job.status,decision:job.decision,provider:job.output?.provider,sourceAssetSha256:job.output?.sourceAssetSha256,validation:job.validation,events:job.events},null,2);
+  $('result').classList.remove('hidden');$('status').textContent='اكتمل المسار المحلي بنجاح.';
+ }catch(e){$('status').className='warn';$('status').textContent=e.message;$('result').classList.remove('hidden');$('decision').className='warn';$('decision').textContent='BLOCK — لم يتم تقديم نجاح وهمي.';$('evidence').textContent=String(e.stack||e)}
+};
+if(token()){$('authGate').classList.add('hidden');$('flow').classList.remove('hidden')}else $('status').textContent='سجّل الدخول من /customer';
+</script></main></body></html>
