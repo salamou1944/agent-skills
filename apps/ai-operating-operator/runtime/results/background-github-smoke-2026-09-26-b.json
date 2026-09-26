@@ -1,0 +1,36 @@
+{
+  "taskId": "background-github-smoke-2026-09-26-b",
+  "state": "BLOCKED_PERMISSION",
+  "plan": {
+    "taskId": "background-github-smoke-2026-09-26-b",
+    "state": "BLOCKED",
+    "skills": [
+      "adaptive-orchestrator",
+      "delegated-user-operator",
+      "persistent-task-operator",
+      "evidence-backed-operator",
+      "permission-aware-executor"
+    ],
+    "capabilities": [
+      {
+        "name": "platform.github",
+        "status": "BLOCKED_PERMISSION",
+        "reason": "not_authorized"
+      }
+    ],
+    "executableAdapters": [
+      "platform.github"
+    ],
+    "executionAllowed": false,
+    "policy": "No unregistered adapter execution; no capability inferred from registry membership alone."
+  },
+  "evidence": [
+    {
+      "evidenceId": "b6ddb39e-041f-4b51-8232-8a9a36749caa",
+      "kind": "action",
+      "capturedAt": "2026-09-26T17:49:22.841Z",
+      "accepted": false,
+      "reason": "execution_gate"
+    }
+  ]
+}
