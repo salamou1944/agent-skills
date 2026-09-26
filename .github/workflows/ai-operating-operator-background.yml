@@ -26,6 +26,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Verify operator repository scope
+        run: |
+          test -n "$GITHUB_REPOSITORY"
+          test "$GITHUB_REPOSITORY" = "$OPERATOR_GITHUB_REPOS"
       - name: Run background operator
         run: node apps/ai-operating-operator/worker.mjs
       - name: Persist operator evidence
