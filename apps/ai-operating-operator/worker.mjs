@@ -14,7 +14,7 @@ async function main(){
   const caps=await probeAccounts();
   // GitHub Actions' built-in token is scoped to the workflow repository; /user is not a valid probe for it.
   if(process.env.GITHUB_ACTIONS==='true' && process.env.GITHUB_REPOSITORY){
-    const allowed=String(process.env.OPERATOR_GITHUB_REPOS||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const allowed=String(process.env.OPERATOR_GITHUB_REPOS||process.env.GITHUB_REPOSITORY||'').split(',').map(x=>x.trim()).filter(Boolean);
     if(allowed.includes(process.env.GITHUB_REPOSITORY)){
       caps.github={configured:true,authorized:true,reachable:true,canRead:true,canWrite:false,canDeploy:false,source:'github-actions-workflow-scope'};
     }
