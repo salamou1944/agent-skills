@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {verifyBrowserResult} from './adapters/browser-adapter.mjs';
+import {verifyResearchResult} from './adapters/research-adapter.mjs';
+import {verifyOllamaResult} from './adapters/ollama-adapter.mjs';
+const ok={executionId:'x',result:{ok:true,status:200}};
+assert.equal(verifyBrowserResult({result:ok,action:'health'}).passed,true);
+assert.equal(verifyBrowserResult({result:ok,action:'click'}).passed,false);
+assert.equal(verifyResearchResult({result:ok,action:'search'}).passed,true);
+assert.equal(verifyResearchResult({result:ok,action:'write'}).passed,false);
+assert.equal(verifyOllamaResult({result:ok}).passed,true);
+console.log('capability fabric tests: PASS');

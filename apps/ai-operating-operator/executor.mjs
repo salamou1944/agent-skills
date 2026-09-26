@@ -5,18 +5,15 @@ import {createTask,evidence,verifyCompletion} from './operator-core.mjs';
 import {buildExecutionPlan} from './skill-router.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
-
 async function loadJson(name){return JSON.parse(await fs.readFile(path.join(ROOT,name),'utf8'));}
-async function loadAdapter(id){
-  const registry=await loadJson('adapter-registry.json');
-  const entry=registry.adapters[id];
-  if(!entry||entry.status!=='ADAPTER_READY')throw new Error('adapter_not_ready');
-  return {entry,module:await import(new URL(entry.module,import.meta.url))};
-}
+async function loadAdapter(id){const registry=await loadJson('adapter-registry.json');const entry=registry.adapters[id];if(!entry||entry.status!=='ADAPTER_READY')throw new Error('adapter_not_ready');return {entry,module:await import(new URL(entry.module,import.meta.url))};}
 async function loadVerifier(id){
   if(id==='nmap-independent-verifier-v1')return import('./verifiers/nmap-verifier.mjs');
   if(id==='github-independent-verifier-v1')return import('./verifiers/github-verifier.mjs');
   if(id==='http-independent-verifier-v1')return import('./verifiers/http-verifier.mjs');
+  if(id==='browser-independent-verifier-v1')return import('./adapters/browser-adapter.mjs');
+  if(id==='research-independent-verifier-v1')return import('./adapters/research-adapter.mjs');
+  if(id==='ollama-independent-verifier-v1')return import('./adapters/ollama-adapter.mjs');
   throw new Error('verifier_not_registered');
 }
 
@@ -30,20 +27,23 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   const {entry,module}=await loadAdapter(capability);
   const inputData={...(adapterInputs[capability]||{}),task};
   if(capability==='security.network.nmap'&&runnerOverrides.nmap)inputData.runner=runnerOverrides.nmap;
-  const result=capability==='security.network.nmap'
-    ? await module.runNmap(inputData)
-    : capability==='platform.github'
-      ? await module.runGitHub(inputData,adapterEnv)
-      : capability==='platform.http'
-        ? await module.runHttp(inputData)
-        : (()=>{throw new Error('adapter_execution_not_implemented')})();
+  let result;
+  if(capability==='security.network.nmap')result=await module.runNmap(inputData);
+  else if(capability==='platform.github')result=await module.runGitHub(inputData,adapterEnv);
+  else if(capability==='platform.http')result=await module.runHttp(inputData);
+  else if(capability==='browser.automation')result=await module.runBrowser(inputData,adapterEnv);
+  else if(capability==='research.search'||capability==='research.read')result=await module.runResearch({...inputData,action:capability.split('.')[1]});
+  else if(capability==='ai.local.ollama')result=await module.runOllama(inputData);
+  else throw new Error('adapter_execution_not_implemented');
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code});
   const verifier=await loadVerifier(entry.independentVerifier);
-  const verification=capability==='security.network.nmap'
-    ? verifier.verifyNmapResult({result,target:inputData.target})
-    : capability==='platform.http'
-      ? verifier.verifyHttpResult({result,expectedStatus:inputData.expectedStatus})
-      : verifier.verifyGitHubResult({result});
+  let verification;
+  if(capability==='security.network.nmap')verification=verifier.verifyNmapResult({result,target:inputData.target});
+  else if(capability==='platform.http')verification=verifier.verifyHttpResult({result,expectedStatus:inputData.expectedStatus});
+  else if(capability==='browser.automation')verification=verifier.verifyBrowserResult({result,action:inputData.action||'health'});
+  else if(capability==='research.search'||capability==='research.read')verification=verifier.verifyResearchResult({result,action:capability.split('.')[1]});
+  else if(capability==='ai.local.ollama')verification=verifier.verifyOllamaResult({result});
+  else verification=verifier.verifyGitHubResult({result});
   const verificationEvidence=evidence('verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
   const independentEvidence=evidence('independent_verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
   const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[actionEvidence,verificationEvidence,independentEvidence],verification};

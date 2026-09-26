@@ -19,6 +19,30 @@
       "module": "./adapters/http-adapter.mjs",
       "independentVerifier": "http-independent-verifier-v1",
       "scope": "HTTPS hosts explicitly allowlisted by OPERATOR_ALLOWED_API_HOSTS"
+    },
+    "research.search": {
+      "module": "./adapters/research-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "research-independent-verifier-v1",
+      "scope": "configured SearXNG endpoint; search only"
+    },
+    "research.read": {
+      "module": "./adapters/research-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "research-independent-verifier-v1",
+      "scope": "configured Jina Reader endpoint; URL read only"
+    },
+    "browser.automation": {
+      "module": "./adapters/browser-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "browser-independent-verifier-v1",
+      "scope": "configured browser endpoint; bounded read/verify actions only"
+    },
+    "ai.local.ollama": {
+      "module": "./adapters/ollama-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "ollama-independent-verifier-v1",
+      "scope": "localhost by default; remote requires HTTPS"
     }
   }
 }

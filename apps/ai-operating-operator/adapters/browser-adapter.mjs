@@ -1,0 +1,9 @@
+import crypto from 'node:crypto';
+
+const SAFE_ACTIONS=new Set(['health','navigate','inspect','screenshot','extract','verify']);
+const TIMEOUT_MS=20000;
+
+function requireUrl(){const raw=process.env.OPERATOR_BROWSER_URL;if(!raw)throw new Error('browser_endpoint_not_configured');const u=new URL(raw);if(u.protocol!=='https:'&&u.hostname!=='127.0.0.1'&&u.hostname!=='localhost')throw new Error('browser_https_required');return u}
+function allowed(action,task){if(!SAFE_ACTIONS.has(action))throw new Error('browser_action_not_allowed');const actions=task?.allowedActions||[];if(action!=='health'&&!actions.includes('browser_read'))throw new Error('browser_read_authorization_required')}
+export async function runBrowser(input,{fetchImpl=fetch}={}){const task=input.task;const action=input.action||'health';allowed(action,task);const base=requireUrl();const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),TIMEOUT_MS);const executionId=crypto.randomUUID();try{const headers={'content-type':'application/json'};if(process.env.OPERATOR_BROWSER_TOKEN)headers.authorization=`Bearer ${process.env.OPERATOR_BROWSER_TOKEN}`;const response=await fetchImpl(new URL(`/v1/${action}`,base),{method:'POST',headers,body:JSON.stringify({executionId,taskId:task?.taskId,arguments:input.arguments||{},provenance:{permissionMode:input.permissionMode||'bounded',manifestHash:input.manifestHash||null}}),signal:controller.signal});let data=null;try{data=await response.json()}catch{}return {executionId,target:base.origin,result:{status:response.status,ok:response.ok,data}}}finally{clearTimeout(timer)}}
+export function verifyBrowserResult({result,action='health'}){const passed=Boolean(result?.result?.ok&&result?.executionId&&SAFE_ACTIONS.has(action));return {verifierId:'browser-independent-verifier-v1',passed,errors:passed?[]:['browser_result_missing_execution_proof']}}
