@@ -20,7 +20,7 @@ async function loadVerifier(id){
   throw new Error('verifier_not_registered');
 }
 
-export async function executeTask(input,{capabilities={},adapterInputs={},runnerOverrides={}}={}){
+export async function executeTask(input,{capabilities={},adapterInputs={},runnerOverrides={},adapterEnv=process.env}={}){
   const task=createTask(input);
   const registry=await loadJson('adapter-registry.json');
   const plan=await buildExecutionPlan(task,{capabilities,adapters:registry.adapters});
@@ -33,7 +33,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   const result=capability==='security.network.nmap'
     ? await module.runNmap(inputData)
     : capability==='platform.github'
-      ? await module.runGitHub(inputData)
+      ? await module.runGitHub(inputData,adapterEnv)
       : capability==='platform.http'
         ? await module.runHttp(inputData)
         : (()=>{throw new Error('adapter_execution_not_implemented')})();
