@@ -38,6 +38,12 @@
       "independentVerifier": "browser-independent-verifier-v1",
       "scope": "configured browser endpoint; bounded read/verify actions only"
     },
+    "platform.cua.driver": {
+      "module": "./adapters/cua-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "cua-independent-verifier-v1",
+      "scope": "explicit Cua endpoint + safe read-only action allowlist"
+    },
     "ai.local.ollama": {
       "module": "./adapters/ollama-adapter.mjs",
       "status": "ADAPTER_READY",
