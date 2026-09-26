@@ -292,6 +292,42 @@
       ],
       "scope": "apps/revenue-engine/live-readiness",
       "updatedAt": "2026-09-26T18:28:12.479Z"
+    },
+    "easy.inspect-blocker": {
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "7d247dc73065269a1cac187e5e964320bc3699a0"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "01",
+            "soldier": "architect",
+            "score": 1,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 4413:23F7B3:2E37FBB:3774F4E:6AB80EE7)\n",
+          "errorClass": "all_providers_exhausted",
+          "task": "easy.inspect-blocker",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "easy/inspection",
+      "updatedAt": "2026-09-26T18:28:57.209Z"
     }
   },
   "history": [
@@ -6164,6 +6200,43 @@
       ],
       "scope": "apps/revenue-engine/live-readiness",
       "at": "2026-09-26T18:28:12.479Z"
+    },
+    {
+      "id": "easy.inspect-blocker",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "7d247dc73065269a1cac187e5e964320bc3699a0"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "01",
+            "soldier": "architect",
+            "score": 1,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 4413:23F7B3:2E37FBB:3774F4E:6AB80EE7)\n",
+          "errorClass": "all_providers_exhausted",
+          "task": "easy.inspect-blocker",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "easy/inspection",
+      "at": "2026-09-26T18:28:57.209Z"
     }
   ]
 }
