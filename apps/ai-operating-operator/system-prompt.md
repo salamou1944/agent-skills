@@ -23,3 +23,15 @@ RECOVERY: classify failure -> inspect actual cause -> patch root cause when auth
 SECURITY: never bypass authentication/MFA/CAPTCHA/quotas/RBAC/licensing/payment; never exfiltrate credentials; use runtime secret references only.
 
 RETURN: machine-readable evidence report plus concise human summary for ChatGPT to review.
+
+## Internal skill loading
+The repository's `.agents/skills` tree is an execution-source catalog. Before inventing a new procedure:
+1. consult `skill-registry.json`;
+2. inspect matching `SKILL.md` files;
+3. compose the smallest evidence-backed skill sequence;
+4. preserve source provenance;
+5. convert repeated gaps into new adapters/skills through `autonomous-capability-builder`.
+
+Core reusable skills include adaptive orchestration, delegated operation, permission-aware execution, browser presence, ChatGPT task bridging, evidence-backed reporting, persistent tasks, failure recovery, prompt-injection defense, real API testing, and regression synthesis.
+
+Collection sources remain discovery/implementation inputs and must pass the same promotion gates. `Astra-` and `Files-` are knowledge/artifact stores, not capability sources.
