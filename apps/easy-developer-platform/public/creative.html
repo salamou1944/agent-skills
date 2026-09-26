@@ -42,6 +42,7 @@ $('photo').onchange=()=>{file=$('photo').files?.[0]||null;if(file){$('sourcePrev
 $('run').onclick=async()=>{
  if(!token()){alert('سجّل الدخول أولًا');return}
  if(!file){alert('اختر صورة المنتج');return}
+ if(file.size>1250000){alert('الصورة كبيرة. الحد الحالي 1.25MB حتى يبقى طلب المتصفح ضمن حد الخدمة.');return}
  if(!$('name').value.trim()){alert('أدخل اسم المنتج');return}
  $('result').classList.add('hidden');$('status').textContent='جاري التنفيذ…';['s1','s2','s3','s4','s5'].forEach(x=>stage(x,'WAIT'));
  try{
@@ -62,6 +63,7 @@ $('run').onclick=async()=>{
   $('decision').className='ok';$('decision').textContent='PASS — النتيجة مرّت Product Integrity والتحقق من بصمة الصورة المصدر.';
   const url=job.output?.dataUrl||'';$('output').src=url;$('output').style.display=url?'block':'none';$('download').href=url;$('download').classList.remove('hidden');
   $('evidence').textContent=JSON.stringify({jobId:job.jobId,status:job.status,decision:job.decision,provider:job.output?.provider,sourceAssetSha256:job.output?.sourceAssetSha256,validation:job.validation,events:job.events},null,2);
+  const history=JSON.parse(localStorage.getItem('easy_creative_history')||'[]');history.unshift({jobId:job.jobId,at:new Date().toISOString(),status:job.status,provider:job.output?.provider,sourceAssetSha256:job.output?.sourceAssetSha256});localStorage.setItem('easy_creative_history',JSON.stringify(history.slice(0,10)));
   $('result').classList.remove('hidden');$('status').textContent='اكتمل المسار المحلي بنجاح.';
  }catch(e){$('status').className='warn';$('status').textContent=e.message;$('result').classList.remove('hidden');$('decision').className='warn';$('decision').textContent='BLOCK — لم يتم تقديم نجاح وهمي.';$('evidence').textContent=String(e.stack||e)}
 };
