@@ -1,0 +1,21 @@
+name: AI Operating Operator self-test
+on:
+  push:
+    branches: [feat/ai-operating-operator-v1]
+  pull_request:
+    paths:
+      - 'apps/ai-operating-operator/**'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --check apps/ai-operating-operator/operator-core.mjs
+      - run: node --test apps/ai-operating-operator/test-operator-core.mjs
+      - run: node apps/ai-operating-operator/test-capability-registry.mjs
+      - run: node apps/ai-operating-operator/adapters/test-nmap-adapter.mjs
+      - run: node apps/ai-operating-operator/test-skill-router.mjs
+      - run: node apps/ai-operating-operator/test-executor.mjs
