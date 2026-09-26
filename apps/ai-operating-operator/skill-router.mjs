@@ -8,7 +8,7 @@ const norm=s=>String(s||'').toLowerCase();
 export async function loadSkillRegistry(){
   const registry=JSON.parse(await fs.readFile(path.join(ROOT,'skill-registry.json'),'utf8'));
   const catalog=await fs.readFile(path.join(ROOT,'INTERNAL-CAPABILITY-CATALOG.md'),'utf8');
-  const ids=[...catalog.matchAll(/\\| \\x60([^\\x60]+)\\x60 \\|/g)].map(m=>m[1]).filter(x=>x!=='ID');
+    const ids=[...catalog.matchAll(/\| \x60([^\x60]+)\x60 \|/g)].map(m=>m[1]).filter(x=>x!=='ID');
   return {...registry,skillIds:[...new Set(ids)]};
 }
 
