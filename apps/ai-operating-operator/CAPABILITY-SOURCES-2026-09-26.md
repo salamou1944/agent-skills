@@ -45,3 +45,5 @@ A source becomes an Operator capability only after:
 7. independent verification evidence exists.
 
 Never equate a catalog entry, star count, README claim or Top Five membership with operational capability.
+
+- multica-ai/multica — agent workspace/runtime/task-routing patterns: agent identity, runtime separation, durable runs, review gates, skills, access scopes, autopilot scheduling. Source inspection completed; license boundary requires exact LICENSE review before code reuse.
