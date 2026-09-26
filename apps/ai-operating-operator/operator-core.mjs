@@ -48,7 +48,7 @@ export function verifyCompletion(task,report){
   return {ok:errors.length===0,errors};
 }
 export function finalize(task,report){const v=verifyCompletion(task,report);return v.ok?{...report,state:'VERIFIED',verification:v,claims:{success:true}}:{...report,state:'VERIFICATION_FAILED',verification:v,claims:{success:false}};}
-export function capabilitySnapshot(env=process.env){
-  const has=x=>!!env[x], mk=(key,deploy=false)=>({configured:has(key),authorized:has(key),reachable:false,canRead:has(key),canWrite:has(key),canDeploy:deploy&&has(key)});
-  return {github:mk('GITHUB_TOKEN'),railway:mk('RAILWAY_TOKEN',true),vercel:mk('VERCEL_TOKEN',true),supabase:mk('SUPABASE_ACCESS_TOKEN',true),browser:mk('OPERATOR_BROWSER_SESSION'),local:{configured:has('OPERATOR_WORKSPACE'),authorized:has('OPERATOR_WORKSPACE'),reachable:true,canRead:has('OPERATOR_WORKSPACE'),canWrite:has('OPERATOR_WORKSPACE'),canDeploy:false}};
+export function capabilitySnapshot(env=process.env,observed={}){
+  const has=x=>!!env[x], mk=(key,deploy=false)=>({configured:has(key),authorized:has(key),reachable:observed[key]?.reachable===true,canRead:observed[key]?.canRead===true,canWrite:observed[key]?.canWrite===true,canDeploy:deploy&&observed[key]?.canDeploy===true});
+  return {github:mk('GITHUB_TOKEN'),railway:mk('RAILWAY_TOKEN',true),vercel:mk('VERCEL_TOKEN',true),supabase:mk('SUPABASE_ACCESS_TOKEN',true),browser:mk('OPERATOR_BROWSER_SESSION'),local:{configured:has('OPERATOR_WORKSPACE'),authorized:has('OPERATOR_WORKSPACE'),reachable:has('OPERATOR_WORKSPACE'),canRead:has('OPERATOR_WORKSPACE'),canWrite:has('OPERATOR_WORKSPACE'),canDeploy:false}};
 }
