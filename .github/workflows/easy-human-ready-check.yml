@@ -1,0 +1,33 @@
+name: EASY Human-Ready Flow Check
+
+on:
+  push:
+    branches: ["feat/easy-human-ready-customer-creative-flow"]
+    paths:
+      - "apps/easy-developer-platform/gateway.mjs"
+      - "apps/easy-developer-platform/public/customer.html"
+      - "apps/easy-developer-platform/public/creative.html"
+      - "apps/easy-developer-platform/test-human-ready-flow.mjs"
+      - ".github/workflows/easy-human-ready-check.yml"
+  pull_request:
+    paths:
+      - "apps/easy-developer-platform/gateway.mjs"
+      - "apps/easy-developer-platform/public/customer.html"
+      - "apps/easy-developer-platform/public/creative.html"
+      - "apps/easy-developer-platform/test-human-ready-flow.mjs"
+      - ".github/workflows/easy-human-ready-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --check apps/easy-developer-platform/gateway.mjs
+      - run: node --test apps/easy-developer-platform/test-human-ready-flow.mjs
