@@ -15,6 +15,7 @@ async function loadAdapter(id){
 }
 async function loadVerifier(id){
   if(id==='nmap-independent-verifier-v1')return import('./verifiers/nmap-verifier.mjs');
+  if(id==='github-independent-verifier-v1')return import('./verifiers/github-verifier.mjs');
   throw new Error('verifier_not_registered');
 }
 
@@ -26,14 +27,18 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   if(plan.executableAdapters.length!==1)return {taskId:task.taskId,state:'REVIEW_REQUIRED',plan,evidence:[evidence('action',{accepted:false,reason:'single_adapter_boundary'})]};
   const capability=plan.executableAdapters[0];
   const {entry,module}=await loadAdapter(capability);
-  const inputData={...(adapterInputs[capability]||{})};
+  const inputData={...(adapterInputs[capability]||{}),task};
   if(capability==='security.network.nmap'&&runnerOverrides.nmap)inputData.runner=runnerOverrides.nmap;
   const result=capability==='security.network.nmap'
     ? await module.runNmap(inputData)
-    : (()=>{throw new Error('adapter_execution_not_implemented')})();
+    : capability==='platform.github'
+      ? await module.runGitHub(inputData)
+      : (()=>{throw new Error('adapter_execution_not_implemented')})();
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code});
   const verifier=await loadVerifier(entry.independentVerifier);
-  const verification=verifier.verifyNmapResult({result,target:inputData.target});
+  const verification=capability==='security.network.nmap'
+    ? verifier.verifyNmapResult({result,target:inputData.target})
+    : verifier.verifyGitHubResult({result});
   const verificationEvidence=evidence('verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
   const independentEvidence=evidence('independent_verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
   const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[actionEvidence,verificationEvidence,independentEvidence],verification};
