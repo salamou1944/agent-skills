@@ -7,6 +7,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "nmap-independent-verifier-v1",
       "scope": "explicit target allowlist"
+    },
+    "platform.github": {
+      "module": "./adapters/github-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "github-independent-verifier-v1",
+      "scope": "explicit repository allowlist + task write authorization"
     }
   }
 }
