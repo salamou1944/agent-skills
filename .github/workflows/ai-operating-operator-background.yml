@@ -1,0 +1,34 @@
+name: AI Operating Operator background worker
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: ai-operating-operator-background
+  cancel-in-progress: false
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITHUB_TOKEN: ${{ secrets.OPERATOR_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      OPERATOR_GITHUB_REPOS: ${{ vars.OPERATOR_GITHUB_REPOS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run background operator
+        run: node apps/ai-operating-operator/worker.mjs
+      - name: Persist operator evidence
+        run: |
+          git config user.name "ai-operating-operator"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/ai-operating-operator/runtime/results apps/ai-operating-operator/runtime/tasks
+          git diff --cached --quiet || git commit -m "operator: persist background run evidence"
+          git push
