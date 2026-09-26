@@ -238,6 +238,11 @@
       ],
       "verification": "Supabase API/database evidence + independent verifier",
       "status": "DISCOVERY"
+    },
+    "platform.http": {
+      "status": "ADAPTER_READY",
+      "adapter": "platform.http",
+      "description": "Allowlisted HTTPS API execution with bounded methods and bearer-token environment references"
     }
   }
 }
