@@ -15,7 +15,7 @@ function validSignature(req,raw){if(!hmac)return false;const supplied=String(req
 
 async function capabilities(){
   const observed=await probeAccounts();
-  return {...capabilitySnapshot(process.env,observed),...Object.fromEntries(Object.entries(observed).map(([k,v])=>[k,{...capabilitySnapshot(process.env,observed)[k],...v}]))};
+  const base=capabilitySnapshot(process.env,observed);\n  const aliases={...Object.fromEntries(Object.entries(observed).map(([k,v])=>[k,{...base[k],...v}]))};\n  if(aliases.github)aliases['platform.github']=aliases.github;\n  if(aliases.railway)aliases['platform.railway']=aliases.railway;\n  if(aliases.vercel)aliases['platform.vercel']=aliases.vercel;\n  if(aliases.supabase)aliases['platform.supabase']=aliases.supabase;\n  return {...base,...aliases};
 }
 
 async function runInBackground(run,task,raw){
