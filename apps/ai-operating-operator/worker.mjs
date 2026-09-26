@@ -12,11 +12,14 @@ async function main(){
   await fs.mkdir(queue,{recursive:true});await fs.mkdir(results,{recursive:true});
   const files=(await fs.readdir(queue)).filter(x=>x.endsWith('.json')).sort();
   const caps=await probeAccounts();
+  const adapters={
+    'platform.github':{status:'ADAPTER_READY'}
+  };
   for(const name of files){
     const p=path.join(queue,name);let task;
     try{task=JSON.parse(await fs.readFile(p,'utf8'));}catch(error){await fs.writeFile(path.join(results,name),JSON.stringify({state:'FAILED',failure:{class:'invalid_task',message:error.message}}));continue;}
     try{
-      const result=await executeTask(task,{capabilities:{...caps,github:caps.github,'platform.github':caps.github}});
+      const result=await executeTask(task,{capabilities:{...caps,github:caps.github,'platform.github':caps.github},adapters});
       await fs.writeFile(path.join(results,name),JSON.stringify(result,null,2));
       await fs.unlink(p);
     }catch(error){
