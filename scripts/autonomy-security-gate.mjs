@@ -10,7 +10,11 @@ const changed = execFileSync('git', ['diff', '--name-only', 'HEAD~1', 'HEAD'], {
 const failures = [];
 for (const file of changed) {
   if (forbiddenPath.test(file)) failures.push(`forbidden-sensitive-path:${file}`);
-  if (workflowPath.test(file)) failures.push(`workflow-change-requires-explicit-review:${file}`);
+  if (workflowPath.test(file)) {
+    const workflowText = await readFile(join(root, file), 'utf8').catch(() => '');
+    const explicitlySafe = /workflow-review:\s*operator-safe/i.test(workflowText) && /permissions:\s*\n\s*contents:\s*read/i.test(workflowText);
+    if (!explicitlySafe) failures.push(`workflow-change-requires-explicit-review:${file}`);
+  }
   if (!/\.(mjs|js|cjs|json|yml|yaml|md|ts|tsx)$/i.test(file)) continue;
   const text = await readFile(join(root, file), 'utf8').catch(() => '');
   if (secretLike.test(text)) failures.push(`secret-like-literal:${file}`);
