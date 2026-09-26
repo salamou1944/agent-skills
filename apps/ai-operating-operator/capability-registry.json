@@ -243,6 +243,19 @@
       "status": "ADAPTER_READY",
       "adapter": "platform.http",
       "description": "Allowlisted HTTPS API execution with bounded methods and bearer-token environment references"
+    },
+    "platform.cua.driver": {
+      "class": "platform",
+      "operations": [
+        "health",
+        "list_apps",
+        "screenshot",
+        "inspect",
+        "verify_visible_result",
+        "cleanup"
+      ],
+      "verification": "Cua response + independent verifier + permission manifest",
+      "status": "ADAPTER_READY"
     }
   }
 }
