@@ -16,6 +16,7 @@ async function loadAdapter(id){
 async function loadVerifier(id){
   if(id==='nmap-independent-verifier-v1')return import('./verifiers/nmap-verifier.mjs');
   if(id==='github-independent-verifier-v1')return import('./verifiers/github-verifier.mjs');
+  if(id==='http-independent-verifier-v1')return import('./verifiers/http-verifier.mjs');
   throw new Error('verifier_not_registered');
 }
 
@@ -33,12 +34,16 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
     ? await module.runNmap(inputData)
     : capability==='platform.github'
       ? await module.runGitHub(inputData)
-      : (()=>{throw new Error('adapter_execution_not_implemented')})();
+      : capability==='platform.http'
+        ? await module.runHttp(inputData)
+        : (()=>{throw new Error('adapter_execution_not_implemented')})();
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code});
   const verifier=await loadVerifier(entry.independentVerifier);
   const verification=capability==='security.network.nmap'
     ? verifier.verifyNmapResult({result,target:inputData.target})
-    : verifier.verifyGitHubResult({result});
+    : capability==='platform.http'
+      ? verifier.verifyHttpResult({result,expectedStatus:inputData.expectedStatus})
+      : verifier.verifyGitHubResult({result});
   const verificationEvidence=evidence('verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
   const independentEvidence=evidence('independent_verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
   const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[actionEvidence,verificationEvidence,independentEvidence],verification};
