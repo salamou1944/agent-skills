@@ -8,7 +8,7 @@ function allowedRepo(repo,env=process.env){
 function b64(s){return Buffer.from(String(s),'utf8').toString('base64');}
 export async function runGitHub(input={},env=process.env){
   const token=env.OPERATOR_GITHUB_TOKEN||env.GITHUB_TOKEN;if(!token)throw new Error('github_token_required');
-  const repo=String(input.repo||'').trim();if(!repo||!allowedRepo(repo,env))throw new Error('github_repo_not_allowlisted');
+  const repo=String(input.repo||'').trim();if(!repo||!allowedRepo(repo,env))throw new Error('github_repo_not_allowlisted:'+repo+':'+String(env.OPERATOR_GITHUB_REPOS||env.GITHUB_REPOSITORY||''));
   const action=String(input.action||'read_repo');
   const mutation=new Set(['write_file','create_pr']).has(action);
   if(mutation&&(!Array.isArray(input.task?.allowedActions)||!input.task.allowedActions.includes('write')))throw new Error('github_write_not_authorized');
