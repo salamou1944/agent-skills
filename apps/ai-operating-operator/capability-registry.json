@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "status": "TEST_READY_REGISTRY",
+  "purpose": "Machine-readable capability registry for the AI Operating Operator. Discovery entries are not executable until configured, authorized, reachable, and operation-tested.",
+  "sourcePolicy": {
+    "knowledgeOnly": ["Astra-", "Files-"],
+    "capabilitySources": ["Project-/COLLECTION source repos", "Top Five source repos", "aw-junaid", "mufeedvh", "Panniantong", "nmap ecosystem", "Agent Reach families", "mnfst/awesome-free-llm-apis"],
+    "promotion": ["DISCOVERY", "VERIFIED", "ADAPTER_READY", "INTEGRATED", "TESTED", "HUMAN_READY"]
+  },
+  "capabilities": {
+    "security.recon": {"class":"security","operations":["discover","enumerate","analyze"],"verification":"target-scoped runtime evidence","status":"DISCOVERY"},
+    "security.network.nmap": {"class":"security","operations":["port-scan","service-detection","scripted-analysis"],"verification":"authorized target + raw tool evidence + independent verifier","status":"DISCOVERY"},
+    "security.web": {"class":"security","operations":["crawl","inspect","test"],"verification":"authorized target + request/response evidence","status":"DISCOVERY"},
+    "security.sast": {"class":"security","operations":["scan","triage","report"],"verification":"reproducible scanner output + source revision","status":"DISCOVERY"},
+    "security.dependency": {"class":"security","operations":["dependency-scan","cve-analysis"],"verification":"lockfile/repository evidence + scanner output","status":"DISCOVERY"},
+    "security.secrets": {"class":"security","operations":["secret-detection","remediation"],"verification":"scanner output + remediation regression","status":"DISCOVERY"},
+    "security.pcap": {"class":"security","operations":["pcap-analysis","protocol-analysis"],"verification":"input hash + reproducible analysis","status":"DISCOVERY"},
+    "security.cloud": {"class":"security","operations":["configuration-audit","exposure-analysis"],"verification":"account/resource evidence","status":"DISCOVERY"},
+    "research.search": {"class":"research","operations":["search","retrieve","cite"],"verification":"source URL/revision + retrieval evidence","status":"DISCOVERY"},
+    "research.crawl": {"class":"research","operations":["crawl","extract","normalize"],"verification":"source URL + extraction fixture","status":"DISCOVERY"},
+    "browser.automation": {"class":"browser","operations":["navigate","inspect","interact","verify"],"verification":"browser evidence + target state","status":"DISCOVERY"},
+    "documents.ocr": {"class":"documents","operations":["ocr","extract","transform"],"verification":"input hash + structured output fixture","status":"DISCOVERY"},
+    "ai.local.inference": {"class":"ai","operations":["infer","embed","evaluate"],"verification":"model/version + deterministic fixture where possible","status":"DISCOVERY"},
+    "ai.provider-routing": {"class":"ai","operations":["route","fallback","health-check"],"verification":"provider response evidence + fail-closed behavior","status":"DISCOVERY"},
+    "workflow.orchestration": {"class":"automation","operations":["plan","execute","retry","resume"],"verification":"run ID + state transitions + evidence","status":"DISCOVERY"},
+    "observability.audit": {"class":"control","operations":["trace","audit","health"],"verification":"immutable event/evidence record","status":"DISCOVERY"},
+    "devops.cicd": {"class":"engineering","operations":["test","build","deploy","rollback"],"verification":"CI/deployment evidence + runtime health","status":"DISCOVERY"}
+  }
+}
