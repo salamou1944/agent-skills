@@ -67,7 +67,7 @@ const serviceStatus = async () => ({
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  if (req.method === 'GET' && url.pathname === '/api/gateway/status') {
+  if (req.method === 'GET' && (url.pathname === '/health' || url.pathname === '/api/gateway/status')) {
     const body = await serviceStatus();
     const healthy = Object.entries(body).filter(([key]) => key.endsWith('Online')).every(([, value]) => value === true);
     return send(res, healthy ? 200 : 503, { ...body, healthy });
