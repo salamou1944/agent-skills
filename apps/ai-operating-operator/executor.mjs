@@ -34,7 +34,8 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code});
   const verifier=await loadVerifier(entry.independentVerifier);
   const verification=verifier.verifyNmapResult({result,target:inputData.target});
-  const verificationEvidence=evidence('independent_verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
-  const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[actionEvidence,verificationEvidence],verification};
+  const verificationEvidence=evidence('verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
+  const independentEvidence=evidence('independent_verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
+  const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[actionEvidence,verificationEvidence,independentEvidence],verification};
   return {...report,completion:verifyCompletion(task,report)};
 }
