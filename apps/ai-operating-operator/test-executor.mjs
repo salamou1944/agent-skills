@@ -17,7 +17,7 @@ const blocked=await executeTask(
   {project:'agent-skills',goal:'authorized nmap scan',requestedCapabilities:['security.network.nmap']},
   {capabilities:{'security.network.nmap':{authorized:true,reachable:false}},adapterInputs:{'security.network.nmap':{target:'authorized-target',allowlist:['authorized-target']}},runnerOverrides:{nmap:fakeRunner}}
 );
-assert.equal(blocked.state,'BLOCKED_PERMISSION');
+assert.equal(blocked.state,'BLOCKED_EXTERNAL_DEPENDENCY');
 
 const ready=await executeTask(
   {project:'agent-skills',goal:'authorized nmap scan',requestedCapabilities:['security.network.nmap']},
