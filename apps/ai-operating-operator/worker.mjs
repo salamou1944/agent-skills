@@ -26,7 +26,7 @@ async function main(){
     const p=path.join(queue,name);let task;
     try{task=JSON.parse(await fs.readFile(p,'utf8'));}catch(error){await fs.writeFile(path.join(results,name),JSON.stringify({state:'FAILED',failure:{class:'invalid_task',message:error.message}}));continue;}
     try{
-      const result=await executeTask(task,{capabilities:{...caps,github:caps.github,'platform.github':caps.github},adapters});
+      const result=await executeTask(task,{capabilities:{...caps,github:caps.github,'platform.github':caps.github},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
       await fs.writeFile(path.join(results,name),JSON.stringify(result,null,2));
       await fs.unlink(p);
     }catch(error){
