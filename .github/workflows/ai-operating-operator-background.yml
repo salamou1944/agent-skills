@@ -20,7 +20,7 @@ jobs:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      OPERATOR_GITHUB_REPOS: ${{ github.repository }}
+      OPERATOR_GITHUB_REPOS: ${{ github.repository }},rohitg00/ai-engineering-from-scratch
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
