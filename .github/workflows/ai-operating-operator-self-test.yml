@@ -4,7 +4,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [feat/ai-operating-operator-v1]
+    branches: [main, feat/ai-operating-operator-background-runtime]
   pull_request:
     paths:
       - 'apps/ai-operating-operator/**'
@@ -17,8 +17,17 @@ jobs:
         with:
           node-version: 20
       - run: node --check apps/ai-operating-operator/operator-core.mjs
+      - run: node --check apps/ai-operating-operator/server.mjs
+      - run: node --check apps/ai-operating-operator/executor.mjs
+      - run: node --check apps/ai-operating-operator/run-ledger.mjs
+      - run: node --check apps/ai-operating-operator/account-probes.mjs
+      - run: node --check apps/ai-operating-operator/review-gate.mjs
+      - run: node --check apps/ai-operating-operator/retry-policy.mjs
       - run: node --test apps/ai-operating-operator/test-operator-core.mjs
       - run: node apps/ai-operating-operator/test-capability-registry.mjs
       - run: node apps/ai-operating-operator/adapters/test-nmap-adapter.mjs
       - run: node apps/ai-operating-operator/test-skill-router.mjs
       - run: node apps/ai-operating-operator/test-executor.mjs
+      - run: node apps/ai-operating-operator/test-background-runtime.mjs
+      - run: node apps/ai-operating-operator/test-account-probes.mjs
+      - run: node apps/ai-operating-operator/test-server.mjs
