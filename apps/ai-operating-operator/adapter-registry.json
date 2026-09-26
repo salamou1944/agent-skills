@@ -19,6 +19,12 @@
       "module": "./adapters/http-adapter.mjs",
       "independentVerifier": "http-independent-verifier-v1",
       "scope": "HTTPS hosts explicitly allowlisted by OPERATOR_ALLOWED_API_HOSTS"
+    },
+    "platform.cua.driver": {
+      "module": "./adapters/cua-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "cua-independent-verifier-v1",
+      "scope": "explicit Cua endpoint + safe read-only action allowlist"
     }
   }
 }
