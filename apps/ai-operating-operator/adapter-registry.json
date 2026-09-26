@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "policy": "Only registered adapters may execute remote task actions.",
+  "adapters": {
+    "security.network.nmap": {
+      "module": "./adapters/nmap-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "nmap-independent-verifier-v1",
+      "scope": "explicit target allowlist"
+    }
+  }
+}

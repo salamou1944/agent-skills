@@ -1,0 +1,58 @@
+{
+  "version": 2,
+  "source": "salamou1944/agent-skills/.agents/skills",
+  "sourceRef": "feat/ai-operating-operator-v1",
+  "registeredCount": 80,
+  "loadingPolicy": "load metadata first; inspect SKILL.md on trigger; execute only after capability/permission checks",
+  "promotion": [
+    "SOURCE_REGISTERED",
+    "INSPECTED",
+    "ADAPTER_READY",
+    "TESTED",
+    "HUMAN_READY"
+  ],
+  "specializedSkills": [
+    "adaptive-orchestrator",
+    "autonomous-capability-builder",
+    "browser-presence-operator",
+    "chatgpt-task-bridge",
+    "delegated-user-operator",
+    "evidence-backed-operator",
+    "failure-recovery-operator",
+    "permission-aware-executor",
+    "persistent-task-operator",
+    "prompt-firewall",
+    "real-api-testing",
+    "regression-synthesizer"
+  ],
+  "categories": [
+    "agent",
+    "code",
+    "api",
+    "browser",
+    "security",
+    "evidence",
+    "data",
+    "research",
+    "revenue",
+    "easy",
+    "github",
+    "prompt",
+    "general"
+  ],
+  "separation": {
+    "knowledgeOnly": [
+      "Astra-",
+      "Files-"
+    ],
+    "projectState": [
+      "AI_operating_memory"
+    ],
+    "collection": [
+      "Project-/COLLECTION"
+    ],
+    "executionSource": [
+      "agent-skills/.agents/skills"
+    ]
+  }
+}
