@@ -13,6 +13,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "github-independent-verifier-v1",
       "scope": "explicit repository allowlist + task write authorization"
+    },
+    "platform.http": {
+      "status": "ADAPTER_READY",
+      "module": "./adapters/http-adapter.mjs",
+      "independentVerifier": "http-independent-verifier-v1",
+      "scope": "HTTPS hosts explicitly allowlisted by OPERATOR_ALLOWED_API_HOSTS"
     }
   }
 }
