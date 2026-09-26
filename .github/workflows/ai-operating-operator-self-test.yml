@@ -15,3 +15,4 @@ jobs:
           node-version: 20
       - run: node --check apps/ai-operating-operator/operator-core.mjs
       - run: node --test apps/ai-operating-operator/test-operator-core.mjs
+      - run: node apps/ai-operating-operator/test-capability-registry.mjs
