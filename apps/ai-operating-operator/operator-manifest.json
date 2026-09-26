@@ -57,6 +57,12 @@
       "role": "runtime agent security",
       "source": "secureagentics/Adrian",
       "verification": "source inspection required"
+    },
+    {
+      "name": "Multica",
+      "role": "agent-workspace-runtime-patterns",
+      "source": "multica-ai/multica",
+      "verification": "source-inspected; exact-license-review-before-code-reuse"
     }
   ],
   "projects": [
