@@ -29,8 +29,8 @@ async function runInBackground(run,task,raw){
   }
 }
 
-export async function createServer(){
- await recoverInterruptedRuns();
+export function createServer(){
+ recoverInterruptedRuns().catch(()=>{});
  return http.createServer(async(req,res)=>{
   try{
    const url=new URL(req.url||'/',`http://${req.headers.host||'localhost'}`);
@@ -49,4 +49,4 @@ export async function createServer(){
   }catch(error){return send(res,error.status||500,{status:'FAILED',error:error.message||'operator_error'});}
  });
 }
-if(import.meta.url===`file://${process.argv[1]}`)createServer().then(s=>s.listen(port,host,()=>console.log(JSON.stringify({service:'ai-operating-operator',host,port})));
+if(import.meta.url===`file://${process.argv[1]}`)createServer().listen(port,host,()=>console.log(JSON.stringify({service:'ai-operating-operator',host,port})));
