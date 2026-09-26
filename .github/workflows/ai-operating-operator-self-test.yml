@@ -1,4 +1,7 @@
 name: AI Operating Operator self-test
+# workflow-review: operator-safe
+permissions:
+  contents: read
 on:
   push:
     branches: [feat/ai-operating-operator-v1]
