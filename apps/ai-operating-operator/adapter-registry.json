@@ -5,7 +5,7 @@
     "security.network.nmap": {
       "module": "./adapters/nmap-adapter.mjs",
       "status": "ADAPTER_READY",
-      "independentVerifier": "nmap-adapter-test",
+      "independentVerifier": "nmap-independent-verifier-v1",
       "scope": "explicit target allowlist"
     }
   }
