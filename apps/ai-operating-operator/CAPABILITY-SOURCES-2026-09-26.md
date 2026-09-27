@@ -51,3 +51,5 @@ Never equate a catalog entry, star count, README claim or Top Five membership wi
 - rohitg00/ai-engineering-from-scratch — 20-phase AI engineering curriculum, 523 lessons, runnable artifacts, focused MCP/Agent Skills routes, agent-assisted engineering, production AI, safety, and capstone implementations. MIT license verified from LICENSE. Use as a knowledge/pattern source; do not equate curriculum completion with operational capability.
 
 - trycua/cua — computer-use infrastructure: Cua Driver (MCP/CLI/SDK), isolated sandboxes/fleets, Lume VMs, Cua Bench, CUA-S1. MIT core license verified; optional perception/OmniParser/Ultralytics components have separate AGPL/CC-BY boundaries. Use as a scoped GUI capability source, never as unrestricted desktop authority.
+
+- cporter202/openclaw-api-list — agent-callable API/MCP discovery catalog. Focus and curated-list files inspected 2026-09-27. High-value patterns: API→capability discovery, bounded OpenAPI→MCP generation, MCP as transport, free/self-hosted-first selection. Catalog entries are discovery only; provider ownership, license, cost, security and runtime must be independently verified.
