@@ -70,7 +70,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
       await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:'BLOCKED_EXTERNAL_DEPENDENCY',retry:{retry:false}});
       return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
     }
-    const artifact=await hydrateArtifact(prepared.task.capabilitySelection);
+    const artifact=prepared.task.capabilitySelection ? await hydrateArtifact(prepared.task.capabilitySelection) : {ok:true,artifact:null};
     if(!artifact.ok){
       const result={taskId:task.taskId,state:artifact.state,evidence:[{kind:'capability_artifact',artifact}],completion:{ok:false,errors:['capability_artifact_hydration']},failure:{class:artifact.state==='BLOCKED_PERMISSION'?'permission':'external_dependency',message:artifact.reason}};
       await fs.writeFile(path.join(resultDir,name),JSON.stringify({...result,runId:run.runId},null,2));
