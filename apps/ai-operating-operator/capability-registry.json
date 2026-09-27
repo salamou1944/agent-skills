@@ -298,8 +298,8 @@
         "inspect_operations",
         "generate_bounded_tools"
       ],
-      "verification": "validated OpenAPI schema + explicit host/path allowlist + generated tool schema + independent verifier",
-      "status": "DISCOVERY"
+      "verification": "validated OpenAPI schema + explicit host allowlist + bounded tool schema + independent verifier",
+      "status": "ADAPTER_READY"
     },
     "research.api_catalog": {
       "class": "research",
