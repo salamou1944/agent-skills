@@ -15,6 +15,7 @@ async function loadVerifier(id){
   if(id==='browser-independent-verifier-v1')return import('./adapters/browser-adapter.mjs');
   if(id==='research-independent-verifier-v1')return import('./adapters/research-adapter.mjs');
   if(id==='ollama-independent-verifier-v1')return import('./adapters/ollama-adapter.mjs');
+  if(id==='workspace-independent-verifier-v1')return import('./adapters/workspace-adapter.mjs');
   throw new Error('verifier_not_registered');
 }
 
@@ -35,6 +36,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='browser.automation')result=await module.runBrowser(inputData,adapterEnv);
   else if(capability==='research.search'||capability==='research.read')result=await module.runResearch({...inputData,action:capability.split('.')[1]});
   else if(capability==='ai.local.ollama')result=await module.runOllama(inputData);
+  else if(capability==='workspace.recovery')result=await module.runWorkspace(inputData,adapterEnv);
   else if(capability==='platform.cua.driver')result=await module.runCua(inputData,adapterEnv);
   else throw new Error('adapter_execution_not_implemented');
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code});
@@ -45,6 +47,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='browser.automation')verification=verifier.verifyBrowserResult({result,action:inputData.action||'health'});
   else if(capability==='research.search'||capability==='research.read')verification=verifier.verifyResearchResult({result,action:capability.split('.')[1]});
   else if(capability==='ai.local.ollama')verification=verifier.verifyOllamaResult({result});
+  else if(capability==='workspace.recovery')verification=verifier.verifyWorkspaceResult({result,action:inputData.action||'health'});
   else if(capability==='platform.cua.driver')verification=verifier.verifyCuaResult({result});
   else verification=verifier.verifyGitHubResult({result});
   const verificationEvidence=evidence('verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
