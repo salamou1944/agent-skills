@@ -19,7 +19,7 @@ try{
   process.env.ELITE_ALLOWED_ROOT=root;
   const provider=async()=>({summary:'safe no-op integration verification',changes:[]});
   const result=await dispatchToElite({project:'ai-operating-operator',goal:'perform a safe verified no-op integration task',workspaceRoot:root,allowedActions:['read'],provider});
-  assert.equal(result.result?.status,'TASK_VERIFIED');
+  assert.equal(result.result?.status,'TASK_VERIFIED',JSON.stringify(result));
   assert.equal(result.verification?.passed,true);
   assert.equal(result.evidence.some(x=>x.kind==='action'),true);
   assert.equal(result.evidence.some(x=>x.kind==='verification'),true);
@@ -28,6 +28,7 @@ try{
   console.log(JSON.stringify({ok:true,state:result.result.status,completion:result.completion}));
 }finally{
   if(oldMode===undefined) delete process.env.ELITE_LOCAL_ENGINE; else process.env.ELITE_LOCAL_ENGINE=oldMode;
+  if(oldAllowed===undefined) process.env.ELITE_ALLOWED_ROOT=oldAllowed;
   if(oldAllowed===undefined) delete process.env.ELITE_ALLOWED_ROOT; else process.env.ELITE_ALLOWED_ROOT=oldAllowed;
   await rm(root,{recursive:true,force:true});
 }
