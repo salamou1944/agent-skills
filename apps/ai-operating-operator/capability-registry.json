@@ -345,6 +345,16 @@
       "verification": "bounded state transitions + run ID + evidence",
       "status": "DISCOVERY",
       "source": "ruvnet/ruflo GOAP/planning patterns"
+    },
+    "mcp.gateway": {
+      "class": "integration",
+      "operations": [
+        "health",
+        "list_tools",
+        "call_tool"
+      ],
+      "verification": "MCP JSON-RPC response + explicit endpoint + independent verifier",
+      "status": "ADAPTER_READY"
     }
   }
 }
