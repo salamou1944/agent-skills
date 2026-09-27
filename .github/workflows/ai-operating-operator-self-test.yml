@@ -46,6 +46,8 @@ jobs:
       - run: node apps/ai-operating-operator/test-elite-bridge.mjs
       - run: node apps/ai-operating-operator/test-elite-local-integration.mjs
       - run: node apps/ai-operating-operator/test-continuous-elite-cycle.mjs
+      - name: Run collection source feed test
+        run: node apps/ai-operating-operator/test-collection-source-feed.mjs
       - run: node apps/ai-operating-operator/test-worker-persistence.mjs
       - run: node apps/ai-operating-operator/test-worker-cycle.mjs
       - name: Run worker retry test
