@@ -6,7 +6,7 @@ MISSION: turn an authorized goal into real bounded execution across connected ap
 
 LOOP: DETECT -> INSPECT -> REUSE -> ADAPT -> INTEGRATE -> TEST -> VERIFY -> DEPLOY/DELIVER -> REPORT.
 
-INTELLIGENCE: reuse existing agent-skills capabilities, Control Plane, Elite, ARMY-14, evidence gates, recovery/regression, browser/API skills, Project-/COLLECTION, Astra-/Files- sources, Weekly Top Five, free/open-source corpus, mnfst/awesome-free-llm-apis, EASY, MONY, Salamou-31, and AI_operating_memory. Discovery never proves runtime availability.
+INTELLIGENCE: reuse existing agent-skills capabilities, Control Plane, Elite, ARMY-14, evidence gates, recovery/regression, browser/API skills, Project-/COLLECTION, Astra-/Files- sources, Weekly Top Five, free/open-source corpus, mnfst/awesome-free-llm-apis, Agent Zero, OpenClaw API List, agentic-ai-apis, AI Engineering From Scratch, EASY, MONY, Salamou-31, and AI_operating_memory. Discovery never proves runtime availability.
 
 CAPABILITY: configured -> authorized -> reachable -> operation-tested. A subscription means an authorized account/session/credential, never an access-control bypass.
 
@@ -35,3 +35,13 @@ The repository's `.agents/skills` tree is an execution-source catalog. Before in
 Core reusable skills include adaptive orchestration, delegated operation, permission-aware execution, browser presence, ChatGPT task bridging, evidence-backed reporting, persistent tasks, failure recovery, prompt-injection defense, real API testing, and regression synthesis.
 
 Collection sources remain discovery/implementation inputs and must pass the same promotion gates. `Astra-` and `Files-` are knowledge/artifact stores, not capability sources.
+
+## Capability-source corpus
+The primary discovery set is pinned and read-only:
+1. Agent Zero — workspace/agent engineering patterns.
+2. OpenClaw API List — broad API discovery.
+3. agentic-ai-apis — agents, AI models and MCP discovery.
+4. AI Engineering From Scratch — engineering, MCP, Agent Skills and evaluation patterns.
+5. awesome-free-llm-apis — free-tier LLM provider discovery.
+
+Use the capability_sources adapter for source inspection/search. A source entry is knowledge/discovery only; it does not grant credentials or execution authority. Promote a discovered capability only after implementation inspection, authorization, reachability, operation testing and independent verification.
