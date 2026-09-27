@@ -45,7 +45,7 @@ export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAUL
     if(!(resolvedRoot===allowedRoot||resolvedRoot.startsWith(allowedRoot+'/'))) return {ok:false,state:'BLOCKED_PERMISSION',taskId:task.taskId,evidence:[evidence('action',{accepted:false,reason:'workspace_root_outside_allowlist'})]};
     try{
       const {runEliteEngine}=await import(LOCAL_ENGINE_MODULE);
-      const result=await runEliteEngine(task.goal,{root:resolvedRoot,isolate:true,policy:{project:task.project||'ai-operating-operator',requireVerification:true,requireReview:true,maxRepairs:3}});
+      const result=await runEliteEngine(task.goal,{root:resolvedRoot,isolate:true,policy:{project:task.project||'ai-operating-operator',requireVerification:true,requireReview:true,maxRepairs:3},provider:typeof input.provider==='function'?input.provider:undefined});
       const verificationPassed=['TASK_VERIFIED','VERIFIED','VERIFIED_NOOP','NOOP_VERIFIED'].includes(result?.status)&&Boolean(result?.evidence);
       const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[evidence('action',{adapter:'elite-local-engine',status:result?.status,changedFiles:result?.changedFiles||[]}),...(Array.isArray(result?.evidence)?result.evidence:[])],verification:{verifierId:'elite-engine-independent-verification',passed:verificationPassed,errors:verificationPassed?[]:['elite_engine_not_verified']}};
       return {...report,completion:verifyCompletion(task,report),result};
