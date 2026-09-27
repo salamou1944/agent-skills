@@ -55,3 +55,13 @@ Never equate a catalog entry, star count, README claim or Top Five membership wi
 - cporter202/openclaw-api-list — agent-callable API/MCP discovery catalog. Focus and curated-list files inspected 2026-09-27. High-value patterns: API→capability discovery, bounded OpenAPI→MCP generation, MCP as transport, free/self-hosted-first selection. Catalog entries are discovery only; provider ownership, license, cost, security and runtime must be independently verified.
 
 - ruvnet/ruflo — agent meta-harness: swarm/orchestration, adaptive planning, persistent memory, model routing, hooks, security/readiness audits, and witness/receipt verification. MIT license verified. Inspected 2026-09-27. High-value patterns captured in Project-/COLLECTION/AI/RUFLO_CAPTURE_2026-09-27.md. Use as architecture/pattern source; do not equate Ruflo features with operator capability until independently tested.
+
+## AI Bot primary capability-source set — 2026-09-27
+Pinned sources for the AI Bot:
+- Agent Zero: `agent0ai/agent-zero@e3051fb584b1a36be2b0a0c90606f1c2c2d356ec`
+- OpenClaw API List: `cporter202/openclaw-api-list@3afa19dd12f3cdc6bc2e297e9b6945059ada0cae`
+- agentic-ai-apis: `cporter202/agentic-ai-apis@64459d7bc2887f034ae5588d9bbd03e3c1d3c5a4`
+- AI Engineering From Scratch: `rohitg00/ai-engineering-from-scratch@968da0791b83917c9d8a5ba197ff190fa0b24093`
+- awesome-free-llm-apis: `mnfst/awesome-free-llm-apis@167013ff729e30f3a92bb8d416062d6c34a84507`
+
+These are read-only discovery inputs. They do not confer provider access.
