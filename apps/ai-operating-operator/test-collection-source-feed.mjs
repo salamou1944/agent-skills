@@ -22,7 +22,7 @@ const repos=await discoverCollectionRepositories({fetchImpl:fakeFetch,limit:10})
 assert.deepEqual(repos.map(x=>x.repo),['foo/one','foo/two','example/new-capability-source','bar/three']);
 const discoveredNew=repos.find(x=>x.repo==='example/new-capability-source');
 assert.ok(discoveredNew);
-assert.equal(discoveredNew.discoveredFrom.collectionRevision,'49c086937245a6c74f3548186aeafb52bbbd476a');
+assert.equal(discoveredNew.discoveredFrom.collectionRevision,'7dca221b4bc64082184e3508beca411b730162d6');
 
 const doc=await fetchCollectionSource(discoveredNew,{fetchImpl:fakeFetch});
 assert.equal(doc.repo,'example/new-capability-source');
