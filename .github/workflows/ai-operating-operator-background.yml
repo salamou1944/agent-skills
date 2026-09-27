@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - 'apps/ai-operating-operator/runtime/tasks/**'
+      - 'apps/ai-operating-operator/capability-feed.mjs'
+      - 'apps/ai-operating-operator/adapters/capability-sources-adapter.mjs'
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
@@ -30,6 +32,8 @@ jobs:
         run: |
           test -n "$GITHUB_REPOSITORY"
           test "$GITHUB_REPOSITORY" = "$OPERATOR_GITHUB_REPOS"
+      - name: Refresh five-source capability feed
+        run: node apps/ai-operating-operator/test-continuous-runtime.mjs
       - name: Run background operator
         run: node apps/ai-operating-operator/worker.mjs
       - name: Persist operator evidence
