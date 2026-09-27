@@ -23,3 +23,23 @@ assert.equal(doc.sha256.length,64);
 assert.ok(doc.discoveredFrom.file);
 assert.ok(calls.length>0);
 console.log(JSON.stringify({ok:true,discovered:repos.length,revision:doc.revision}));
+
+const inventoryPayload={items:[{
+  id:'cap-1',
+  repo:'foo/one',
+  capabilityType:'tool',
+  capability:'example',
+  evidenceLevel:'VERIFIED_FROM_README_LICENSE',
+  dedupeKey:'github:foo/one'
+}]};
+const inventoryFetch=async(url)=>{
+  if(url.includes('harry0703_capability_inventory_2026-09-27.json')) {
+    return new Response(JSON.stringify(inventoryPayload),{status:200});
+  }
+  return fakeFetch(url);
+};
+const inventory=await (await import('./collection-source-feed.mjs')).fetchCollectionCapabilityInventory({fetchImpl:inventoryFetch});
+assert.equal(inventory.length,1);
+assert.equal(inventory[0].capabilityType,'tool');
+assert.equal(inventory[0].collectionRevision,'79d97983a95a808c2881b2e0c21c3366ad620aa4');
+console.log(JSON.stringify({inventoryOk:true,capabilityCount:inventory.length}));
