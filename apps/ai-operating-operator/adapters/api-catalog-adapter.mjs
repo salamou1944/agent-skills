@@ -29,9 +29,9 @@ async function getText(url,timeoutMs=15000){
 
 function rows(markdown){
   const out=[];
-  for(const line of markdown.split('\\n')){
-    if(!/^\\|/.test(line) || /^\\|\\s*-+/.test(line)) continue;
-    const m=line.match(/^\\|\\s*(.*?)\\s*\\|\\s*(.*?)\\s*\\|/);
+  for(const line of markdown.split('\n')){
+    if(!/^\|/.test(line) || /^\|\s*-+/.test(line)) continue;
+    const m=line.match(/^\|\s*(.*?)\s*\|\s*(.*?)\s*\|/);
     if(!m || /^api name$/i.test(m[1])) continue;
     out.push({name:m[1],description:m[2]});
   }
@@ -41,7 +41,7 @@ function rows(markdown){
 function searchRows(markdown,query,limit=20){
   const q=String(query||'').trim().toLowerCase();
   if(!q) throw new Error('query_required');
-  const terms=q.split(/\\s+/).filter(Boolean);
+  const terms=q.split(/\s+/).filter(Boolean);
   return rows(markdown).filter(r=>terms.every(t=>(r.name+' '+r.description).toLowerCase().includes(t))).slice(0,limit);
 }
 
@@ -60,9 +60,7 @@ export async function runApiCatalog(input){
   if(!file) throw new Error('category_not_supported');
   const markdown=await getText(SOURCE+file);
   const limit=Math.min(Math.max(Number(input.limit||20),1),50);
-  const results=action==='category'
-    ? rows(markdown).slice(0,limit)
-    : searchRows(markdown,input.query,limit);
+  const results=action==='category' ? rows(markdown).slice(0,limit) : searchRows(markdown,input.query,limit);
 
   return {
     executionId:`api-catalog-${Date.now()}`,
@@ -71,7 +69,7 @@ export async function runApiCatalog(input){
   };
 }
 
-export function verifyApiCatalogResult({result,action}){
+export function verifyApiCatalogResult({result}){
   const ok=Boolean(result && result.result && result.result.status===200 && result.executionId && result.target);
   return {verifierId:'api-catalog-independent-verifier-v1',passed:ok,errors:ok?[]:['missing_valid_catalog_execution']};
 }
