@@ -29,7 +29,8 @@ const idle=await processNextTask({queueDir:queue,resultDir:results,executeTaskIm
 assert.equal(idle.state,'IDLE');
 assert.deepEqual(calls,['high','low']);
 assert.equal((await fs.readdir(queue)).length,0);
-const ledgerLines=(await fs.readFile(ledger,'utf8')).trim().split('\n').map(JSON.parse);
-assert.equal(ledgerLines.some(x=>x.state==='VERIFIED'&&x.taskId==='high'),true);
-assert.equal(ledgerLines.some(x=>x.state==='VERIFIED'&&x.taskId==='low'),true);
+const {listRuns}=await import('./run-ledger.mjs');
+const persisted=await listRuns(100);
+assert.equal(persisted.some(x=>x.state==='VERIFIED'&&x.taskId==='high'),true);
+assert.equal(persisted.some(x=>x.state==='VERIFIED'&&x.taskId==='low'),true);
 console.log(JSON.stringify({ok:true,selection:calls,terminal:'VERIFIED',idle:true}));
