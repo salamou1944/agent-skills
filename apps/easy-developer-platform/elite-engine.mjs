@@ -19,6 +19,21 @@ import { validateEvidence, fingerprintPatch } from './independent-evidence-gate.
 
 const execFileAsync = promisify(execFile);
 function trim(value, max = 8000) { return String(value ?? '').slice(0, max); }
+
+function validateCapabilitySelection(selection) {
+  if (!selection) return { ok: true, selection: null };
+  const reasons = [];
+  if (!selection.id || !selection.repo || !selection.revision) reasons.push('identity_incomplete');
+  if (!/^VERIFIED/.test(String(selection.evidenceLevel || ''))) reasons.push('evidence_not_verified');
+  if (!selection.license || /unknown|unresolved|not found/i.test(String(selection.license))) reasons.push('license_unresolved');
+  if (reasons.length) return { ok: false, reasons };
+  return { ok: true, selection: {
+    id: selection.id, repo: selection.repo, revision: selection.revision,
+    capabilityType: selection.capabilityType || null, capability: selection.capability || null,
+    evidenceLevel: selection.evidenceLevel, license: selection.license,
+    compatibility: selection.compatibility || null, dedupeKey: selection.dedupeKey || null
+  }};
+}
 async function git(root, args, timeout = 30_000) { try { const { stdout, stderr } = await execFileAsync('git', args, { cwd: root, timeout, maxBuffer: 4_000_000 }); return { ok: true, stdout: trim(stdout), stderr: trim(stderr) }; } catch (error) { return { ok: false, stdout: trim(error.stdout), stderr: trim(error.stderr || error.message) }; } }
 
 async function inspect({ root, goal, maxContextBytes, decomposer }) {
@@ -36,15 +51,16 @@ async function inspect({ root, goal, maxContextBytes, decomposer }) {
   return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition, engineeringDNA: dna, counterfactuals, selectedCounterfactual: counterfactual }).slice(0, maxContextBytes), dna, counterfactuals, counterfactual };
 }
 
-function makeProvider(env) {
+function makeProvider(env, capabilitySelection) {
   return async ({ role, goal, context, failedPlan, failure, constraints }) => {
     if (role === 'decomposer') {
-      const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
+      const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nVerified capability selected for this task: ${JSON.stringify(capabilitySelection)}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
       return ask(prompt, env);
     }
+    const capabilityLine = capabilitySelection ? `\nVerified capability contract (must be used only at the pinned revision): ${JSON.stringify(capabilitySelection)}` : '';
     const prompt = role === 'repair'
-      ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
-      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.`;
+      ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}${capabilityLine}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
+      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.${capabilityLine}`;
     return ask(prompt, env);
   };
 }
@@ -142,12 +158,15 @@ export async function scanWorkspaceSecrets(root) {
   return Object.freeze([...new Set(findings)]);
 }
 
-async function runCore(goal, { root, policy, env, journalPath, provider, metrics }) {
+async function runCore(goal, { root, policy, env, journalPath, provider, metrics, capabilitySelection }) {
   const workspaceSecrets = await scanWorkspaceSecrets(root);
   if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
-  const activeProvider = provider || makeProvider(env);
+  const capabilityGate = validateCapabilitySelection(capabilitySelection);
+  if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }
+  const activeProvider = provider || makeProvider(env, capabilityGate.selection);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
+  if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
   const guardedProvider = async args => {
     const plan = await activeProvider(args);
     if (args.role === 'repair') {
@@ -161,6 +180,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   };
   const prediction = predictImpact({ dna: inspectResult.dna, changedFiles: [] });
   const project = projectScope(policy.project || 'default');
+  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection };
   const counterfactual = inspectResult.counterfactual;
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
@@ -182,20 +202,20 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   return result;
 }
 
-export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath, provider, isolate = true } = {}) {
+export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath, provider, isolate = true, capabilitySelection = null } = {}) {
   const metrics = createMetrics();
   const effectivePolicy = { ...policy, metricsPath: policy.metricsPath || join(root, '.elite', 'metrics.jsonl'), memoryPath: policy.memoryPath || join(root, '.elite', 'memory.jsonl') };
-  if (!isolate) return runCore(goal, { root, policy: effectivePolicy, env, journalPath, provider, metrics });
+  if (!isolate) return runCore(goal, { root, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection });
   const status = await workspaceStatus(root);
   if (!status.clean) { const error = new Error('workspace_dirty_refusing_isolated_execution'); error.code = 'workspace_dirty'; throw error; }
   return withIsolatedWorktree(root, `task-${Date.now()}`, async (worktree, { promote }) => {
-    const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics });
+    const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection });
     if (result.status === 'TASK_VERIFIED' && result.changedFiles.length) await promote(result.changedFiles);
     return result;
   });
 }
 
-export { runParallelReview };
+export { runParallelReview, validateCapabilitySelection };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const goal = process.argv.slice(2).join(' ').trim();

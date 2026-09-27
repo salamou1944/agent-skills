@@ -20,11 +20,14 @@ const status=getEliteBridgeStatus();
 assert.equal(status.configured,true);
 assert.equal(status.authorized,true);
 
+const capabilitySelection={id:'cap-verified',repo:'example/research',revision:'b'.repeat(40),capabilityType:'research',capability:'verified research capability',evidenceLevel:'VERIFIED_FROM_README_LICENSE',license:'MIT',compatibility:'node',dedupeKey:'example:research'};
+
 const result=await dispatchToElite({
   project:'ai-operating-operator',
   goal:'verify elite bridge',
   requestedCapabilities:['elite.execution'],
-  allowedActions:['read']
+  allowedActions:['read'],
+  capabilitySelection
 },{fetchImpl:fakeFetch});
 
 assert.equal(result.taskId.length>0,true);
@@ -33,6 +36,7 @@ assert.equal(result.completion.ok,true);
 assert.equal(calls.length,1);
 assert.equal(JSON.parse(calls[0].options.body).protocol,'ai-operating-elite-v1');
 assert.equal(calls[0].options.headers.authorization,'Bearer test-token');
+assert.equal(JSON.parse(calls[0].options.body).task.capabilitySelection.id,'cap-verified');
 
 if(oldUrl===undefined) delete process.env.ELITE_EXECUTOR_URL; else process.env.ELITE_EXECUTOR_URL=oldUrl;
 if(oldToken===undefined) delete process.env.ELITE_EXECUTOR_TOKEN; else process.env.ELITE_EXECUTOR_TOKEN=oldToken;
