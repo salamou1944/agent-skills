@@ -13,6 +13,8 @@ function endpoint(env){
 function allowed(action,task){
   if(!SAFE_ACTIONS.has(action)) throw new Error('mcp_action_not_allowed');
   if(action!=='health'&&!(task?.allowedActions||[]).includes('mcp_read')) throw new Error('mcp_read_authorization_required');
+  if(action==='call_tool'&&!(task?.allowedActions||[]).includes('mcp_execute')) throw new Error('mcp_execute_authorization_required');
+  if(action==='call_tool'&&!(task?.allowedMcpTools||[]).includes(String(input.tool||''))) throw new Error('mcp_tool_not_allowlisted');
 }
 function jsonRpc(method,params,id){return {jsonrpc:'2.0',id,method,params:params||{}};}
 
@@ -45,6 +47,7 @@ export async function runMcp(input,env=process.env){
 }
 
 export function verifyMcpResult({result,action='health'}){
-  const passed=Boolean(result?.executionId&&result?.target&&result?.result?.status>=200&&result?.result?.status<300&&SAFE_ACTIONS.has(action));
+  const rpcError=result?.result?.data?.error;
+  const passed=Boolean(result?.executionId&&result?.target&&result?.result?.status>=200&&result?.result?.status<300&&SAFE_ACTIONS.has(action)&&!rpcError);
   return {verifierId:'mcp-independent-verifier-v1',passed,errors:passed?[]:['mcp_result_missing_execution_proof']};
 }
