@@ -18,7 +18,12 @@
       "mnfst/awesome-free-llm-apis",
       "agent0ai/agent-zero",
       "cporter202/openclaw-api-list",
-      "ruvnet/ruflo"
+      "ruvnet/ruflo",
+      "five-source capability set: Agent Zero",
+      "five-source capability set: OpenClaw API List",
+      "five-source capability set: agentic-ai-apis",
+      "five-source capability set: AI Engineering From Scratch",
+      "five-source capability set: awesome-free-llm-apis"
     ],
     "promotion": [
       "DISCOVERY",
@@ -346,14 +351,15 @@
       "status": "DISCOVERY",
       "source": "ruvnet/ruflo GOAP/planning patterns"
     },
-    "mcp.gateway": {
-      "class": "integration",
+    "research.capability_sources": {
+      "class": "research",
       "operations": [
         "health",
-        "list_tools",
-        "call_tool"
+        "sources",
+        "inspect",
+        "search"
       ],
-      "verification": "MCP JSON-RPC response + explicit endpoint + independent verifier",
+      "verification": "pinned source revision + retrieval response + independent verifier + explicit read authorization",
       "status": "ADAPTER_READY"
     }
   }
