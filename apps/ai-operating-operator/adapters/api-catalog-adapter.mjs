@@ -1,11 +1,23 @@
-const SOURCE='https://raw.githubusercontent.com/cporter202/openclaw-api-list/main/';
+const SOURCE='https://raw.githubusercontent.com/cporter202/openclaw-api-list/3afa19dd12f3cdc6bc2e297e9b6945059ada0cae/';
 
 const CATEGORY_FILES={
   recommended:'OPENCLAW_RECOMMENDED.md',
   mcp:'mcp-servers-apis-131/README.md',
   integrations:'integrations-apis-890/README.md',
   automation:'automation-apis-4825/README.md',
-  open_source:'open-source-apis-768/README.md'
+  open_source:'open-source-apis-768/README.md',
+  agents:'agents-apis-697/README.md',
+  ai:'ai-apis-1208/README.md',
+  developer_tools:'developer-tools-apis-2652/README.md',
+  ecommerce:'ecommerce-apis-2440/README.md',
+  jobs:'jobs-apis-848/README.md',
+  lead_generation:'lead-generation-apis-3452/README.md',
+  news:'news-apis-590/README.md',
+  seo:'seo-tools-apis-710/README.md',
+  social:'social-media-apis-3268/README.md',
+  travel:'travel-apis-397/README.md',
+  videos:'videos-apis-979/README.md',
+  other:'other-apis-1297/README.md'
 };
 
 const ALLOWED_ACTIONS=new Set(['health','search','category']);
@@ -65,7 +77,7 @@ export async function runApiCatalog(input){
   return {
     executionId:`api-catalog-${Date.now()}`,
     target:`cporter202/openclaw-api-list:${file}`,
-    result:{status:200,action,category,count:results.length,results,sourceRevision:'main'}
+    result:{status:200,action,category,count:results.length,results,sourceRevision:'3afa19dd12f3cdc6bc2e297e9b6945059ada0cae'}
   };
 }
 
