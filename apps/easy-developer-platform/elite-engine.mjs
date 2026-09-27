@@ -166,7 +166,7 @@ export async function materializeCapabilityArtifact(root, artifact) {
     error.code = 'invalid_capability_artifact';
     throw error;
   }
-  if (!/^[0-9a-f]{40}$/.test(artifact.revision) || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(artifact.repo)) {
+  if (!/^[0-9a-f]{40}$/.test(artifact.revision) || !/^[A-Za-z0-9_-][A-Za-z0-9_.-]*\/[A-Za-z0-9_-][A-Za-z0-9_.-]*$/.test(artifact.repo)) {
     const error = new Error('invalid_capability_artifact_provenance');
     error.code = 'invalid_capability_artifact_provenance';
     throw error;
