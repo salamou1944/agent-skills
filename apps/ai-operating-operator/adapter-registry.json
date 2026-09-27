@@ -49,6 +49,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "ollama-independent-verifier-v1",
       "scope": "localhost by default; remote requires HTTPS"
+    },
+    "workspace.recovery": {
+      "module": "./adapters/workspace-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "workspace-independent-verifier-v1",
+      "scope": "explicit OPERATOR_WORKSPACE_ROOT + workspace_read authorization"
     }
   }
 }
