@@ -18,6 +18,7 @@ async function loadVerifier(id){
   if(id==='workspace-independent-verifier-v1')return import('./adapters/workspace-adapter.mjs');
   if(id==='api-catalog-independent-verifier-v1')return import('./adapters/api-catalog-adapter.mjs');
   if(id==='openapi-mcp-independent-verifier-v1')return import('./adapters/openapi-mcp-adapter.mjs');
+  if(id==='mcp-independent-verifier-v1')return import('./adapters/mcp-adapter.mjs');
   throw new Error('verifier_not_registered');
 }
 
@@ -41,6 +42,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='workspace.recovery')result=await module.runWorkspace(inputData,adapterEnv);
   else if(capability==='research.api_catalog')result=await module.runApiCatalog(inputData);
   else if(capability==='mcp.openapi_bridge')result=await module.runOpenApiMcp(inputData);
+  else if(capability==='mcp.gateway')result=await module.runMcp(inputData,adapterEnv);
   else if(capability==='platform.cua.driver')result=await module.runCua(inputData,adapterEnv);
   else throw new Error('adapter_execution_not_implemented');
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code});
@@ -54,6 +56,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='workspace.recovery')verification=verifier.verifyWorkspaceResult({result,action:inputData.action||'health'});
   else if(capability==='research.api_catalog')verification=verifier.verifyApiCatalogResult({result,action:inputData.action||'health'});
   else if(capability==='mcp.openapi_bridge')verification=verifier.verifyOpenApiMcpResult({result});
+  else if(capability==='mcp.gateway')verification=verifier.verifyMcpResult({result,action:inputData.action||'health'});
   else if(capability==='platform.cua.driver')verification=verifier.verifyCuaResult({result});
   else verification=verifier.verifyGitHubResult({result});
   const verificationEvidence=evidence('verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
