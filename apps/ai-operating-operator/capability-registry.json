@@ -16,7 +16,8 @@
       "nmap ecosystem",
       "Agent Reach families",
       "mnfst/awesome-free-llm-apis",
-      "agent0ai/agent-zero"
+      "agent0ai/agent-zero",
+      "cporter202/openclaw-api-list"
     ],
     "promotion": [
       "DISCOVERY",
@@ -289,6 +290,16 @@
       ],
       "verification": "workspace manifest/status + independent verifier + explicit workspace root",
       "status": "ADAPTER_READY"
+    },
+    "api.catalog.discovery": {
+      "class": "research",
+      "operations": [
+        "catalog",
+        "inspect",
+        "select-candidate"
+      ],
+      "verification": "catalog source + candidate docs/license/terms evidence; no execution",
+      "status": "DISCOVERY"
     }
   }
 }
