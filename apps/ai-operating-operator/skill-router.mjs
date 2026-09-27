@@ -18,6 +18,7 @@ const RULES=[
   {terms:['revenue','customer','lead','sell','money','outreach'],skills:['revenue-opportunity-discovery','revenue-path-validator','revenue-compliance-gate']},
   {terms:['deploy','railway','vercel','ci','github','pull request'],skills:['github-delivery','release-verification','release-observer']},
   {terms:['api','integration','endpoint','provider'],skills:['real-api-testing','api-production-readiness','permission-aware-executor']},
+  {terms:['agent zero','openclaw','agentic ai','mcp','free llm','free api','ai engineering'],skills:['real-api-testing','api-production-readiness','evidence-backed-operator']},
   {terms:['bug','error','failure','broken','fix'],skills:['bug-triage','failure-recovery-operator','regression-synthesizer']},
   {terms:['easy','creative','seller','commerce'],skills:['easy-continuous-builder','customer-to-code','verified-change']},
   {terms:['orchestrate','agent','multi','task'],skills:['adaptive-orchestrator','delegated-user-operator','persistent-task-operator']}
