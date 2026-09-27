@@ -51,13 +51,13 @@ async function inspect({ root, goal, maxContextBytes, decomposer }) {
   return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition, engineeringDNA: dna, counterfactuals, selectedCounterfactual: counterfactual }).slice(0, maxContextBytes), dna, counterfactuals, counterfactual };
 }
 
-function makeProvider(env, capabilitySelection) {
+function makeProvider(env, capabilitySelection, capabilityArtifact) {
   return async ({ role, goal, context, failedPlan, failure, constraints }) => {
     if (role === 'decomposer') {
-      const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nVerified capability selected for this task: ${JSON.stringify(capabilitySelection)}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
+      const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nVerified capability selected for this task: ${JSON.stringify(capabilitySelection)}\nPinned capability artifact: ${JSON.stringify(capabilityArtifact)}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
       return ask(prompt, env);
     }
-    const capabilityLine = capabilitySelection ? `\nVerified capability contract (must be used only at the pinned revision): ${JSON.stringify(capabilitySelection)}` : '';
+    const capabilityLine = capabilitySelection ? `\nVerified capability contract (must be used only at the pinned revision): ${JSON.stringify(capabilitySelection)}\nPinned capability artifact: ${JSON.stringify(capabilityArtifact)}` : '';
     const prompt = role === 'repair'
       ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}${capabilityLine}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
       : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.${capabilityLine}`;
@@ -158,12 +158,12 @@ export async function scanWorkspaceSecrets(root) {
   return Object.freeze([...new Set(findings)]);
 }
 
-async function runCore(goal, { root, policy, env, journalPath, provider, metrics, capabilitySelection }) {
+async function runCore(goal, { root, policy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact }) {
   const workspaceSecrets = await scanWorkspaceSecrets(root);
   if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
   const capabilityGate = validateCapabilitySelection(capabilitySelection);
   if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }
-  const activeProvider = provider || makeProvider(env, capabilityGate.selection);
+  const activeProvider = provider || makeProvider(env, capabilityGate.selection, capabilityArtifact);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
   if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
@@ -180,7 +180,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   };
   const prediction = predictImpact({ dna: inspectResult.dna, changedFiles: [] });
   const project = projectScope(policy.project || 'default');
-  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection };
+  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection, capabilityArtifact: capabilityArtifact || null };
   const counterfactual = inspectResult.counterfactual;
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
@@ -202,10 +202,10 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   return result;
 }
 
-export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath, provider, isolate = true, capabilitySelection = null } = {}) {
+export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath, provider, isolate = true, capabilitySelection = null, capabilityArtifact = null } = {}) {
   const metrics = createMetrics();
   const effectivePolicy = { ...policy, metricsPath: policy.metricsPath || join(root, '.elite', 'metrics.jsonl'), memoryPath: policy.memoryPath || join(root, '.elite', 'memory.jsonl') };
-  if (!isolate) return runCore(goal, { root, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection });
+  if (!isolate) return runCore(goal, { root, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact });
   const status = await workspaceStatus(root);
   if (!status.clean) { const error = new Error('workspace_dirty_refusing_isolated_execution'); error.code = 'workspace_dirty'; throw error; }
   return withIsolatedWorktree(root, `task-${Date.now()}`, async (worktree, { promote }) => {

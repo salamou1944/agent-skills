@@ -23,6 +23,7 @@ let executedTask=null;
 const result=await processNextTask({
   queueDir:queue,resultDir:results,
   selectCapability:async()=>({decision:'ADAPT_AND_VERIFY',selected,evidence:{selectedId:selected.id,sourceRevision:selected.revision,verificationStatus:selected.evidenceLevel}}),
+  hydrateArtifact:async selection=>({ok:true,artifact:{repo:selection.repo,revision:selection.revision,file:'README.md',url:'https://raw.githubusercontent.com/example/research/'+selection.revision+'/README.md',sha256:'a'.repeat(64),bytes:12,content:'verified capability artifact'}}),
   executeTaskImpl:async task=>{
     executedTask=task;
     return {state:'VERIFIED',completion:{ok:true},evidence:[
@@ -34,6 +35,8 @@ const result=await processNextTask({
 });
 assert.equal(result.state,'VERIFIED');
 assert.equal(executedTask.capabilitySelection.id,'cap-verified');
+assert.equal(executedTask.capabilityArtifact.file,'README.md');
+assert.equal(executedTask.capabilityArtifact.content,'verified capability artifact');
 assert.equal(executedTask.sourceRevision,'b'.repeat(40));
 assert.equal(executedTask.requestedCapabilities.includes('research'),true);
 assert.equal(executedTask.constraints.includes('capability-selected-verified'),true);
