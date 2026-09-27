@@ -5,6 +5,7 @@ import {executeTask} from './executor.mjs';
 import {probeAccounts} from './account-probes.mjs';
 import {createRun,updateRun,recoverInterruptedRuns} from './run-ledger.mjs';
 import {retryDecision} from './retry-policy.mjs';
+import {dispatchToElite} from './elite-bridge.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const queue=process.env.OPERATOR_TASK_QUEUE||path.join(ROOT,'runtime','tasks');
@@ -27,7 +28,7 @@ export function classifyFailure(result){
   return null;
 }
 
-export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'}},executeTaskImpl=executeTask,sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'}},executeTaskImpl=async (task,options)=>task.executionTarget==='elite'?dispatchToElite(task):executeTask(task,options),sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
   const selected=await selectNextTask(queueDir);
   if(!selected)return {selected:null,state:'IDLE'};
   const {name,task}=selected;
