@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 const COLLECTION_REPO='salamou1944/Project-';
-const COLLECTION_REVISION='79d97983a95a808c2881b2e0c21c3366ad620aa4';
+const COLLECTION_REVISION='49c086937245a6c74f3548186aeafb52bbbd476a';
 const CATALOG_FILES=Object.freeze([
   'COLLECTION/INDEX.md',
   'COLLECTION/AI/AI_INDEX.md',
