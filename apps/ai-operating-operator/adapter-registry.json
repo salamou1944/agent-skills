@@ -55,6 +55,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "workspace-independent-verifier-v1",
       "scope": "explicit OPERATOR_WORKSPACE_ROOT + workspace_read authorization"
+    },
+    "mcp.openapi.inspect": {
+      "module": "./adapters/openapi-mcp-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "openapi-mcp-independent-verifier-v1",
+      "scope": "validated OpenAPI schema input + explicit api_schema_read authorization; discovery only"
     }
   }
 }
