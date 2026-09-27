@@ -3,7 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {executeTask} from './executor.mjs';
 import {probeAccounts} from './account-probes.mjs';
-import {createRun,updateRun} from './run-ledger.mjs';
+import {createRun,updateRun,recoverInterruptedRuns} from './run-ledger.mjs';
 import {retryDecision} from './retry-policy.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
@@ -58,6 +58,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
 
 async function main(){
   await fs.mkdir(queue,{recursive:true});await fs.mkdir(results,{recursive:true});
+  await recoverInterruptedRuns();
   const caps=await probeAccounts();
   if(process.env.GITHUB_ACTIONS==='true'&&process.env.GITHUB_REPOSITORY){
     const allowed=String(process.env.OPERATOR_GITHUB_REPOS||process.env.GITHUB_REPOSITORY||'').split(',').map(x=>x.trim()).filter(Boolean);
