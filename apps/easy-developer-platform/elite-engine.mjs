@@ -209,7 +209,7 @@ export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, 
   });
 }
 
-export { runParallelReview };
+export { runParallelReview, validateCapabilitySelection };
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const goal = process.argv.slice(2).join(' ').trim();
