@@ -5,7 +5,7 @@ const WRITE=new Set(['write','merge','deploy','delete','production-mutation','cr
 
 export function createTask(input={}){
   const goal=String(input.goal||'').trim(); if(!goal) throw new Error('goal_required');
-  return {version:'ai-operating-task-v1',taskId:input.taskId||crypto.randomUUID(),createdAt:new Date().toISOString(),mediator:'chatgpt',project:input.project||null,goal,constraints:Array.isArray(input.constraints)?input.constraints:[],requestedCapabilities:Array.isArray(input.requestedCapabilities)?input.requestedCapabilities:[],allowedActions:Array.isArray(input.allowedActions)?input.allowedActions:[],sourceRevision:input.sourceRevision||null,idempotencyKey:input.idempotencyKey||null,state:'REQUESTED',completionClaimAllowed:false};
+  return {version:'ai-operating-task-v1',taskId:input.taskId||crypto.randomUUID(),createdAt:new Date().toISOString(),mediator:'chatgpt',project:input.project||null,goal,constraints:Array.isArray(input.constraints)?input.constraints:[],requestedCapabilities:Array.isArray(input.requestedCapabilities)?input.requestedCapabilities:[],allowedActions:Array.isArray(input.allowedActions)?input.allowedActions:[],sourceRevision:input.sourceRevision||null,capabilitySelection:input.capabilitySelection||null,idempotencyKey:input.idempotencyKey||null,state:'REQUESTED',completionClaimAllowed:false};
 }
 
 export function assessCapabilities(task,capabilities={}){
