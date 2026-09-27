@@ -57,7 +57,9 @@ function makeProvider(env, capabilitySelection) {
       const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nVerified capability selected for this task: ${JSON.stringify(capabilitySelection)}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
       return ask(prompt, env);
     }
-    const capabilityLine = capabilitySelection ? `\nVerified capability contract (must be used only at the pinned revision): ${JSON.stringify(capabilitySelection)}` : '';\n    const prompt = role === 'repair'\n      ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}${capabilityLine}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
+    const capabilityLine = capabilitySelection ? `\nVerified capability contract (must be used only at the pinned revision): ${JSON.stringify(capabilitySelection)}` : '';
+    const prompt = role === 'repair'
+      ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}${capabilityLine}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
       : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.${capabilityLine}`;
     return ask(prompt, env);
   };
@@ -159,9 +161,11 @@ export async function scanWorkspaceSecrets(root) {
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics, capabilitySelection }) {
   const workspaceSecrets = await scanWorkspaceSecrets(root);
   if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
-  const capabilityGate = validateCapabilitySelection(capabilitySelection);\n  if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }\n  const activeProvider = provider || makeProvider(env, capabilityGate.selection);
+  const capabilityGate = validateCapabilitySelection(capabilitySelection);
+  if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }\n  const activeProvider = provider || makeProvider(env, capabilityGate.selection);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
-  const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });\n  if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
+  const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
+  if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
   const guardedProvider = async args => {
     const plan = await activeProvider(args);
     if (args.role === 'repair') {
@@ -174,7 +178,8 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
     return plan;
   };
   const prediction = predictImpact({ dna: inspectResult.dna, changedFiles: [] });
-  const project = projectScope(policy.project || 'default');\n  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection };
+  const project = projectScope(policy.project || 'default');
+  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection };
   const counterfactual = inspectResult.counterfactual;
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
