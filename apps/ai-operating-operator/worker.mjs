@@ -28,7 +28,7 @@ export async function prepareTaskForExecution(task,{selectCapability=selectVerif
   return {ok:true,task:{...task,capabilitySelection:selection.selected,sourceRevision:selection.selected.revision,requestedCapabilities:Array.from(new Set([...(task.requestedCapabilities||[]),selection.selected.capabilityType])),constraints:Array.from(new Set([...(task.constraints||[]),'capability-selected-verified']))},selection};
 }
 
-export async function hydrateCapabilityArtifact(selection,{fetchImpl=fetch,file='README.md'}={}) {
+export async function hydrateCapabilityArtifact(selection,{fetchImpl=fetch,file='README.md',expectedSha256=null}={}) {
   if(!selection?.repo||!selection?.revision)return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:'capability_artifact_identity_incomplete'};
   if(!/^https:\/\/raw\.githubusercontent\.com\//.test('https://raw.githubusercontent.com/'))return {ok:false,state:'BLOCKED_PERMISSION',reason:'raw_github_not_allowed'};
   if(!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(selection.repo))return {ok:false,state:'BLOCKED_PERMISSION',reason:'repository_not_allowlisted'};
@@ -41,6 +41,7 @@ export async function hydrateCapabilityArtifact(selection,{fetchImpl=fetch,file=
     if(!response.ok)return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:`artifact_http_${response.status}`,url};
     const content=await response.text();
     const sha256=crypto.createHash('sha256').update(content,'utf8').digest('hex');
+    if(expectedSha256 && sha256!==String(expectedSha256).toLowerCase())return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:'artifact_checksum_mismatch',url,sha256,expectedSha256};
     return {ok:true,artifact:{repo:selection.repo,revision:selection.revision,file:safeFile,url,sha256,bytes:Buffer.byteLength(content,'utf8'),content}};
   }catch(error){return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:String(error?.message||error),url};}
 }
@@ -70,7 +71,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
       await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:'BLOCKED_EXTERNAL_DEPENDENCY',retry:{retry:false}});
       return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
     }
-    const artifact=prepared.task.capabilitySelection ? await hydrateArtifact(prepared.task.capabilitySelection) : {ok:true,artifact:null};
+    const artifact=prepared.task.capabilitySelection ? await hydrateArtifact(prepared.task.capabilitySelection,{file:prepared.task.capabilityArtifactFile||'README.md',expectedSha256:prepared.task.capabilityArtifactSha256||null}) : {ok:true,artifact:null};
     if(!artifact.ok){
       const result={taskId:task.taskId,state:artifact.state,evidence:[{kind:'capability_artifact',artifact}],completion:{ok:false,errors:['capability_artifact_hydration']},failure:{class:artifact.state==='BLOCKED_PERMISSION'?'permission':'external_dependency',message:artifact.reason}};
       await fs.writeFile(path.join(resultDir,name),JSON.stringify({...result,runId:run.runId},null,2));
