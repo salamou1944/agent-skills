@@ -1,0 +1,26 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+
+const root=await fs.mkdtemp(path.join(os.tmpdir(),'operator-worker-retry-'));
+const queue=path.join(root,'tasks');
+const results=path.join(root,'results');
+const ledger=path.join(root,'runs.jsonl');
+await fs.mkdir(queue,{recursive:true});
+await fs.mkdir(results,{recursive:true});
+process.env.OPERATOR_RUN_LEDGER=ledger;
+const {processNextTask}=await import('./worker.mjs');
+await fs.writeFile(path.join(queue,'retry.json'),JSON.stringify({taskId:'retry',idempotencyKey:'retry',goal:'retry',priority:1,maxRetries:2}));
+let calls=0; const sleeps=[];
+const executeTaskImpl=async()=>{calls++; if(calls<3)return {state:'FAILED',failure:{class:'timeout',message:'temporary'}}; return {state:'VERIFIED',completion:{ok:true},evidence:[{type:'action'},{type:'verification'},{type:'independent_verification'}]};};
+const sleepImpl=async ms=>sleeps.push(ms);
+const a=await processNextTask({queueDir:queue,resultDir:results,executeTaskImpl,sleepImpl});
+assert.equal(a.state,'RETRYING'); assert.equal(a.retry.retry,true);
+const b=await processNextTask({queueDir:queue,resultDir:results,executeTaskImpl,sleepImpl});
+assert.equal(b.state,'RETRYING'); assert.equal(b.retry.retry,true);
+const c=await processNextTask({queueDir:queue,resultDir:results,executeTaskImpl,sleepImpl});
+assert.equal(c.state,'VERIFIED');
+assert.deepEqual(sleeps,[1000,2000]);
+assert.equal((await fs.readdir(queue)).length,0);
+console.log(JSON.stringify({ok:true,calls,sleeps,final:c.state}));
