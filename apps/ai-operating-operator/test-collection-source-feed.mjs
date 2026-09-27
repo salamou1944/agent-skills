@@ -1,28 +1,36 @@
 import assert from 'node:assert/strict';
-import {discoverCollectionRepositories,fetchCollectionSource} from './collection-source-feed.mjs';
+import {discoverCollectionRepositories,fetchCollectionSource,fetchCollectionCapabilityInventory} from './collection-source-feed.mjs';
 
 const calls=[];
 const fakeFetch=async(url)=>{
   calls.push(url);
-  if(url.includes('/COLLECTION/INDEX.md')) return new Response('# x\nhttps://github.com/foo/one\nhttps://github.com/foo/two\n',{status:200});
+  if(url.includes('/COLLECTION/INDEX.md')) return new Response('# x\nhttps://github.com/foo/one\nhttps://github.com/foo/two\nhttps://github.com/example/new-capability-source\n',{status:200});
   if(url.includes('/COLLECTION/AI/AI_INDEX.md')) return new Response('https://github.com/foo/two\nhttps://github.com/bar/three\n',{status:200});
   if(url.includes('/COLLECTION/SOURCES/AI_DISCOVERY_SOURCES.md')) return new Response('https://github.com/foo/one\n',{status:200});
   if(url.includes('/COLLECTION/DOCUMENTS/DOCUMENT_OCR_INDEX.md')) return new Response('https://github.com/bar/three\n',{status:200});
   if(url.endsWith('/repos/foo/one')) return new Response(JSON.stringify({default_branch:'main'}),{status:200});
   if(url.endsWith('/repos/foo/one/branches/main')) return new Response(JSON.stringify({commit:{sha:'rev-one'}}),{status:200});
   if(url.endsWith('/foo/one/rev-one/README.md')) return new Response('# One\ncapability\n',{status:200});
+  if(url.endsWith('/repos/example/new-capability-source')) return new Response(JSON.stringify({default_branch:'main'}),{status:200});
+  if(url.endsWith('/repos/example/new-capability-source/branches/main')) return new Response(JSON.stringify({commit:{sha:'0123456789abcdef0123456789abcdef01234567'}}),{status:200});
+  if(url.endsWith('/example/new-capability-source/0123456789abcdef0123456789abcdef01234567/README.md')) return new Response('# New capability source\nAutomatic discovery fixture.\n',{status:200});
   throw new Error('unexpected:'+url);
 };
+
 const repos=await discoverCollectionRepositories({fetchImpl:fakeFetch,limit:10});
-assert.deepEqual(repos.map(x=>x.repo),['foo/one','foo/two','bar/three']);
-const doc=await fetchCollectionSource(repos[0],{fetchImpl:fakeFetch});
-assert.equal(doc.repo,'foo/one');
-assert.equal(doc.revision,'rev-one');
+assert.deepEqual(repos.map(x=>x.repo),['foo/one','foo/two','example/new-capability-source','bar/three']);
+const discoveredNew=repos.find(x=>x.repo==='example/new-capability-source');
+assert.ok(discoveredNew);
+assert.equal(discoveredNew.discoveredFrom.collectionRevision,'49c086937245a6c74f3548186aeafb52bbbd476a');
+
+const doc=await fetchCollectionSource(discoveredNew,{fetchImpl:fakeFetch});
+assert.equal(doc.repo,'example/new-capability-source');
+assert.equal(doc.revision,'0123456789abcdef0123456789abcdef01234567');
 assert.equal(doc.file,'README.md');
+assert.equal(doc.content,'# New capability source\nAutomatic discovery fixture.\n');
 assert.equal(doc.sha256.length,64);
 assert.ok(doc.discoveredFrom.file);
 assert.ok(calls.length>0);
-console.log(JSON.stringify({ok:true,discovered:repos.length,revision:doc.revision}));
 
 const inventoryPayload={items:[{
   id:'cap-1',
@@ -38,8 +46,8 @@ const inventoryFetch=async(url)=>{
   }
   return fakeFetch(url);
 };
-const inventory=await (await import('./collection-source-feed.mjs')).fetchCollectionCapabilityInventory({fetchImpl:inventoryFetch});
+const inventory=await fetchCollectionCapabilityInventory({fetchImpl:inventoryFetch});
 assert.equal(inventory.length,1);
 assert.equal(inventory[0].capabilityType,'tool');
-assert.equal(inventory[0].collectionRevision,'79d97983a95a808c2881b2e0c21c3366ad620aa4');
-console.log(JSON.stringify({inventoryOk:true,capabilityCount:inventory.length}));
+assert.equal(inventory[0].collectionRevision,'49c086937245a6c74f3548186aeafb52bbbd476a');
+console.log(JSON.stringify({ok:true,automaticDiscovery:'VERIFIED_TEST',discovered:repos.length,newSource:discoveredNew.repo,revision:doc.revision,inventoryOk:true}));
