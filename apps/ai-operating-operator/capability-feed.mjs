@@ -16,7 +16,7 @@ async function readSnapshot(dir,id){try{return JSON.parse(await fs.readFile(path
 export async function syncCapabilityFeed({dir=DEFAULT_DIR}={}){
   if(state.running)return {ok:false,skipped:true,state};
   state.running=true;state.lastRunAt=new Date().toISOString();state.lastError=null;
-  let changed=0,documents=0;
+  let changed=0,documents=0,capabilityCount=0;
   try{
     const task={allowedActions:['capability_sources_read']};
     const listed=await runCapabilitySources({task,action:'sources'});
@@ -41,8 +41,8 @@ export async function syncCapabilityFeed({dir=DEFAULT_DIR}={}){
       if(!old||old.sha256!==item.sha256)changed++;
       await writeSnapshot(dir,id,item);documents++;
     }
-    cache=next;
-    state={...state,started:true,running:false,lastSuccessAt:new Date().toISOString(),sourceCount:listed.result.sources.length,documents,changed,collectionSourceCount:collection.discoveredCount,collectionDocumentCount:collection.documents.length,collectionFailures:collection.failures.length};
+    for(const capability of (collection.capabilities||[])) {\n      const key='collection_capability::'+capability.id;\n      const content=JSON.stringify(capability);\n      const item={...capability,file:'capability-inventory.json',content,sha256:digest(content),bytes:Buffer.byteLength(content,'utf8'),fetchedAt:new Date().toISOString()};\n      next.set(key,item);\n      capabilityCount++;\n    }\n    cache=next;
+    state={...state,started:true,running:false,lastSuccessAt:new Date().toISOString(),sourceCount:listed.result.sources.length,documents,changed,collectionSourceCount:collection.discoveredCount,collectionDocumentCount:collection.documents.length,collectionCapabilityCount:capabilityCount,collectionFailures:collection.failures.length};
     return {ok:true,state};
   }catch(error){
     state={...state,running:false,lastError:String(error?.message||error)};
@@ -57,7 +57,7 @@ export function startCapabilityFeed(opts={}){
   return {started:true,intervalMs,state};
 }
 export function stopCapabilityFeed(){if(timer)clearInterval(timer);timer=null;state={...state,started:false};return state;}
-export function getCapabilityFeedStatus(){return {...state,cacheEntries:cache.size};}
+export function getCapabilityFeedStatus(){return {...state,cacheEntries:cache.size};}\nexport async function searchCapabilityCandidates({query,limit=20}={}){\n  const q=String(query||'').trim().toLowerCase();if(!q)throw new Error('query_required');\n  const terms=q.split(/\\s+/).filter(Boolean);\n  const candidates=[...cache.values()].filter(x=>x.source==='collection_capability_inventory');\n  const results=[];\n  for(const item of candidates){\n    const hay=[item.id,item.repo,item.capabilityType,item.capability,item.evidenceLevel,item.compatibility,item.dedupeKey].filter(Boolean).join(' ').toLowerCase();\n    if(terms.every(t=>hay.includes(t))) results.push({id:item.id,repo:item.repo,revision:item.revision,capabilityType:item.capabilityType,capability:item.capability,evidenceLevel:item.evidenceLevel,license:item.license,securityNotes:item.securityNotes,compatibility:item.compatibility,dedupeKey:item.dedupeKey});\n    if(results.length>=Math.min(Math.max(Number(limit||20),1),100)) break;\n  }\n  return results;\n}
 export async function getCapabilityFeedDocuments({source=null,file=null,dir=DEFAULT_DIR}={}){
   if(cache.size===0){
     const entries=await fs.readdir(dir).catch(()=>[]);
