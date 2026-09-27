@@ -18,7 +18,12 @@
       "mnfst/awesome-free-llm-apis",
       "agent0ai/agent-zero",
       "cporter202/openclaw-api-list",
-      "ruvnet/ruflo"
+      "ruvnet/ruflo",
+      "five-source capability set: Agent Zero",
+      "five-source capability set: OpenClaw API List",
+      "five-source capability set: agentic-ai-apis",
+      "five-source capability set: AI Engineering From Scratch",
+      "five-source capability set: awesome-free-llm-apis"
     ],
     "promotion": [
       "DISCOVERY",
@@ -354,6 +359,17 @@
         "call_tool"
       ],
       "verification": "MCP JSON-RPC response + explicit endpoint + independent verifier",
+      "status": "ADAPTER_READY"
+    },
+    "research.capability_sources": {
+      "class": "research",
+      "operations": [
+        "health",
+        "sources",
+        "inspect",
+        "search"
+      ],
+      "verification": "pinned source revision + retrieval response + independent verifier + explicit read authorization",
       "status": "ADAPTER_READY"
     }
   }
