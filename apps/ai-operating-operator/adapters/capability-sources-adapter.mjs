@@ -63,11 +63,13 @@ function extractRows(markdown,query,limit=20){
   const terms=q.split(/\\s+/).filter(Boolean);
   const rows=[];
   for(const line of markdown.split('\\n')){
-    if(!/^\\|/.test(line) || /^\\|\\s*-+/.test(line)) continue;
-    const m=line.match(/^\\|\\s*(.*?)\\s*\\|\\s*(.*?)\\s*\\|/);
-    if(!m) continue;
-    const hay=(m[1]+' '+m[2]).toLowerCase();
-    if(terms.every(t=>hay.includes(t))) rows.push({name:m[1],description:m[2]});
+    const clean=line.trim();
+    if(!clean) continue;
+    const m=clean.match(/^\\|\\s*(.*?)\\s*\\|\\s*(.*?)\\s*\\|/);
+    const hay=(m?m[1]+' '+m[2]:clean).toLowerCase();
+    if(terms.every(t=>hay.includes(t))){
+      rows.push(m?{name:m[1],description:m[2]}:{name:clean.replace(/^#+\\s*/,'').slice(0,160),description:clean.slice(0,500)});
+    }
     if(rows.length>=limit) break;
   }
   return rows;
