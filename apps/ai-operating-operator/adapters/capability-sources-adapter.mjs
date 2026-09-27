@@ -65,7 +65,7 @@ function extractRows(markdown,query,limit=20){
   for(const line of markdown.split('\n')){
     const clean=line.trim();
     if(!clean) continue;
-    const m=clean.match(/^\\|\\s*(.*?)\\s*\\|\\s*(.*?)\\s*\\|/);
+    const m=clean.match(/^\|\s*(.*?)\s*\|\s*(.*?)\s*\|/);
     const hay=(m?m[1]+' '+m[2]:clean).toLowerCase();
     if(terms.every(t=>hay.includes(t))){
       rows.push(m?{name:m[1],description:m[2]}:{name:clean.replace(/^#+\s*/,'').slice(0,160),description:clean.slice(0,500)});
