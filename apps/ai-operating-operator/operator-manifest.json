@@ -119,6 +119,12 @@
       "registry": "apps/ai-operating-operator/capability-registry.json",
       "scope": "explicit target/resource allowlists",
       "authorizationRequired": true
+    },
+    "mcp": {
+      "credentialEnv": "OPERATOR_MCP_TOKEN",
+      "endpointEnv": "OPERATOR_MCP_URL",
+      "requiresAuthorization": true,
+      "scope": "explicit server endpoint + mcp_read/mcp_execute + tool allowlist"
     }
   },
   "invariants": [
