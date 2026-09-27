@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {executeTask} from './executor.mjs';
 import {probeAccounts} from './account-probes.mjs';
 import {createRun,updateRun} from './run-ledger.mjs';
+import {retryDecision} from './retry-policy.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const queue=process.env.OPERATOR_TASK_QUEUE||path.join(ROOT,'runtime','tasks');
@@ -17,7 +18,16 @@ export async function selectNextTask(queueDir=queue){
   return candidates[0]||null;
 }
 
-export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'}},executeTaskImpl=executeTask}={}){
+export function classifyFailure(result){
+  const failure=result?.failure||{};
+  if(result?.state==='BLOCKED_PERMISSION'||failure.class==='permission')return 'BLOCKED_PERMISSION';
+  if(result?.state==='BLOCKED_EXTERNAL_DEPENDENCY'||failure.class==='external_dependency')return 'BLOCKED_EXTERNAL_DEPENDENCY';
+  if(failure.class)return String(failure.class);
+  if(result?.state==='FAILED')return 'unknown';
+  return null;
+}
+
+export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'}},executeTaskImpl=executeTask,sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
   const selected=await selectNextTask(queueDir);
   if(!selected)return {selected:null,state:'IDLE'};
   const {name,task}=selected;
@@ -28,10 +38,16 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
     await updateRun(run.runId,{state:'RUNNING',attempt:(run.attempt||0)+1});
     const result=await executeTaskImpl(task,{capabilities:{...caps,github:caps.github,'platform.github':caps.github},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
     const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
-    await fs.writeFile(path.join(resultDir,name),JSON.stringify({...result,runId:run.runId},null,2));
-    await updateRun(run.runId,{state:terminal,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion||null,evidence:result.evidence||[]});
+    const attempt=(run.attempt||0)+1;
+    const failureClass=classifyFailure(result);
+    const retry=terminal==='FAILED' ? retryDecision({attempt,maxRetries:Number(task.maxRetries??2),errorClass:failureClass||'unknown'}) : {retry:false};
+    const persistedState=retry.retry?'RETRYING':terminal;
+    const persistedResult={...result,runId:run.runId,failureClass,retry};
+    await fs.writeFile(path.join(resultDir,name),JSON.stringify(persistedResult,null,2));
+    await updateRun(run.runId,{state:persistedState,attempt,resultState:result.state,completion:result.completion||null,evidence:result.evidence||[],failure:result.failure||null,failureClass,retry});
     if(terminal==='VERIFIED')await fs.unlink(p);
-    return {selected:name,taskId:task.taskId,runId:run.runId,state:terminal};
+    if(retry.retry)await sleepImpl(retry.backoffMs);
+    return {selected:name,taskId:task.taskId,runId:run.runId,state:persistedState,retry};
   }catch(error){
     const failure={class:'worker_error',message:error.message};
     await fs.writeFile(path.join(resultDir,name),JSON.stringify({taskId:task.taskId,state:'FAILED',runId:run?.runId,failure},null,2));
