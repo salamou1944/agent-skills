@@ -1,4 +1,4 @@
-const SOURCE='https://raw.githubusercontent.com/cporter202/openclaw-api-list/main/';
+const SOURCE='https://raw.githubusercontent.com/cporter202/openclaw-api-list/3afa19dd12f3cdc6bc2e297e9b6945059ada0cae/';
 
 const CATEGORY_FILES={
   recommended:'OPENCLAW_RECOMMENDED.md',
@@ -65,7 +65,7 @@ export async function runApiCatalog(input){
   return {
     executionId:`api-catalog-${Date.now()}`,
     target:`cporter202/openclaw-api-list:${file}`,
-    result:{status:200,action,category,count:results.length,results,sourceRevision:'main'}
+    result:{status:200,action,category,count:results.length,results,sourceRevision:'3afa19dd12f3cdc6bc2e297e9b6945059ada0cae'}
   };
 }
 
