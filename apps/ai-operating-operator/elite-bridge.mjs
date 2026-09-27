@@ -41,7 +41,7 @@ export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAUL
     const allowed=String(process.env.ELITE_ALLOWED_ROOT||'').trim();
     if(!root||!allowed) return {ok:false,state:'BLOCKED_PERMISSION',taskId:task.taskId,evidence:[evidence('action',{accepted:false,reason:'local_engine_root_not_authorized'})]};
     const resolvedRoot=new URL('file://'+root.replace(/\\\\/g,'/')).pathname;
-    const allowedRoot=new URL('file://'+allowed.replace(/\\\\/g,'/')).pathname.replace(/\\/$/,'');
+    const allowedRoot=new URL('file://'+allowed.replace(/\\\\/g,'/')).pathname.replace(/\/$/,'');
     if(!(resolvedRoot===allowedRoot||resolvedRoot.startsWith(allowedRoot+'/'))) return {ok:false,state:'BLOCKED_PERMISSION',taskId:task.taskId,evidence:[evidence('action',{accepted:false,reason:'workspace_root_outside_allowlist'})]};
     try{
       const {runEliteEngine}=await import(LOCAL_ENGINE_MODULE);
