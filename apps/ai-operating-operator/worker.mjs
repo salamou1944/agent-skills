@@ -40,7 +40,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
     const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
     const attempt=(run.attempt||0)+1;
     const failureClass=classifyFailure(result);
-    const retry=terminal==='FAILED' ? retryDecision({attempt,maxRetries:Number(task.maxRetries??2),errorClass:failureClass||'unknown'}) : {retry:false};
+    const retry=terminal==='FAILED' ? retryDecision({attempt:Math.max(0,attempt-1),maxRetries:Number(task.maxRetries??2),errorClass:failureClass||'unknown'}) : {retry:false};
     const persistedState=retry.retry?'RETRYING':terminal;
     const persistedResult={...result,runId:run.runId,failureClass,retry};
     await fs.writeFile(path.join(resultDir,name),JSON.stringify(persistedResult,null,2));
