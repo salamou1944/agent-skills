@@ -8,6 +8,7 @@ const fakeFetch=async(url)=>{
   if(url.includes('/COLLECTION/AI/AI_INDEX.md')) return new Response('https://github.com/foo/two\nhttps://github.com/bar/three\n',{status:200});
   if(url.includes('/COLLECTION/SOURCES/AI_DISCOVERY_SOURCES.md')) return new Response('https://github.com/foo/one\n',{status:200});
   if(url.includes('/COLLECTION/DOCUMENTS/DOCUMENT_OCR_INDEX.md')) return new Response('https://github.com/bar/three\n',{status:200});
+  if(url.includes('/COLLECTION/AUTO/EXTRACTED/harry0703_capability_inventory_2026-09-27.json')) return new Response(JSON.stringify({items:[]}),{status:200});
   if(url.endsWith('/repos/foo/one')) return new Response(JSON.stringify({default_branch:'main'}),{status:200});
   if(url.endsWith('/repos/foo/one/branches/main')) return new Response(JSON.stringify({commit:{sha:'rev-one'}}),{status:200});
   if(url.endsWith('/foo/one/rev-one/README.md')) return new Response('# One\ncapability\n',{status:200});
