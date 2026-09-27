@@ -30,6 +30,7 @@ jobs:
       - run: node --check apps/ai-operating-operator/adapters/research-adapter.mjs
       - run: node --check apps/ai-operating-operator/adapters/ollama-adapter.mjs
       - run: node --check apps/ai-operating-operator/adapters/workspace-adapter.mjs
+      - run: node --check apps/ai-operating-operator/adapters/api-catalog-adapter.mjs
       - run: node --test apps/ai-operating-operator/test-operator-core.mjs
       - run: node apps/ai-operating-operator/test-capability-registry.mjs
       - run: node apps/ai-operating-operator/adapters/test-nmap-adapter.mjs
@@ -40,5 +41,6 @@ jobs:
       - run: node apps/ai-operating-operator/test-capability-fabric.mjs
       - run: node apps/ai-operating-operator/test-cua-adapter.mjs
       - run: node apps/ai-operating-operator/test-workspace-adapter.mjs
+      - run: node apps/ai-operating-operator/test-api-catalog-adapter.mjs
       - run: node apps/ai-operating-operator/test-account-probes.mjs
       - run: node apps/ai-operating-operator/test-server.mjs
