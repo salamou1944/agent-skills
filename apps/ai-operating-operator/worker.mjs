@@ -7,6 +7,7 @@ import {createRun,updateRun,recoverInterruptedRuns} from './run-ledger.mjs';
 import {retryDecision} from './retry-policy.mjs';
 import {dispatchToElite} from './elite-bridge.mjs';
 import {selectVerifiedCapability} from './capability-selection.mjs';
+import crypto from 'node:crypto';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const queue=process.env.OPERATOR_TASK_QUEUE||path.join(ROOT,'runtime','tasks');
@@ -25,6 +26,23 @@ export async function prepareTaskForExecution(task,{selectCapability=selectVerif
   const selection=await selectCapability({query:task.capabilityQuery,compatibility:task.capabilityCompatibility||null,allowedLicenses:task.allowedLicenses||null,limit:Number(task.capabilityLimit||20)});
   if(selection.decision!=='ADAPT_AND_VERIFY')return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',task,selection};
   return {ok:true,task:{...task,capabilitySelection:selection.selected,sourceRevision:selection.selected.revision,requestedCapabilities:Array.from(new Set([...(task.requestedCapabilities||[]),selection.selected.capabilityType])),constraints:Array.from(new Set([...(task.constraints||[]),'capability-selected-verified']))},selection};
+}
+
+export async function hydrateCapabilityArtifact(selection,{fetchImpl=fetch,file='README.md'}={}) {
+  if(!selection?.repo||!selection?.revision)return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:'capability_artifact_identity_incomplete'};
+  if(!/^https:\/\/raw\.githubusercontent\.com\//.test('https://raw.githubusercontent.com/'))return {ok:false,state:'BLOCKED_PERMISSION',reason:'raw_github_not_allowed'};
+  if(!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(selection.repo))return {ok:false,state:'BLOCKED_PERMISSION',reason:'repository_not_allowlisted'};
+  if(!/^[0-9a-f]{40}$/.test(selection.revision))return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:'revision_not_pinned'};
+  const safeFile=String(file||'README.md').replace(/^\/+/, '');
+  if(safeFile.includes('..'))return {ok:false,state:'BLOCKED_PERMISSION',reason:'artifact_path_traversal'};
+  const url=`https://raw.githubusercontent.com/${selection.repo}/${selection.revision}/${safeFile}`;
+  try{
+    const response=await fetchImpl(url,{headers:{accept:'text/plain','user-agent':'ai-operating-operator-capability-artifact'}});
+    if(!response.ok)return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:`artifact_http_${response.status}`,url};
+    const content=await response.text();
+    const sha256=crypto.createHash('sha256').update(content,'utf8').digest('hex');
+    return {ok:true,artifact:{repo:selection.repo,revision:selection.revision,file:safeFile,url,sha256,bytes:Buffer.byteLength(content,'utf8'),content}};
+  }catch(error){return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:String(error?.message||error),url};}
 }
 
 export function classifyFailure(result){
@@ -52,7 +70,14 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
       await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:'BLOCKED_EXTERNAL_DEPENDENCY',retry:{retry:false}});
       return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
     }
-    const executionTask=prepared.task;
+    const artifact=await hydrateCapabilityArtifact(prepared.task.capabilitySelection,{fetchImpl:executeTaskImpl===undefined?fetch:fetch});
+    if(!artifact.ok){
+      const result={taskId:task.taskId,state:artifact.state,evidence:[{kind:'capability_artifact',artifact}],completion:{ok:false,errors:['capability_artifact_hydration']},failure:{class:artifact.state==='BLOCKED_PERMISSION'?'permission':'external_dependency',message:artifact.reason}};
+      await fs.writeFile(path.join(resultDir,name),JSON.stringify({...result,runId:run.runId},null,2));
+      await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:result.state,retry:{retry:false}});
+      return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
+    }
+    const executionTask={...prepared.task,capabilityArtifact:artifact.artifact};
     const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
     const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
     const attempt=(run.attempt||0)+1;
