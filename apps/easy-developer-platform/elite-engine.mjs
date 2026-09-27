@@ -212,7 +212,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   };
   const prediction = predictImpact({ dna: inspectResult.dna, changedFiles: [] });
   const project = projectScope(policy.project || 'default');
-  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection, capabilityArtifact: capabilityArtifact || null };
+  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection, capabilityArtifact: materializedCapabilityArtifact || null };
   const counterfactual = inspectResult.counterfactual;
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
