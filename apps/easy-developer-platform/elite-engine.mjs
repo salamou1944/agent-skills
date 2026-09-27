@@ -159,7 +159,7 @@ export async function scanWorkspaceSecrets(root) {
   return Object.freeze([...new Set(findings)]);
 }
 
-async function materializeCapabilityArtifact(root, artifact) {
+export async function materializeCapabilityArtifact(root, artifact) {
   if (!artifact) return null;
   if (!artifact.repo || !artifact.revision || !artifact.file || typeof artifact.content !== 'string' || !/^[0-9a-f]{64}$/.test(String(artifact.sha256 || ''))) {
     const error = new Error('invalid_capability_artifact');
