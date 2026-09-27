@@ -17,7 +17,8 @@
       "Agent Reach families",
       "mnfst/awesome-free-llm-apis",
       "agent0ai/agent-zero",
-      "cporter202/openclaw-api-list"
+      "cporter202/openclaw-api-list",
+      "ruvnet/ruflo"
     ],
     "promotion": [
       "DISCOVERY",
@@ -310,6 +311,40 @@
       ],
       "verification": "catalog response + source URL + independent verifier + explicit read authorization",
       "status": "ADAPTER_READY"
+    },
+    "control.evidence.receipt": {
+      "class": "control",
+      "operations": [
+        "classify",
+        "hash",
+        "verify_provenance",
+        "report"
+      ],
+      "verification": "content-addressed evidence + provenance scope + independent verifier",
+      "status": "DISCOVERY",
+      "source": "ruvnet/ruflo witness/receipt contract v1"
+    },
+    "control.harness.audit": {
+      "class": "control",
+      "operations": [
+        "mcp_scan",
+        "threat_model",
+        "drift_check"
+      ],
+      "verification": "read-only audit output + source revision + independent verifier",
+      "status": "DISCOVERY",
+      "source": "ruvnet/ruflo ruflo-metaharness"
+    },
+    "workflow.replanning": {
+      "class": "automation",
+      "operations": [
+        "plan",
+        "replan",
+        "resume"
+      ],
+      "verification": "bounded state transitions + run ID + evidence",
+      "status": "DISCOVERY",
+      "source": "ruvnet/ruflo GOAP/planning patterns"
     }
   }
 }
