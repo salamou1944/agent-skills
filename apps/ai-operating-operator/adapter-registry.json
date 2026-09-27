@@ -61,6 +61,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "api-catalog-independent-verifier-v1",
       "scope": "read-only curated OpenClaw API catalog; explicit api_catalog_read authorization"
+    },
+    "mcp.openapi_bridge": {
+      "module": "./adapters/openapi-mcp-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "openapi-mcp-independent-verifier-v1",
+      "scope": "inline OpenAPI document; explicit openapi_mcp_read authorization; HTTPS server hosts only when allowlisted"
     }
   }
 }
