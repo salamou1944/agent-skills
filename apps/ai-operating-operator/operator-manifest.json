@@ -69,6 +69,12 @@
       "role": "agent-callable API and MCP discovery",
       "source": "cporter202/openclaw-api-list",
       "verification": "source/docs/license/cost/security/runtime verification required"
+    },
+    {
+      "name": "openclaw/mcporter",
+      "role": "MCP runtime and transport architecture",
+      "source": "openclaw/mcporter",
+      "verification": "MIT license verified; server/tool allowlists, authorization, schema validation, evidence and independent verification required"
     }
   ],
   "projects": [
