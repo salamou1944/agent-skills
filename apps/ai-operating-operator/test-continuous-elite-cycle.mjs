@@ -48,7 +48,7 @@ const result=await processNextTask({
 
 assert.equal(result.state,'VERIFIED');
 assert.equal(result.retry.retry,false);
-assert.equal((await import('node:fs/promises')).readdir(queue).then(x=>x.length),0);
+assert.equal((await (await import('node:fs/promises')).readdir(queue)).length,0);
 const persisted=await listRuns(20);
 const run=persisted.find(x=>x.taskId==='continuous-elite');
 assert.equal(run?.state,'VERIFIED');
