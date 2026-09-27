@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {runMcp,verifyMcpResult} from './adapters/mcp-adapter.mjs';
 
 const env={OPERATOR_MCP_URL:'https://mcp.example.test'};
+const badEnv={OPERATOR_MCP_URL:'http://remote.example.test'};
+let rejected=false; try{await runMcp({task:{allowedActions:['mcp_read']},action:'health'},badEnv)}catch(e){rejected=e.message==='mcp_https_required'} assert.equal(rejected,true);
 const oldFetch=globalThis.fetch;
 globalThis.fetch=async (_url,opts)=>({status:200,ok:true,text:async()=>JSON.stringify({jsonrpc:'2.0',id:JSON.parse(opts.body).id,result:{tools:[]}})});
 try{
