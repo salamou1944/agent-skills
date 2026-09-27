@@ -45,6 +45,7 @@ jobs:
       - run: node apps/ai-operating-operator/test-continuous-runtime.mjs
       - run: node apps/ai-operating-operator/test-elite-bridge.mjs
       - run: node apps/ai-operating-operator/test-elite-local-integration.mjs
+      - run: node apps/ai-operating-operator/test-worker-persistence.mjs
       - run: node apps/ai-operating-operator/test-capability-fabric.mjs
       - run: node apps/ai-operating-operator/test-cua-adapter.mjs
       - run: node apps/ai-operating-operator/test-workspace-adapter.mjs
