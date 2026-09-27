@@ -1,12 +1,13 @@
 import crypto from 'node:crypto';
 
 const COLLECTION_REPO='salamou1944/Project-';
-const COLLECTION_REVISION='a284033041163c704b86d83fa5ad89cc1cd9b1fd';
+const COLLECTION_REVISION='79d97983a95a808c2881b2e0c21c3366ad620aa4';
 const CATALOG_FILES=Object.freeze([
   'COLLECTION/INDEX.md',
   'COLLECTION/AI/AI_INDEX.md',
   'COLLECTION/SOURCES/AI_DISCOVERY_SOURCES.md',
-  'COLLECTION/DOCUMENTS/DOCUMENT_OCR_INDEX.md'
+  'COLLECTION/DOCUMENTS/DOCUMENT_OCR_INDEX.md',
+  'COLLECTION/AUTO/EXTRACTED/harry0703_capability_inventory_2026-09-27.json'
 ]);
 const API='https://api.github.com';
 const RAW='https://raw.githubusercontent.com';
@@ -60,6 +61,17 @@ export async function fetchCollectionSource(repo,{fetchImpl=fetch}={}){
     content
   };
 }
+export async function fetchCollectionCapabilityInventory({fetchImpl=fetch}={}) {
+  const url=`${RAW}/${COLLECTION_REPO}/${COLLECTION_REVISION}/COLLECTION/AUTO/EXTRACTED/harry0703_capability_inventory_2026-09-27.json`;
+  const res=await get(url,{fetchImpl});
+  const payload=await res.json();
+  if(!Array.isArray(payload.items))throw new Error('collection_capability_inventory_invalid');
+  return payload.items.map(item=>({
+    ...item,
+    source:'collection_capability_inventory',
+    collectionRevision:COLLECTION_REVISION
+  }));
+}
 export async function syncCollectionSources({fetchImpl=fetch,limit=DEFAULT_LIMIT}={}){
   const discovered=await discoverCollectionRepositories({fetchImpl,limit});
   const documents=[]; const failures=[];
@@ -67,5 +79,5 @@ export async function syncCollectionSources({fetchImpl=fetch,limit=DEFAULT_LIMIT
     try{documents.push(await fetchCollectionSource(repo,{fetchImpl}));}
     catch(error){failures.push({repo:repo.repo,error:String(error?.message||error)});}
   }
-  return {discoveredCount:discovered.length,documents,failures,collectionRevision:COLLECTION_REVISION};
+  let capabilities=[];\n  try{capabilities=await fetchCollectionCapabilityInventory({fetchImpl});}\n  catch(error){failures.push({repo:COLLECTION_REPO+'/capability-inventory',error:String(error?.message||error)});}\n  return {discoveredCount:discovered.length,documents,capabilities,failures,collectionRevision:COLLECTION_REVISION};
 }
