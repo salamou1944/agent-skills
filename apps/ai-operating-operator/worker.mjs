@@ -45,7 +45,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
     const persistedResult={...result,runId:run.runId,failureClass,retry};
     await fs.writeFile(path.join(resultDir,name),JSON.stringify(persistedResult,null,2));
     await updateRun(run.runId,{state:persistedState,attempt,resultState:result.state,completion:result.completion||null,evidence:result.evidence||[],failure:result.failure||null,failureClass,retry});
-    if(terminal==='VERIFIED')await fs.unlink(p);
+    if(persistedState!=='RETRYING')await fs.unlink(p);
     if(retry.retry)await sleepImpl(retry.backoffMs);
     return {selected:name,taskId:task.taskId,runId:run.runId,state:persistedState,retry};
   }catch(error){
