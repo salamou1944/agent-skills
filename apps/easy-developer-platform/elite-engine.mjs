@@ -162,7 +162,8 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   const workspaceSecrets = await scanWorkspaceSecrets(root);
   if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
   const capabilityGate = validateCapabilitySelection(capabilitySelection);
-  if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }\n  const activeProvider = provider || makeProvider(env, capabilityGate.selection);
+  if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }
+  const activeProvider = provider || makeProvider(env, capabilityGate.selection);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
   if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
