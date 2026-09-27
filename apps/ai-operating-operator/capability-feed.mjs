@@ -2,10 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {runCapabilitySources} from './adapters/capability-sources-adapter.mjs';
+import {syncCollectionSources} from './collection-source-feed.mjs';
 
 const DEFAULT_INTERVAL_MS=Number(process.env.OPERATOR_FEED_INTERVAL_MS||900000);
 const DEFAULT_DIR=process.env.OPERATOR_FEED_DIR||'/tmp/ai-operating-operator-feed';
-let state={started:false,running:false,lastRunAt:null,lastSuccessAt:null,lastError:null,sourceCount:0,documents:0,changed:0};
+let state={started:false,running:false,lastRunAt:null,lastSuccessAt:null,lastError:null,sourceCount:0,documents:0,changed:0,collectionSourceCount:0,collectionDocumentCount:0,collectionFailures:0};
 let cache=new Map();
 let timer=null;
 function digest(text){return crypto.createHash('sha256').update(text,'utf8').digest('hex');}
@@ -32,8 +33,16 @@ export async function syncCapabilityFeed({dir=DEFAULT_DIR}={}){
         await writeSnapshot(dir,id,item);documents++;
       }
     }
+    const collection=await syncCollectionSources({limit:Number(process.env.OPERATOR_COLLECTION_SOURCE_LIMIT||60)});
+    for(const item of collection.documents){
+      next.set(item.source+'::'+item.repo+'::'+item.file,item);
+      const id='collection--'+item.repo.replace(/[^a-zA-Z0-9._-]/g,'_')+'--'+item.file;
+      const old=cache.get(item.source+'::'+item.repo+'::'+item.file)||await readSnapshot(dir,id);
+      if(!old||old.sha256!==item.sha256)changed++;
+      await writeSnapshot(dir,id,item);documents++;
+    }
     cache=next;
-    state={...state,started:true,running:false,lastSuccessAt:new Date().toISOString(),sourceCount:listed.result.sources.length,documents,changed};
+    state={...state,started:true,running:false,lastSuccessAt:new Date().toISOString(),sourceCount:listed.result.sources.length,documents,changed,collectionSourceCount:collection.discoveredCount,collectionDocumentCount:collection.documents.length,collectionFailures:collection.failures.length};
     return {ok:true,state};
   }catch(error){
     state={...state,running:false,lastError:String(error?.message||error)};
