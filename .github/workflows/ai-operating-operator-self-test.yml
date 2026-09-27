@@ -56,6 +56,9 @@ jobs:
         run: node apps/ai-operating-operator/test-worker-capability-gate.mjs
       - name: Run capability artifact hydration test
         run: node apps/ai-operating-operator/test-capability-artifact-hydration.mjs
+      - name: Run Elite capability materialization test
+        run: node apps/easy-developer-platform/test-elite-capability-materialization.mjs
+
       - name: Run Elite capability contract test
         run: node apps/easy-developer-platform/test-elite-capability-contract.mjs
       - run: node apps/ai-operating-operator/test-worker-persistence.mjs
