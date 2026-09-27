@@ -10,7 +10,7 @@ const content='# verified capability\\nimplementation evidence\\n';
 const sha256=crypto.createHash('sha256').update(content,'utf8').digest('hex');
 const artifact={repo:'example/research',revision:'b'.repeat(40),file:'README.md',sha256,bytes:Buffer.byteLength(content),content};
 try {
-  const result=await runEliteEngine('validate capability artifact',{root,isolate:false,provider:async ({role})=> role==='decomposer'?{subtasks:[]}:{summary:'noop',changes:[]} ,capabilitySelection:{id:'cap-verified',repo:artifact.repo,revision:artifact.revision,capabilityType:'research',capability:'verified research capability',evidenceLevel:'VERIFIED_FROM_README_LICENSE',license:'MIT'},capabilityArtifact:artifact,policy:{metricsPath:join(root,'metrics.jsonl'),memoryPath:join(root,'memory.jsonl')}});
+  const result=await runEliteEngine('validate capability artifact',{root,isolate:false,provider:async()=>({summary:'safe no-op capability materialization verification',changes:[]}) ,capabilitySelection:{id:'cap-verified',repo:artifact.repo,revision:artifact.revision,capabilityType:'research',capability:'verified research capability',evidenceLevel:'VERIFIED_FROM_README_LICENSE',license:'MIT'},capabilityArtifact:artifact,policy:{metricsPath:join(root,'metrics.jsonl'),memoryPath:join(root,'memory.jsonl')}});
   const materialized=join(root,'.elite','capabilities',sha256,'README.md');
   assert.equal(await readFile(materialized,'utf8'),content);
   assert.ok(['TASK_VERIFIED','VERIFIED','VERIFIED_NOOP','NOOP_VERIFIED','blocked'].includes(result.status));
