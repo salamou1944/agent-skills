@@ -300,6 +300,16 @@
       ],
       "verification": "validated OpenAPI schema + explicit host/path allowlist + generated tool schema + independent verifier",
       "status": "DISCOVERY"
+    },
+    "research.api_catalog": {
+      "class": "research",
+      "operations": [
+        "health",
+        "search",
+        "category"
+      ],
+      "verification": "catalog response + source URL + independent verifier + explicit read authorization",
+      "status": "ADAPTER_READY"
     }
   }
 }
