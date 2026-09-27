@@ -7,7 +7,7 @@ const fakeFetch=async(url,options)=>{
   return new Response(JSON.stringify({
     state:'VERIFIED',
     verification:{verifierId:'elite-independent-verifier-v1',passed:true,errors:[]},
-    evidence:[{kind:'verification',verifierId:'elite-independent-verifier-v1',passed:true}]
+    evidence:[{kind:'action',adapter:'elite',accepted:true},{kind:'verification',verifierId:'elite-independent-verifier-v1',passed:true},{kind:'independent_verification',verifierId:'elite-independent-verifier-v1',passed:true}]
   }),{status:200,headers:{'content-type':'application/json'}});
 };
 
