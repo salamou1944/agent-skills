@@ -54,6 +54,8 @@ jobs:
         run: node apps/ai-operating-operator/test-capability-selection.mjs
       - name: Run worker to Elite capability gate test
         run: node apps/ai-operating-operator/test-worker-capability-gate.mjs
+      - name: Run Elite capability contract test
+        run: node apps/easy-developer-platform/test-elite-capability-contract.mjs
       - run: node apps/ai-operating-operator/test-worker-persistence.mjs
       - run: node apps/ai-operating-operator/test-worker-cycle.mjs
       - name: Run worker retry test
