@@ -6,6 +6,8 @@ const hv=verifyApiCatalogResult({result:health,action:'health'});
 if(!hv.passed) throw new Error('health_verifier_failed');
 
 const found=await runApiCatalog({task,action:'search',category:'recommended',query:'MCP',limit:5});
+const ai=await runApiCatalog({task,action:'category',category:'ai',limit:3});
+if(ai.result.count<1) throw new Error('ai_category_contract_failed');
 const fv=verifyApiCatalogResult({result:found,action:'search'});
 console.log(JSON.stringify({found,verification:fv}));
 if(!fv.passed || found.result.count<1) throw new Error('search_contract_failed');
@@ -15,4 +17,4 @@ try{await runApiCatalog({task:{allowedActions:[]},action:'search',category:'reco
 catch(e){denied=e.message==='api_catalog_read_not_authorized';}
 if(!denied) throw new Error('authorization_gate_failed');
 
-console.log(JSON.stringify({ok:true,health:hv,search:fv,count:found.result.count}));
+console.log(JSON.stringify({ok:true,health:hv,search:fv,aiCategoryCount:ai.result.count,count:found.result.count}));
