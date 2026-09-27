@@ -67,6 +67,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "openapi-mcp-independent-verifier-v1",
       "scope": "inline OpenAPI document; explicit openapi_mcp_read authorization; HTTPS server hosts only when allowlisted"
+    },
+    "mcp.gateway": {
+      "module": "./adapters/mcp-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "mcp-independent-verifier-v1",
+      "scope": "explicit OPERATOR_MCP_URL + mcp_read authorization; safe health/list_tools/call_tool only"
     }
   }
 }
