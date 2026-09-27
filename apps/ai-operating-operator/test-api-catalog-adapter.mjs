@@ -16,3 +16,7 @@ catch(e){denied=e.message==='api_catalog_read_not_authorized';}
 if(!denied) throw new Error('authorization_gate_failed');
 
 console.log(JSON.stringify({ok:true,health:hv,search:fv,count:found.result.count}));
+
+const openapi=await runApiCatalog({task,action:'search',category:'recommended',query:'OpenAPI MCP',limit:5});
+if(openapi.result.sourceRevision!=='3afa19dd12f3cdc6bc2e297e9b6945059ada0cae') throw new Error('revision_pin_failed');
+if(!openapi.result.results.some(x=>/openapi/i.test(x.name+' '+x.description))) throw new Error('openapi_catalog_gap');
