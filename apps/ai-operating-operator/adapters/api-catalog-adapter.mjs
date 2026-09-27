@@ -96,5 +96,5 @@ export function verifyApiCatalogResult({result}){
     result.executionId && result.target &&
     result.result.sourceRevision===SOURCE_REVISION
   );
-  return {verifierId:'api-catalog-independent-verifier-v2',passed:ok,errors:ok?[]:['missing_valid_catalog_execution_or_provenance']};
+  return {verifierId:'api-catalog-independent-verifier-v1',passed:ok,errors:ok?[]:['missing_valid_catalog_execution_or_provenance']};
 }
