@@ -67,6 +67,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "openapi-mcp-independent-verifier-v1",
       "scope": "inline OpenAPI document; explicit openapi_mcp_read authorization; HTTPS server hosts only when allowlisted"
+    },
+    "research.capability_sources": {
+      "module": "./adapters/capability-sources-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "capability-sources-independent-verifier-v1",
+      "scope": "read-only pinned five-source capability corpus; explicit capability_sources_read authorization"
     }
   }
 }
