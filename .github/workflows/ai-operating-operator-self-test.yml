@@ -45,6 +45,7 @@ jobs:
       - run: node apps/ai-operating-operator/test-continuous-runtime.mjs
       - run: node apps/ai-operating-operator/test-elite-bridge.mjs
       - run: node apps/ai-operating-operator/test-elite-local-integration.mjs
+      - run: node apps/ai-operating-operator/test-continuous-elite-cycle.mjs
       - run: node apps/ai-operating-operator/test-worker-persistence.mjs
       - run: node apps/ai-operating-operator/test-worker-cycle.mjs
       - name: Run worker retry test
