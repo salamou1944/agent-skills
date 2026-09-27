@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: 20
       - run: node --check apps/ai-operating-operator/operator-core.mjs
+      - run: node --check apps/ai-operating-operator/elite-bridge.mjs
+      - run: node --check apps/ai-operating-operator/runtime.mjs
       - run: node --check apps/ai-operating-operator/server.mjs
       - run: node --check apps/ai-operating-operator/executor.mjs
       - run: node --check apps/ai-operating-operator/run-ledger.mjs
@@ -41,6 +43,7 @@ jobs:
       - run: node apps/ai-operating-operator/test-executor.mjs
       - run: node apps/ai-operating-operator/test-background-runtime.mjs
       - run: node apps/ai-operating-operator/test-continuous-runtime.mjs
+      - run: node apps/ai-operating-operator/test-elite-bridge.mjs
       - run: node apps/ai-operating-operator/test-capability-fabric.mjs
       - run: node apps/ai-operating-operator/test-cua-adapter.mjs
       - run: node apps/ai-operating-operator/test-workspace-adapter.mjs
