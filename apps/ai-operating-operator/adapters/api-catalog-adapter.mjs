@@ -28,11 +28,14 @@ async function getText(url,timeoutMs=15000){
 }
 
 function rows(markdown){
-  return markdown.split('\\n')
-    .filter(l=>l.startsWith('|') && !l.includes('|---') && !l.toLowerCase().includes('| api name |'))
-    .map(l=>l.split('|').slice(1,-1).map(x=>x.trim()))
-    .filter(a=>a.length>=2 && a[0] && a[1])
-    .map(a=>({name:a[0],description:a[1]}));
+  const out=[];
+  for(const line of markdown.split('\\n')){
+    if(!/^\\|/.test(line) || /^\\|\\s*-+/.test(line)) continue;
+    const m=line.match(/^\\|\\s*(.*?)\\s*\\|\\s*(.*?)\\s*\\|/);
+    if(!m || /^api name$/i.test(m[1])) continue;
+    out.push({name:m[1],description:m[2]});
+  }
+  return out.filter(r=>r.name && r.description);
 }
 
 function searchRows(markdown,query,limit=20){
