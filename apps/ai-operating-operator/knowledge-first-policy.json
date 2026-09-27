@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "name": "knowledge-first-reuse-gate",
+  "purpose": "Existing local assets, collected repositories, and the pinned Top Five are the primary search space before new external research.",
+  "order": [
+    "current_project",
+    "salamou1944/agent-skills",
+    "salamou1944/Salamou-31",
+    "salamou1944/AI_operating_memory",
+    "salamou1944/Project-",
+    "salamou1944/Files-",
+    "salamou1944/Easy-",
+    "salamou1944/Astra-",
+    "salamou1944/Astra",
+    "Project-/COLLECTION",
+    "Top Five pinned capability sources",
+    "new_external_research"
+  ],
+  "topFive": [
+    {
+      "id": "agent-zero",
+      "repo": "agent0ai/agent-zero",
+      "revision": "e3051fb584b1a36be2b0a0c90606f1c2c2d356ec",
+      "role": "agent/workspace engineering"
+    },
+    {
+      "id": "openclaw-api-list",
+      "repo": "cporter202/openclaw-api-list",
+      "revision": "3afa19dd12f3cdc6bc2e297e9b6945059ada0cae",
+      "role": "API discovery"
+    },
+    {
+      "id": "agentic-ai-apis",
+      "repo": "cporter202/agentic-ai-apis",
+      "revision": "64459d7bc2887f034ae5588d9bbd03e3c1d3c5a4",
+      "role": "agents/models/MCP discovery"
+    },
+    {
+      "id": "ai-engineering-from-scratch",
+      "repo": "rohitg00/ai-engineering-from-scratch",
+      "revision": "968da0791b83917c9d8a5ba197ff190fa0b24093",
+      "role": "engineering/evaluation/agent skills"
+    },
+    {
+      "id": "awesome-free-llm-apis",
+      "repo": "mnfst/awesome-free-llm-apis",
+      "revision": "167013ff729e30f3a92bb8d416062d6c34a84507",
+      "role": "free provider discovery"
+    }
+  ],
+  "rules": [
+    "Inspect current project assets first.",
+    "Inspect agent-skills next.",
+    "Inspect user project and storage repositories without mixing their state.",
+    "Inspect Project-/COLLECTION before new web or GitHub research.",
+    "Inspect the pinned Top Five next.",
+    "Prefer reuse or adaptation over greenfield implementation.",
+    "If a capability exists but is not integrated, integrate it before searching for a replacement.",
+    "Documentation is discovery evidence only; runtime availability requires authorization, reachability, operation testing, and independent verification.",
+    "External research is allowed only when the existing corpus cannot satisfy the missing capability or freshness is required.",
+    "Keep credentials, secrets, state, revenue evidence, and deployment evidence isolated by project."
+  ],
+  "decisionRecord": {
+    "requiredFields": [
+      "goal",
+      "searchedLayers",
+      "reusedAssets",
+      "missingCapability",
+      "reasonExternalSearchWasNeeded",
+      "sourceRevision",
+      "verificationStatus"
+    ],
+    "stopCondition": "Stop searching when an existing evidence-backed capability satisfies the requirement and can be integrated safely."
+  }
+}
