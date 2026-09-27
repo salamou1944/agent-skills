@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, dirname } from 'node:path';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
+import crypto from 'node:crypto';
 import { runEliteTask } from './elite-harness.mjs';
 import { ask } from './autonomous-coder.mjs';
 import { inspectRepository, discoverTests, scanImports } from './elite-intelligence.mjs';
@@ -158,12 +159,43 @@ export async function scanWorkspaceSecrets(root) {
   return Object.freeze([...new Set(findings)]);
 }
 
+async function materializeCapabilityArtifact(root, artifact) {
+  if (!artifact) return null;
+  if (!artifact.repo || !artifact.revision || !artifact.file || typeof artifact.content !== 'string' || !/^[0-9a-f]{64}$/.test(String(artifact.sha256 || ''))) {
+    const error = new Error('invalid_capability_artifact');
+    error.code = 'invalid_capability_artifact';
+    throw error;
+  }
+  if (!/^[0-9a-f]{40}$/.test(artifact.revision) || !/^[A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+$/.test(artifact.repo)) {
+    const error = new Error('invalid_capability_artifact_provenance');
+    error.code = 'invalid_capability_artifact_provenance';
+    throw error;
+  }
+  const actualSha = crypto.createHash('sha256').update(artifact.content, 'utf8').digest('hex');
+  if (actualSha !== artifact.sha256) {
+    const error = new Error('capability_artifact_checksum_mismatch');
+    error.code = 'capability_artifact_checksum_mismatch';
+    throw error;
+  }
+  const safeFile = String(artifact.file).replace(/^\\/+/, '');
+  if (!safeFile || safeFile.includes('..') || safeFile.startsWith('/')) {
+    const error = new Error('capability_artifact_path_invalid');
+    error.code = 'capability_artifact_path_invalid';
+    throw error;
+  }
+  const materialized = join(root, '.elite', 'capabilities', artifact.sha256, safeFile);
+  await mkdir(dirname(materialized), { recursive: true });
+  await writeFile(materialized, artifact.content, 'utf8');
+  return { ...artifact, materializedPath: materialized.slice(root.length + 1) };
+}
+
 async function runCore(goal, { root, policy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact }) {
+  const materializedCapabilityArtifact = await materializeCapabilityArtifact(root, capabilityArtifact);
   const workspaceSecrets = await scanWorkspaceSecrets(root);
   if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
   const capabilityGate = validateCapabilitySelection(capabilitySelection);
   if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }
-  const activeProvider = provider || makeProvider(env, capabilityGate.selection, capabilityArtifact);
+  const activeProvider = provider || makeProvider(env, capabilityGate.selection, materializedCapabilityArtifact);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
   if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
@@ -209,7 +241,7 @@ export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, 
   const status = await workspaceStatus(root);
   if (!status.clean) { const error = new Error('workspace_dirty_refusing_isolated_execution'); error.code = 'workspace_dirty'; throw error; }
   return withIsolatedWorktree(root, `task-${Date.now()}`, async (worktree, { promote }) => {
-    const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection });
+    const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact });
     if (result.status === 'TASK_VERIFIED' && result.changedFiles.length) await promote(result.changedFiles);
     return result;
   });
