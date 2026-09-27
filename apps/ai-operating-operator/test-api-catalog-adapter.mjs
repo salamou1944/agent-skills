@@ -6,7 +6,8 @@ const hv=verifyApiCatalogResult({result:health,action:'health'});
 if(!hv.passed) throw new Error('health_verifier_failed');
 
 const found=await runApiCatalog({task,action:'search',category:'recommended',query:'MCP',limit:5});
-const fv=verifyApiCatalogResult({result:found,action:'search'});\nconsole.log(JSON.stringify({found,verification:fv}));
+const fv=verifyApiCatalogResult({result:found,action:'search'});
+console.log(JSON.stringify({found,verification:fv}));
 if(!fv.passed || found.result.count<1) throw new Error('search_contract_failed');
 
 let denied=false;
