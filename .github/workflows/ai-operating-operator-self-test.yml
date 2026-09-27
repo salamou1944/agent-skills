@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'apps/ai-operating-operator/**'
+      - '.github/workflows/ai-operating-operator-self-test.yml'
 jobs:
   test:
     runs-on: ubuntu-latest
