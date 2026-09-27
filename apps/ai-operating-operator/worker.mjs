@@ -36,7 +36,7 @@ export function classifyFailure(result){
   return null;
 }
 
-export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'}},executeTaskImpl=async (task,options)=>task.executionTarget==='elite'?dispatchToElite(task):executeTask(task,options),sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'}},selectCapability=selectVerifiedCapability,executeTaskImpl=async (task,options)=>task.executionTarget==='elite'?dispatchToElite(task):executeTask(task,options),sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
   const selected=await selectNextTask(queueDir);
   if(!selected)return {selected:null,state:'IDLE'};
   const {name,task}=selected;
@@ -45,7 +45,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
   try{
     run=await createRun(task);
     await updateRun(run.runId,{state:'RUNNING',attempt:(run.attempt||0)+1});
-    const prepared=await prepareTaskForExecution(task);
+    const prepared=await prepareTaskForExecution(task,{selectCapability});
     if(!prepared.ok){
       const result={taskId:task.taskId,state:prepared.state,evidence:[{kind:'capability_selection',selection:prepared.selection}],completion:{ok:false,errors:['capability_selection_gate']},failure:{class:'external_dependency',message:'no verified capability candidate passed selection gate'}};
       await fs.writeFile(path.join(resultDir,name),JSON.stringify({...result,runId:run.runId},null,2));
