@@ -289,6 +289,14 @@
       ],
       "verification": "workspace manifest/status + independent verifier + explicit workspace root",
       "status": "ADAPTER_READY"
+    },
+    "mcp.openapi.inspect": {
+      "class": "integration",
+      "operations": [
+        "inspect"
+      ],
+      "verification": "OpenAPI schema response + independent verifier + explicit api_schema_read authorization",
+      "status": "ADAPTER_READY"
     }
   }
 }
