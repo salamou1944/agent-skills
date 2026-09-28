@@ -88,6 +88,7 @@ export async function runEliteTask(goal, deps = {}) {
   const test = deps.test || (async () => ({ ok: true, summary: 'No test runner configured' }));
   const review = deps.review || (async () => ({ ok: true, summary: 'No reviewer configured' }));
   const verify = deps.verify || (async () => ({ ok: true, summary: 'No verifier configured' }));
+  const invokeCapability = deps.invokeCapability;
   if (!String(goal || '').trim()) throw new EliteHarnessError('goal_required', 'A non-empty goal is required');
   if (typeof provider !== 'function') throw new EliteHarnessError('provider_required', 'An inference provider is required');
   const step = async (phase, payload, fn) => { if (++state.steps > policy.maxSteps) throw new EliteHarnessError('step_budget_exhausted', 'Maximum task steps exceeded'); if (Date.now() - started > policy.maxWallMs) throw new EliteHarnessError('wall_clock_budget_exhausted', 'Maximum task duration exceeded'); state.phase = phase; await journal.append(phase, payload); return fn(); };
@@ -129,7 +130,7 @@ export async function runEliteTask(goal, deps = {}) {
         const reproduce = stageEvidence('reproduce', { failure: classification }, [rootCause.evidenceId]);
         state.stageEvidence.push(reproduce, rootCause);
         await journal.append('repair', { repair: state.repairs, error: error.message, code: error.code || 'unknown', classification });
-        plan = normalizePlan(await provider({ role: 'repair', goal, failedPlan: plan, failure: buildRepairContext({ goal, failure, previousPlan: plan, inspectContext: context, attempt: state.repairs }), context }));
+        plan = normalizePlan(await provider({ role: 'repair', goal, failedPlan: plan, failure: buildRepairContext({ goal, failure, previousPlan: plan, inspectContext: context, attempt: state.repairs }), context, capabilityInvocation }));
         state.planHash = hash(JSON.stringify(plan));
       }
     }
