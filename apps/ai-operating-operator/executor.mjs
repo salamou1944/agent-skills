@@ -21,6 +21,7 @@ async function loadVerifier(id){
   if(id==='openapi-mcp-independent-verifier-v1')return import('./adapters/openapi-mcp-adapter.mjs');
   if(id==='mcp-independent-verifier-v1')return import('./adapters/mcp-adapter.mjs');
   if(id==='capability-sources-independent-verifier-v1')return import('./adapters/capability-sources-adapter.mjs');
+  if(id==='capability-artifact-independent-verifier-v1')return import('./adapters/capability-artifact-adapter.mjs');
   throw new Error('verifier_not_registered');
 }
 
@@ -69,6 +70,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='mcp.gateway')result=await module.runMcp(inputData,adapterEnv);
   else if(capability==='research.capability_sources')result=await module.runCapabilitySources(inputData);
   else if(capability==='platform.cua.driver')result=await module.runCua(inputData,adapterEnv);
+  else if(capability==='capability.artifact')result=await module.runCapabilityArtifact(inputData);
   else throw new Error('adapter_execution_not_implemented');
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code,capabilityInvocation:invocation?{mode:invocation.mode,capabilityId:task.capabilitySelection.id,artifactSha256:task.capabilityArtifact.sha256}:null});
   const verifier=verifierOverrides[capability]||await loadVerifier(entry.independentVerifier);
@@ -84,6 +86,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='mcp.gateway')verification=verifier.verifyMcpResult({result,action:inputData.action||'health'});
   else if(capability==='research.capability_sources')verification=verifier.verifyCapabilitySourcesResult({result});
   else if(capability==='platform.cua.driver')verification=verifier.verifyCuaResult({result});
+  else if(capability==='capability.artifact')verification=verifier.verifyCapabilityArtifactResult({result});
   else verification=verifier.verifyGitHubResult({result});
   const verificationEvidence=evidence('verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
   const independentEvidence=evidence('independent_verification',{verifierId:verification.verifierId,passed:verification.passed,errors:verification.errors});
