@@ -14,9 +14,10 @@ export function evaluateCapabilityCandidate(candidate,{compatibility=null,allowe
   if(BLOCKED_SECURITY.test(String(candidate?.securityNotes||'')))reasons.push('security_review_required');
   const invocation=candidate?.invocation||null;
   if(invocation){
-    if(invocation.mode!=='prompt')reasons.push('invocation_mode_not_allowed');
-    if(invocation.adapter!=='ai.local.ollama')reasons.push('invocation_adapter_not_allowed');
-    if(invocation.action!=='chat')reasons.push('invocation_action_not_allowed');
+    if(invocation.mode!=='artifact_read')reasons.push('invocation_mode_not_allowed');
+    if(invocation.adapter!=='capability.artifact')reasons.push('invocation_adapter_not_allowed');
+    if(invocation.verifier!=='capability-artifact-independent-verifier-v1')reasons.push('invocation_verifier_not_allowed');
+    if(invocation.contractVersion!=='capability-invocation-v1')reasons.push('invocation_contract_version_invalid');
   }
   return {eligible:reasons.length===0,reasons};
 }
