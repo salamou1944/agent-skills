@@ -30,7 +30,7 @@ console.log('executor tests: PASS');
 
 
 const artifactContent='verified skill instructions: summarize the task safely';
-const artifactSha256='3b2a4b1e6f2c6b5f8d6f8f6d9d8d8b4f2e5f4b1f5a3c7d8e9f0a1b2c3d4e5f6a7';
+const artifactSha256='aeab9ae0a19f44817d7c15d2ff2f9c0fb1dec245b752e1bb722365f59b4b6d02';
 const artifactRevision='b'.repeat(40);
 const capabilityArtifact={repo:'example/superpowers',revision:artifactRevision,file:'skills/systematic-debugging/SKILL.md',sha256:artifactSha256,bytes:artifactContent.length,content:artifactContent};
 const capabilitySelection={id:'cap-skill',repo:capabilityArtifact.repo,revision:artifactRevision,capabilityType:'skill',capability:'safe verified skill',evidenceLevel:'VERIFIED_FROM_SOURCE',license:'MIT',artifact:capabilityArtifact};
