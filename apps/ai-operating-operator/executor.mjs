@@ -13,8 +13,9 @@ function validateCapabilityArtifactInvocation(invocation,artifact,registry){
   const adapter=registry.adapters?.[invocation.adapter];
   if(!adapter||adapter.status!=='ADAPTER_READY') return {ok:false,state:'BLOCKED_PERMISSION',reason:'capability_invocation_adapter_not_registered'};
   if(invocation.adapter!=='ai.local.ollama'||invocation.mode!=='prompt') return {ok:false,state:'REVIEW_REQUIRED',reason:'capability_invocation_mode_not_allowlisted'};
-  if(!Array.isArray(invocation.allowedActions)||!invocation.allowedActions.includes('chat')) return {ok:false,state:'BLOCKED_PERMISSION',reason:'capability_invocation_action_not_authorized'};
-  return {ok:true,invocation:{adapter:invocation.adapter,mode:invocation.mode,allowedActions:['chat'],artifactSha256:artifact.sha256,sourceRevision:artifact.revision}};
+  const chatAllowed=invocation.action==='chat'||(Array.isArray(invocation.allowedActions)&&invocation.allowedActions.includes('chat'));
+  if(!chatAllowed) return {ok:false,state:'BLOCKED_PERMISSION',reason:'capability_invocation_action_not_authorized'};
+  return {ok:true,invocation:{adapter:invocation.adapter,mode:invocation.mode,action:'chat',contractVersion:invocation.contractVersion||'capability-invocation-v1',artifactSha256:artifact.sha256,sourceRevision:artifact.revision}};
 }
 
 async function loadVerifier(id){
