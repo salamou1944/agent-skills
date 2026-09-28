@@ -5,7 +5,7 @@ import {promisify} from 'node:util';
 import {mkdtemp,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {dispatchToElite} from './elite-bridge.mjs';
+import {dispatchToElite} from '../ai-operating-operator/elite-bridge.mjs';
 
 const execFileAsync=promisify(execFile);
 const root=await mkdtemp(join(tmpdir(),'elite-invocation-feedback-'));
