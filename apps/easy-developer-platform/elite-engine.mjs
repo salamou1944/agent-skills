@@ -33,7 +33,7 @@ function validateCapabilitySelection(selection) {
     id: selection.id, repo: selection.repo, revision: selection.revision,
     capabilityType: selection.capabilityType || null, capability: selection.capability || null,
     evidenceLevel: selection.evidenceLevel, license: selection.license,
-    compatibility: selection.compatibility || null, dedupeKey: selection.dedupeKey || null
+    compatibility: selection.compatibility || null, dedupeKey: selection.dedupeKey || null, invocation: selection.invocation || null
   }};
 }
 async function git(root, args, timeout = 30_000) { try { const { stdout, stderr } = await execFileAsync('git', args, { cwd: root, timeout, maxBuffer: 4_000_000 }); return { ok: true, stdout: trim(stdout), stderr: trim(stderr) }; } catch (error) { return { ok: false, stdout: trim(error.stdout), stderr: trim(error.stderr || error.message) }; } }
