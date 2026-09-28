@@ -13,13 +13,15 @@ const artifact={
 };
 
 const accepted=validateCapabilityArtifactInvocation(
-  {adapter:'ai.local.ollama',mode:'prompt',allowedActions:['chat']},
+  {adapter:'ai.local.ollama',mode:'prompt',action:'chat',contractVersion:'capability-invocation-v1'},
   artifact,
   registry
 );
 assert.equal(accepted.ok,true);
 assert.equal(accepted.invocation.adapter,'ai.local.ollama');
 assert.equal(accepted.invocation.mode,'prompt');
+assert.equal(accepted.invocation.action,'chat');
+assert.equal(accepted.invocation.contractVersion,'capability-invocation-v1');
 assert.equal(accepted.invocation.artifactSha256,artifact.sha256);
 assert.equal(accepted.invocation.sourceRevision,artifact.revision);
 
