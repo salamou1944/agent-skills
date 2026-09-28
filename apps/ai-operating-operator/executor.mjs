@@ -3,6 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createTask,evidence,verifyCompletion} from './operator-core.mjs';
 import {buildExecutionPlan} from './skill-router.mjs';
+import {resolveCapabilityInvocation} from './capability-invocation.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 async function loadJson(name){return JSON.parse(await fs.readFile(path.join(ROOT,name),'utf8'));}
@@ -27,6 +28,11 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   const task=createTask(input);
   const registry=await loadJson('adapter-registry.json');
   const plan=await buildExecutionPlan(task,{capabilities,adapters:registry.adapters});
+  if(task.capabilitySelection){
+    const invocation=await resolveCapabilityInvocation(task.capabilitySelection,{registry});
+    if(!invocation.ok)return {taskId:task.taskId,state:invocation.state||'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:invocation.reason,adapter:invocation.adapter||null})]};
+    task.capabilityInvocation=invocation.binding;
+  }
   if(!plan.executionAllowed){const blocked=plan.capabilities.find(x=>x.status!=='AVAILABLE');return {taskId:task.taskId,state:blocked?.status||'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'execution_gate'})]};}
   if(plan.executableAdapters.length!==1)return {taskId:task.taskId,state:'REVIEW_REQUIRED',plan,evidence:[evidence('action',{accepted:false,reason:'single_adapter_boundary'})]};
   const capability=plan.executableAdapters[0];
