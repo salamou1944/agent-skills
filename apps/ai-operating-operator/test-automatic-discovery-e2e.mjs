@@ -26,7 +26,8 @@ const capabilities=[{
   license:'MIT',
   securityNotes:'fixture only',
   compatibility:'node',
-  dedupeKey:'github:example/new-capability-source:automatic-discovery-fixture'
+  dedupeKey:'github:example/new-capability-source:automatic-discovery-fixture',
+  artifact:{file:'src/capability.mjs',sha256:'a'.repeat(64),bytes:42,artifactStatus:'VERIFIED_FETCH',sourceRevision:'0123456789abcdef0123456789abcdef01234567'}
 }];
 
 const syncCollections=async()=>({
@@ -38,14 +39,14 @@ const syncCollections=async()=>({
     revision:'0123456789abcdef0123456789abcdef01234567',
     sha256:'fixture-sha',
     bytes:48,
-    collectionRevision:'49c086937245a6c74f3548186aeafb52bbbd476a',
-    discoveredFrom:{file:'COLLECTION/INDEX.md',collectionRevision:'49c086937245a6c74f3548186aeafb52bbbd476a'},
+    collectionRevision:'1f31f0124ec8abc2d7fd6fce2b3eabdf4085c8a4',
+    discoveredFrom:{file:'COLLECTION/INDEX.md',collectionRevision:'1f31f0124ec8abc2d7fd6fce2b3eabdf4085c8a4'},
     capturedAt:new Date().toISOString(),
     content:'# New capability source\nAutomatic discovery fixture.\n'
   }],
   capabilities,
   failures:[],
-  collectionRevision:'49c086937245a6c74f3548186aeafb52bbbd476a'
+  collectionRevision:'1f31f0124ec8abc2d7fd6fce2b3eabdf4085c8a4'
 });
 
 const dir='/tmp/automatic-discovery-e2e';
@@ -59,6 +60,8 @@ assert.equal(found.length,1);
 assert.equal(found[0].id,'cap-auto-001');
 assert.equal(found[0].repo,'example/new-capability-source');
 assert.equal(found[0].revision,'0123456789abcdef0123456789abcdef01234567');
+assert.equal(found[0].artifact.file,'src/capability.mjs');
+assert.equal(found[0].artifact.sha256,'a'.repeat(64));
 
 console.log(JSON.stringify({
   ok:true,
