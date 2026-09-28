@@ -189,7 +189,7 @@ export async function materializeCapabilityArtifact(root, artifact) {
   return { ...artifact, materializedPath: materialized.slice(root.length + 1) };
 }
 
-async function runCore(goal, { root, policy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact }) {
+async function runCore(goal, { root, policy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact, invokeCapability }) {
   const materializedCapabilityArtifact = await materializeCapabilityArtifact(root, capabilityArtifact);
   const workspaceSecrets = await scanWorkspaceSecrets(root);
   if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
@@ -214,7 +214,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   const project = projectScope(policy.project || 'default');
   if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection, capabilityArtifact: materializedCapabilityArtifact || null };
   const counterfactual = inspectResult.counterfactual;
-  const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
+  const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }), invokeCapability, capabilitySelection: capabilityGate.selection, capabilityArtifact: materializedCapabilityArtifact });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
   const taskVerified = ['TASK_VERIFIED', 'VERIFIED', 'VERIFIED_NOOP', 'NOOP_VERIFIED'].includes(result.status);
   const patch = Array.isArray(result.patch) ? result.patch : Object.fromEntries((result.changedFiles || []).map(path => [path, null]));
@@ -234,14 +234,14 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   return result;
 }
 
-export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath, provider, isolate = true, capabilitySelection = null, capabilityArtifact = null } = {}) {
+export async function runEliteEngine(goal, { root = process.cwd(), policy = {}, env = process.env, journalPath, provider, isolate = true, capabilitySelection = null, capabilityArtifact = null, invokeCapability = null } = {}) {
   const metrics = createMetrics();
   const effectivePolicy = { ...policy, metricsPath: policy.metricsPath || join(root, '.elite', 'metrics.jsonl'), memoryPath: policy.memoryPath || join(root, '.elite', 'memory.jsonl') };
-  if (!isolate) return runCore(goal, { root, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact });
+  if (!isolate) return runCore(goal, { root, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact, invokeCapability });
   const status = await workspaceStatus(root);
   if (!status.clean) { const error = new Error('workspace_dirty_refusing_isolated_execution'); error.code = 'workspace_dirty'; throw error; }
   return withIsolatedWorktree(root, `task-${Date.now()}`, async (worktree, { promote }) => {
-    const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact });
+    const result = await runCore(goal, { root: worktree, policy: effectivePolicy, env, journalPath, provider, metrics, capabilitySelection, capabilityArtifact, invokeCapability });
     if (result.status === 'TASK_VERIFIED' && result.changedFiles.length) await promote(result.changedFiles);
     return result;
   });
