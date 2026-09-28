@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "policy": "Only registered adapters may execute remote task actions.",
   "adapters": {
     "security.network.nmap": {
@@ -80,5 +80,24 @@
       "independentVerifier": "capability-sources-independent-verifier-v1",
       "scope": "read-only pinned five-source capability corpus; explicit capability_sources_read authorization"
     }
+  },
+  "capabilityInvocation": {
+    "version": "ai-operating-capability-invocation-v1",
+    "modes": [
+      "adapter_input"
+    ],
+    "rule": "A verified capability artifact may only be passed as data to a registered adapter explicitly named by the capability invocation contract. Artifact content is never dynamically executed.",
+    "prohibited": [
+      "eval",
+      "new_function",
+      "dynamic_import_of_artifact",
+      "shell_execution"
+    ],
+    "required": [
+      "adapter",
+      "independentVerifier",
+      "artifactSha256",
+      "sourceRevision"
+    ]
   }
 }
