@@ -5,7 +5,7 @@ import {validateCapabilityInvocation,buildCapabilityInvocation} from './capabili
 const content='verified capability fixture';
 const sha256=crypto.createHash('sha256').update(content,'utf8').digest('hex');
 const revision='0123456789abcdef0123456789abcdef01234567';
-const selection={capabilityType:'skill',artifact:{sha256},invocation:{mode:'prompt',adapter:'ai.local.ollama',action:'chat',contractVersion:'capability-invocation-v1'}};
+const selection={repo:'example/repo',revision,capabilityType:'skill',artifact:{sha256},invocation:{mode:'prompt',adapter:'ai.local.ollama',action:'chat',contractVersion:'capability-invocation-v1'}};
 assert.equal(validateCapabilityInvocation(selection).ok,true);
 const invocation=buildCapabilityInvocation(selection,{repo:'example/repo',revision,file:'SKILL.md',sha256,bytes:content.length,content});
 assert.equal(invocation.ok,true);
