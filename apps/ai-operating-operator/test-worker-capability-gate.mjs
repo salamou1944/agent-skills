@@ -12,7 +12,7 @@ await fs.mkdir(results,{recursive:true});
 process.env.OPERATOR_RUN_LEDGER=ledger;
 
 const {processNextTask}=await import('./worker.mjs');
-const selected={id:'cap-verified',repo:'example/research',revision:'b'.repeat(40),capabilityType:'research',capability:'verified research capability',evidenceLevel:'VERIFIED_FROM_README_LICENSE',license:'MIT',compatibility:'node',dedupeKey:'example:research'};
+const selected={id:'cap-verified',repo:'example/research',revision:'b'.repeat(40),capabilityType:'research',capability:'verified research capability',evidenceLevel:'VERIFIED_FROM_README_LICENSE',license:'MIT',compatibility:'node',dedupeKey:'example:research',artifact:{file:'src/capability.mjs'}};
 await fs.writeFile(path.join(queue,'elite.json'),JSON.stringify({
   taskId:'elite-gated',idempotencyKey:'elite-gated',project:'test',goal:'safe verified task',
   priority:1,executionTarget:'elite',capabilityQuery:'verified research capability',
@@ -23,7 +23,7 @@ let executedTask=null;
 const result=await processNextTask({
   queueDir:queue,resultDir:results,
   selectCapability:async()=>({decision:'ADAPT_AND_VERIFY',selected,evidence:{selectedId:selected.id,sourceRevision:selected.revision,verificationStatus:selected.evidenceLevel}}),
-  hydrateArtifact:async selection=>({ok:true,artifact:{repo:selection.repo,revision:selection.revision,file:'README.md',url:'https://raw.githubusercontent.com/example/research/'+selection.revision+'/README.md',sha256:'a'.repeat(64),bytes:12,content:'verified capability artifact'}}),
+  hydrateArtifact:async (selection,options)=>{assert.equal(options.file,'src/capability.mjs');return {ok:true,artifact:{repo:selection.repo,revision:selection.revision,file:options.file,url:'https://raw.githubusercontent.com/example/research/'+selection.revision+'/'+options.file,sha256:'a'.repeat(64),bytes:12,content:'verified capability artifact'}};},
   executeTaskImpl:async task=>{
     executedTask=task;
     return {state:'VERIFIED',completion:{ok:true},evidence:[
@@ -35,7 +35,7 @@ const result=await processNextTask({
 });
 assert.equal(result.state,'VERIFIED');
 assert.equal(executedTask.capabilitySelection.id,'cap-verified');
-assert.equal(executedTask.capabilityArtifact.file,'README.md');
+assert.equal(executedTask.capabilityArtifact.file,'src/capability.mjs');
 assert.equal(executedTask.capabilityArtifact.content,'verified capability artifact');
 assert.equal(executedTask.sourceRevision,'b'.repeat(40));
 assert.equal(executedTask.requestedCapabilities.includes('research'),true);
