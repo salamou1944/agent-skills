@@ -50,7 +50,7 @@ const inventoryFetch=async(url)=>{
 const inventory=await fetchCollectionCapabilityInventory({fetchImpl:inventoryFetch});
 assert.equal(inventory.length,1);
 assert.equal(inventory[0].capabilityType,'tool');
-assert.equal(inventory[0].collectionRevision,'49c086937245a6c74f3548186aeafb52bbbd476a');
+assert.equal(inventory[0].collectionRevision,'7dca221b4bc64082184e3508beca411b730162d6');
 console.log(JSON.stringify({ok:true,automaticDiscovery:'VERIFIED_TEST',discovered:repos.length,newSource:discoveredNew.repo,revision:doc.revision,inventoryOk:true}));
 
 // e2e-verification-marker: automatic-discovery
