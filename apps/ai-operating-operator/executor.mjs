@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {createTask,evidence,verifyCompletion} from './operator-core.mjs';
 import {buildExecutionPlan} from './skill-router.mjs';
@@ -23,7 +24,7 @@ async function loadVerifier(id){
   throw new Error('verifier_not_registered');
 }
 
-export async function executeTask(input,{capabilities={},adapterInputs={},runnerOverrides={},adapterEnv=process.env}={}){
+export async function executeTask(input,{capabilities={},adapterInputs={},runnerOverrides={},adapterEnv=process.env,adapterOverrides={},verifierOverrides={}}={}){
   const task=createTask(input);
   const registry=await loadJson('adapter-registry.json');
   const plan=await buildExecutionPlan(task,{capabilities,adapters:registry.adapters});
@@ -34,9 +35,13 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   if(invocation){
     if(!task.capabilitySelection?.id||!task.capabilityArtifact?.content||!task.capabilityArtifact?.sha256)return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_artifact_missing'})]};
     if(!(task.allowedActions||[]).includes('capability_invoke'))return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_not_authorized'})]};
+    if(!/^[0-9a-f]{40}$/.test(String(task.capabilitySelection.revision||'')))return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_revision_not_pinned'})]};
+    const actualSha=crypto.createHash('sha256').update(task.capabilityArtifact.content,'utf8').digest('hex');
+    if(actualSha!==String(task.capabilityArtifact.sha256||'').toLowerCase())return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_checksum_mismatch'})]};
     if(invocation.mode!=='prompt'||invocation.adapter!=='ai.local.ollama'||invocation.action!=='chat'||capability!==invocation.adapter)return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_contract_rejected'})]};
   }
-  const {entry,module}=await loadAdapter(capability);
+  const loaded=adapterOverrides[capability]||await loadAdapter(capability);
+  const {entry,module}=loaded;
   const inputData={...(adapterInputs[capability]||{}),task};
   if(invocation){
     inputData.action='chat';
@@ -66,7 +71,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='platform.cua.driver')result=await module.runCua(inputData,adapterEnv);
   else throw new Error('adapter_execution_not_implemented');
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code,capabilityInvocation:invocation?{mode:invocation.mode,capabilityId:task.capabilitySelection.id,artifactSha256:task.capabilityArtifact.sha256}:null});
-  const verifier=await loadVerifier(entry.independentVerifier);
+  const verifier=verifierOverrides[capability]||await loadVerifier(entry.independentVerifier);
   let verification;
   if(capability==='security.network.nmap')verification=verifier.verifyNmapResult({result,target:inputData.target});
   else if(capability==='platform.http')verification=verifier.verifyHttpResult({result,expectedStatus:inputData.expectedStatus});
