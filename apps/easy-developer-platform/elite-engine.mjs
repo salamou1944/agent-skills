@@ -17,6 +17,7 @@ import { withIsolatedWorktree, workspaceStatus } from './elite-worktree.mjs';
 import { buildEngineeringDNA, predictImpact, recordAttempt, readAttemptLedger, rejectRepeatedStrategy, createProof, shadowDelta } from './elite-dna.mjs';
 import { generateCounterfactuals, chooseCounterfactual, immuneGate, adversarialProbe, appendEvolution, evolutionEvent, projectScope, crossProjectSignal, stopAndExplain, integritySummary } from './elite-unique-intelligence.mjs';
 import { validateEvidence, fingerprintPatch } from './independent-evidence-gate.mjs';
+import { invokeVerifiedCapability, verifyCapabilityInvocation } from './capability-invocation.mjs';
 
 const execFileAsync = promisify(execFile);
 function trim(value, max = 8000) { return String(value ?? '').slice(0, max); }
@@ -52,13 +53,13 @@ async function inspect({ root, goal, maxContextBytes, decomposer }) {
   return { ...base, context: JSON.stringify({ base: JSON.parse(base.context), imports, decomposition, engineeringDNA: dna, counterfactuals, selectedCounterfactual: counterfactual }).slice(0, maxContextBytes), dna, counterfactuals, counterfactual };
 }
 
-function makeProvider(env, capabilitySelection, capabilityArtifact) {
+function makeProvider(env, capabilitySelection, capabilityArtifact, capabilityInvocation) {
   return async ({ role, goal, context, failedPlan, failure, constraints }) => {
     if (role === 'decomposer') {
-      const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nVerified capability selected for this task: ${JSON.stringify(capabilitySelection)}\nPinned capability artifact: ${JSON.stringify(capabilityArtifact)}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
+      const prompt = `You are Elite's task decomposition specialist. Break the goal into the smallest independently verifiable engineering subtasks, with explicit dependencies. Goal: ${goal}\nVerified capability selected for this task: ${JSON.stringify(capabilitySelection)}\nPinned capability artifact: ${JSON.stringify(capabilityArtifact)}\nVerified capability invocation context: ${JSON.stringify(capabilityInvocation)}\nRepository context: ${context}\nReturn JSON only: {"subtasks":[{"id":"task-1","goal":"...","dependsOn":[]}]}.`;
       return ask(prompt, env);
     }
-    const capabilityLine = capabilitySelection ? `\nVerified capability contract (must be used only at the pinned revision): ${JSON.stringify(capabilitySelection)}\nPinned capability artifact: ${JSON.stringify(capabilityArtifact)}` : '';
+    const capabilityLine = capabilitySelection ? `\nVerified capability contract (must be used only at the pinned revision): ${JSON.stringify(capabilitySelection)}\nPinned capability artifact: ${JSON.stringify(capabilityArtifact)}\nVerified capability invocation context: ${JSON.stringify(capabilityInvocation)}` : '';
     const prompt = role === 'repair'
       ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}${capabilityLine}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
       : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.${capabilityLine}`;
@@ -195,7 +196,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   if (workspaceSecrets.length) { const error = new Error(`workspace_secret_detected:${workspaceSecrets.join(',')}`); error.code = 'workspace_secret_detected'; throw error; }
   const capabilityGate = validateCapabilitySelection(capabilitySelection);
   if (!capabilityGate.ok) { const error = new Error(`invalid_capability_selection:${capabilityGate.reasons.join(',')}`); error.code = 'invalid_capability_selection'; throw error; }
-  const activeProvider = provider || makeProvider(env, capabilityGate.selection, materializedCapabilityArtifact);
+  let capabilityInvocation = null;\n  if (capabilityGate.selection && materializedCapabilityArtifact) {\n    const invocation = invokeVerifiedCapability(capabilityGate.selection, materializedCapabilityArtifact);\n    if (!invocation.ok) { const error = new Error(`capability_invocation_blocked:${invocation.reason}`); error.code = invocation.reason; throw error; }\n    const invocationVerification = verifyCapabilityInvocation(invocation);\n    if (!invocationVerification.passed) { const error = new Error('capability_invocation_verification_failed'); error.code = 'capability_invocation_verification_failed'; throw error; }\n    capabilityInvocation = { ...invocation.invocation, verification: invocationVerification };\n  }\n  const activeProvider = provider || makeProvider(env, capabilityGate.selection, materializedCapabilityArtifact, capabilityInvocation);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
   if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
@@ -212,7 +213,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   };
   const prediction = predictImpact({ dna: inspectResult.dna, changedFiles: [] });
   const project = projectScope(policy.project || 'default');
-  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection, capabilityArtifact: materializedCapabilityArtifact || null };
+  if (capabilityGate.selection) policy = { ...policy, capabilitySelection: capabilityGate.selection, capabilityArtifact: materializedCapabilityArtifact || null, capabilityInvocation };
   const counterfactual = inspectResult.counterfactual;
   const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
@@ -227,7 +228,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   if (policy.evolutionPath) await appendEvolution(policy.evolutionPath, evolution);
   const crossProject = crossProjectSignal({ project: policy.project || 'default', kind: 'verified_task', value: result.taskId || goal });
   const integrity = integritySummary({ counterfactual, immune: { signature: null }, adversarial: result.evidence?.find?.(x => x?.adversarial)?.adversarial || null, evolution, crossProject });
-  result.evidence = [...(result.evidence || []), { engineeringProof: proof }, { eliteIntegrity: integrity, completion, projectScope: project, crossProject }];
+  result.evidence = [...(result.evidence || []), ...(capabilityInvocation ? [{ capabilityInvocation }] : []), { engineeringProof: proof }, { eliteIntegrity: integrity, completion, projectScope: project, crossProject }];
   if (!completion.ok) result.status = 'blocked';
   metrics.finish(result.status); await persistMetric(policy.metricsPath, metrics.metrics);
   if (policy.memoryPath) await remember(policy.memoryPath, { goal, status: result.status, taskId: result.taskId, steps: result.steps, repairs: result.repairs, evidence: result.evidence, dnaHash: inspectResult.dna.dnaHash, proofHash: proof.proofHash });
