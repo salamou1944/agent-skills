@@ -104,7 +104,7 @@ export async function syncCollectionSources({fetchImpl=fetch,limit=DEFAULT_LIMIT
     catch(error){failures.push({repo:repo.repo,error:String(error?.message||error)});}
   }
   let capabilities=[];
-  try{capabilities=await fetchCollectionCapabilityInventory({fetchImpl});}
+  try{capabilities=await hydrateCapabilityInventoryArtifacts(await fetchCollectionCapabilityInventory({fetchImpl}),{fetchImpl});}
   catch(error){failures.push({repo:COLLECTION_REPO+'/capability-inventory',error:String(error?.message||error)});}
   return {discoveredCount:discovered.length,documents,capabilities,failures,collectionRevision:COLLECTION_REVISION};
 }
