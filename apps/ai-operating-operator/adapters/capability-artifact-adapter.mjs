@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 export async function runCapabilityArtifact(input={}){
-  const task=input.task||{}, artifact=task.capabilityArtifact, contract=task.capabilityInvocation;
+  const task=input.task||{}, artifact=task.capabilityArtifact, contract=task.capabilityInvocation||task.capabilityArtifactInvocation;
   if(!artifact||!contract) throw new Error('capability_invocation_contract_required');
   if(contract.mode!=='artifact_read') throw new Error('capability_invocation_mode_not_allowed');
   if(!artifact.repo||!artifact.revision||!artifact.file||typeof artifact.content!=='string') throw new Error('capability_artifact_invalid');
