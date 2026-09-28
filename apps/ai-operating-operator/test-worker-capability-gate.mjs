@@ -12,7 +12,7 @@ await fs.mkdir(results,{recursive:true});
 process.env.OPERATOR_RUN_LEDGER=ledger;
 
 const {processNextTask}=await import('./worker.mjs');
-const selected={id:'cap-verified',repo:'example/research',revision:'b'.repeat(40),capabilityType:'research',capability:'verified research capability',evidenceLevel:'VERIFIED_FROM_README_LICENSE',license:'MIT',compatibility:'node',dedupeKey:'example:research',artifact:{file:'src/capability.mjs'}};
+const selected={id:'cap-verified',repo:'example/research',revision:'b'.repeat(40),capabilityType:'research',capability:'verified research capability',evidenceLevel:'VERIFIED_FROM_README_LICENSE',license:'MIT',compatibility:'node',dedupeKey:'example:research',artifact:{file:'src/capability.mjs',sha256:'a'.repeat(64),artifactStatus:'VERIFIED_FETCH',sourceRevision:'b'.repeat(40)}};
 await fs.writeFile(path.join(queue,'elite.json'),JSON.stringify({
   taskId:'elite-gated',idempotencyKey:'elite-gated',project:'test',goal:'safe verified task',
   priority:1,executionTarget:'elite',capabilityQuery:'verified research capability',
