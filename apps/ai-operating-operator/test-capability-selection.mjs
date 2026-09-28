@@ -10,6 +10,7 @@ const selected=await selectVerifiedCapability({query:'local research tool',searc
 assert.equal(selected.decision,'ADAPT_AND_VERIFY');
 assert.equal(selected.selected.id,'cap-1');
 assert.equal(selected.evidence.sourceRevision,'a'.repeat(40));
+assert.equal(selected.selected.invocation,null);
 
 const blocked=await selectVerifiedCapability({query:'unsafe candidate',search:async()=>[{...verified,id:'cap-4',evidenceLevel:'DISCOVERY_ONLY'}]});
 assert.equal(blocked.selected,null);
