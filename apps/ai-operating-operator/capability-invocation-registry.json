@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "policy": "Only explicitly pinned capability IDs/revisions may receive an invocation contract.",
+  "capabilities": {
+    "mufeedvh-superpowers-systematic-debugging": {
+      "repo": "mufeedvh/superpowers",
+      "revision": "289dc1c4ce47cde394dc27e47b8da47fbe0d12e1",
+      "mode": "prompt",
+      "adapter": "ai.local.ollama",
+      "action": "chat",
+      "contractVersion": "capability-invocation-v1"
+    }
+  }
+}
