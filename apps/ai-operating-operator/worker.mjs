@@ -56,7 +56,7 @@ export function classifyFailure(result){
   return null;
 }
 
-export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'},'capability.artifact':{status:'ADAPTER_READY'}},selectCapability=selectVerifiedCapability,hydrateArtifact=hydrateCapabilityArtifact,executeTaskImpl=async (task,options)=>task.executionTarget==='elite'?dispatchToElite(task):executeTask(task,options),sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'},'capability.artifact':{status:'ADAPTER_READY'}},selectCapability=selectVerifiedCapability,hydrateArtifact=hydrateCapabilityArtifact,executeTaskImpl=async (task,options)=>task.executionTarget==='elite'?dispatchToElite(task,options):executeTask(task,options),sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
   const selected=await selectNextTask(queueDir);
   if(!selected)return {selected:null,state:'IDLE'};
   const {name,task}=selected;
