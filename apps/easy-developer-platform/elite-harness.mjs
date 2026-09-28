@@ -96,8 +96,15 @@ export async function runEliteTask(goal, deps = {}) {
     state.stageEvidence.push(stageEvidence('detect', { goalHash: hash(goal) }));
     const inspected = await step('inspect', { goalHash: hash(goal) }, () => inspect({ root, goal, maxContextBytes: policy.maxContextBytes }));
     state.stageEvidence.push(stageEvidence('inspect', { contextHash: hash(String(inspected?.context || '')) }, [state.stageEvidence.at(-1).evidenceId]));
-    const context = String(inspected?.context || '').slice(0, policy.maxContextBytes);
-    let plan = normalizePlan(await step('plan', { contextHash: hash(context) }, () => provider({ role: 'planner', goal, context, constraints: { requireVerification: policy.requireVerification, protectedPaths: [...policy.forbidden] } })));
+    let context = String(inspected?.context || '').slice(0, policy.maxContextBytes);
+    let capabilityInvocation = null;
+    if (typeof invokeCapability === 'function') {
+      capabilityInvocation = await step('capability_invoke', { capabilityId: deps.capabilitySelection?.id || null, revision: deps.capabilitySelection?.revision || null }, () => invokeCapability({ goal, capabilitySelection: deps.capabilitySelection || null, capabilityArtifact: deps.capabilityArtifact || null, context }));
+      if (!capabilityInvocation || capabilityInvocation.ok !== true) throw new EliteHarnessError('capability_invocation_failed', capabilityInvocation?.reason || 'Capability invocation did not produce a verified result');
+      state.evidence.push(capabilityInvocation.evidence || { kind: 'capability_invocation', passed: true, result: capabilityInvocation.result || null });
+      context = `${context}\nVerified capability invocation result: ${JSON.stringify(capabilityInvocation.result || capabilityInvocation).slice(0, 120000)}`.slice(0, policy.maxContextBytes);
+    }
+    let plan = normalizePlan(await step('plan', { contextHash: hash(context), capabilityInvocation: Boolean(capabilityInvocation) }, () => provider({ role: 'planner', goal, context, capabilityInvocation, constraints: { requireVerification: policy.requireVerification, protectedPaths: [...policy.forbidden] } })));
     state.planHash = hash(JSON.stringify(plan));
     while (true) {
       const changes = validateChanges(root, plan.changes, policy), originals = await snapshot(changes);
