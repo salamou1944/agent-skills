@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: 20
       - run: node --check apps/ai-operating-operator/operator-core.mjs
+      - run: node --check apps/easy-developer-platform/elite-engine.mjs
+      - run: node --check apps/easy-developer-platform/capability-invocation.mjs
       - run: node --check apps/ai-operating-operator/elite-bridge.mjs
       - run: node --check apps/ai-operating-operator/runtime.mjs
       - run: node --check apps/ai-operating-operator/server.mjs
