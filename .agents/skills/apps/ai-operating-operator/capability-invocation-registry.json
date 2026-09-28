@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "policy": "Only verified capabilities explicitly mapped to a registered adapter may be invoked.",
+  "capabilities": {
+    "mufeedvh-code2prompt-core": {
+      "mode": "DISCOVERY_ONLY"
+    },
+    "mufeedvh-superpowers-systematic-debugging": {
+      "mode": "DISCOVERY_ONLY"
+    },
+    "panniantong-skillshare-audit": {
+      "mode": "DISCOVERY_ONLY"
+    },
+    "panniantong-new-api-neo": {
+      "mode": "DISCOVERY_ONLY"
+    },
+    "panniantong-cliproxyapi-server": {
+      "mode": "DISCOVERY_ONLY"
+    },
+    "harry0703-MoneyPrinterTurbo-video-pipeline": {
+      "mode": "DISCOVERY_ONLY"
+    },
+    "harry0703-AudioNotes-funasr": {
+      "mode": "DISCOVERY_ONLY"
+    },
+    "harry0703-FlashVoice-sensevoice-streaming": {
+      "mode": "DISCOVERY_ONLY"
+    }
+  }
+}
