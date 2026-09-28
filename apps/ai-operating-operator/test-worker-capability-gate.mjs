@@ -37,6 +37,8 @@ assert.equal(result.state,'VERIFIED');
 assert.equal(executedTask.capabilitySelection.id,'cap-verified');
 assert.equal(executedTask.capabilityArtifact.file,'src/capability.mjs');
 assert.equal(executedTask.capabilityArtifact.content,'verified capability artifact');
+assert.equal(executedTask.capabilitySelection.artifact.file,'src/capability.mjs');
+assert.equal(executedTask.capabilitySelection.artifact.sha256,'a'.repeat(64));
 assert.equal(executedTask.sourceRevision,'b'.repeat(40));
 assert.equal(executedTask.requestedCapabilities.includes('research'),true);
 assert.equal(executedTask.constraints.includes('capability-selected-verified'),true);
