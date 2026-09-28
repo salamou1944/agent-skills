@@ -22,7 +22,7 @@ const repos=await discoverCollectionRepositories({fetchImpl:fakeFetch,limit:10})
 assert.deepEqual(repos.map(x=>x.repo),['foo/one','foo/two','example/new-capability-source','bar/three']);
 const discoveredNew=repos.find(x=>x.repo==='example/new-capability-source');
 assert.ok(discoveredNew);
-assert.equal(discoveredNew.discoveredFrom.collectionRevision,'7dca221b4bc64082184e3508beca411b730162d6');
+assert.equal(discoveredNew.discoveredFrom.collectionRevision,'a717acd856ceb01865f9bb082f862651e601ff3a');
 
 const doc=await fetchCollectionSource(discoveredNew,{fetchImpl:fakeFetch});
 assert.equal(doc.repo,'example/new-capability-source');
@@ -50,7 +50,7 @@ const inventoryFetch=async(url)=>{
 const inventory=await fetchCollectionCapabilityInventory({fetchImpl:inventoryFetch});
 assert.equal(inventory.length,1);
 assert.equal(inventory[0].capabilityType,'tool');
-assert.equal(inventory[0].collectionRevision,'7dca221b4bc64082184e3508beca411b730162d6');
+assert.equal(inventory[0].collectionRevision,'a717acd856ceb01865f9bb082f862651e601ff3a');
 console.log(JSON.stringify({ok:true,automaticDiscovery:'VERIFIED_TEST',discovered:repos.length,newSource:discoveredNew.repo,revision:doc.revision,inventoryOk:true}));
 
 // e2e-verification-marker: automatic-discovery
