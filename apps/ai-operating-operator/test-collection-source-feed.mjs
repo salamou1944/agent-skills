@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {discoverCollectionRepositories,fetchCollectionSource,fetchCollectionCapabilityInventory} from './collection-source-feed.mjs';
+import {discoverCollectionRepositories,fetchCollectionSource,fetchCollectionCapabilityInventory,hydrateCapabilityInventoryArtifacts} from './collection-source-feed.mjs';
 
 const calls=[];
 const fakeFetch=async(url)=>{
@@ -54,3 +54,9 @@ assert.equal(inventory[0].collectionRevision,'7dca221b4bc64082184e3508beca411b73
 console.log(JSON.stringify({ok:true,automaticDiscovery:'VERIFIED_TEST',discovered:repos.length,newSource:discoveredNew.repo,revision:doc.revision,inventoryOk:true}));
 
 // e2e-verification-marker: automatic-discovery
+
+const artifactItems=await hydrateCapabilityInventoryArtifacts([{id:'cap-artifact',repo:'foo/one',revision:'0123456789abcdef0123456789abcdef01234567',artifact:{file:'src/capability.mjs'}}],{fetchImpl:async url=>new Response('export const capability=true;\\n',{status:200})});
+assert.equal(artifactItems[0].artifact.artifactStatus,'VERIFIED_FETCH');
+assert.equal(artifactItems[0].artifact.sha256.length,64);
+assert.equal(artifactItems[0].artifact.sourceRevision,'0123456789abcdef0123456789abcdef01234567');
+console.log(JSON.stringify({ok:true,artifactChecksum:'PASS',artifactRevision:'PASS'}));

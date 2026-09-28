@@ -72,6 +72,30 @@ export async function fetchCollectionCapabilityInventory({fetchImpl=fetch}={}) {
     collectionRevision:COLLECTION_REVISION
   }));
 }
+export async function hydrateCapabilityInventoryArtifacts(items,{fetchImpl=fetch}={}) {
+  if(!Array.isArray(items)) throw new Error('collection_capability_inventory_invalid');
+  const out=[];
+  for(const item of items){
+    const artifact=item?.artifact;
+    if(!artifact?.file){out.push(item);continue;}
+    const repo=String(item.repo||'');
+    const revision=String(item.revision||'');
+    const file=String(artifact.file||'').replace(/^\/+/, '');
+    if(!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) || !/^[0-9a-f]{40}$/.test(revision) || !file || file.includes('..')){
+      out.push({...item,artifact:{...artifact,sha256:null,artifactStatus:'BLOCKED_PROVENANCE'}});
+      continue;
+    }
+    try{
+      const res=await get(`${RAW}/${repo}/${revision}/${file}`,{fetchImpl});
+      const content=await res.text();
+      out.push({...item,artifact:{...artifact,sha256:sha256(content),bytes:Buffer.byteLength(content,'utf8'),artifactStatus:'VERIFIED_FETCH',sourceRevision:revision}});
+    }catch(error){
+      out.push({...item,artifact:{...artifact,sha256:null,artifactStatus:'BLOCKED_EXTERNAL_DEPENDENCY',error:String(error?.message||error)}});
+    }
+  }
+  return out;
+}
+
 export async function syncCollectionSources({fetchImpl=fetch,limit=DEFAULT_LIMIT}={}){
   const discovered=await discoverCollectionRepositories({fetchImpl,limit});
   const documents=[]; const failures=[];
@@ -80,7 +104,7 @@ export async function syncCollectionSources({fetchImpl=fetch,limit=DEFAULT_LIMIT
     catch(error){failures.push({repo:repo.repo,error:String(error?.message||error)});}
   }
   let capabilities=[];
-  try{capabilities=await fetchCollectionCapabilityInventory({fetchImpl});}
+  try{capabilities=await hydrateCapabilityInventoryArtifacts(await fetchCollectionCapabilityInventory({fetchImpl}),{fetchImpl});}
   catch(error){failures.push({repo:COLLECTION_REPO+'/capability-inventory',error:String(error?.message||error)});}
   return {discoveredCount:discovered.length,documents,capabilities,failures,collectionRevision:COLLECTION_REVISION};
 }
