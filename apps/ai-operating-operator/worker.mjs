@@ -8,6 +8,7 @@ import {retryDecision} from './retry-policy.mjs';
 import {dispatchToElite} from './elite-bridge.mjs';
 import {selectVerifiedCapability} from './capability-selection.mjs';
 import crypto from 'node:crypto';
+import {buildCapabilityInvocation} from './capability-invocation.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const queue=process.env.OPERATOR_TASK_QUEUE||path.join(ROOT,'runtime','tasks');
@@ -78,8 +79,18 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
       await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:result.state,retry:{retry:false}});
       return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
     }
-    const executionTask={...prepared.task,capabilityArtifact:artifact.artifact};
-    const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
+    let executionTask={...prepared.task,capabilityArtifact:artifact.artifact};
+    if(prepared.task.capabilitySelection?.invocation){
+      const invocation=buildCapabilityInvocation(prepared.task.capabilitySelection,artifact.artifact);
+      if(!invocation.ok){
+        const result={taskId:task.taskId,state:invocation.state,evidence:[{kind:'capability_invocation',invocation}],completion:{ok:false,errors:['capability_invocation_gate']},failure:{class:invocation.state==='BLOCKED_PERMISSION'?'permission':'external_dependency',message:invocation.reason}};
+        await fs.writeFile(path.join(resultDir,name),JSON.stringify({...result,runId:run.runId},null,2));
+        await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:result.state,retry:{retry:false}});
+        return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
+      }
+      executionTask={...executionTask,capabilityInvocation:invocation.invocation,requestedCapabilities:Array.from(new Set([...(executionTask.requestedCapabilities||[]),'capability.artifact']))};
+    }
+    const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github,'capability.artifact':executionTask.capabilityInvocation?{authorized:true,reachable:true}:undefined},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
     const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
     const attempt=(run.attempt||0)+1;
     const failureClass=classifyFailure(result);
