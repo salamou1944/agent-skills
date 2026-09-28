@@ -10,9 +10,14 @@ const selected=await selectVerifiedCapability({query:'local research tool',searc
 assert.equal(selected.decision,'ADAPT_AND_VERIFY');
 assert.equal(selected.selected.id,'cap-1');
 assert.equal(selected.evidence.sourceRevision,'a'.repeat(40));
+assert.equal(selected.selected.invocation,null);
+
+const inv=await selectVerifiedCapability({query:'systematic debugging',search:async()=>[{id:'mufeedvh-superpowers-systematic-debugging',repo:'mufeedvh/superpowers',revision:'289dc1c4ce47cde394dc27e47b8da47fbe0d12e1',capabilityType:'skill',capability:'systematic debugging',evidenceLevel:'VERIFIED_FROM_SOURCE',license:'MIT'}]});
+assert.equal(inv.selected.invocation.adapter,'ai.local.ollama');
+assert.equal(inv.selected.invocation.contractVersion,'capability-invocation-v1');
 
 const blocked=await selectVerifiedCapability({query:'unsafe candidate',search:async()=>[{...verified,id:'cap-4',evidenceLevel:'DISCOVERY_ONLY'}]});
 assert.equal(blocked.selected,null);
 assert.equal(blocked.decision,'BLOCKED_EXTERNAL_DEPENDENCY');
 
-console.log(JSON.stringify({ok:true,selectionGate:'PASS',verifiedSelection:'PASS',blockedUnverified:'PASS'}));
+console.log(JSON.stringify({ok:true,selectionGate:'PASS',verifiedSelection:'PASS',invocationContract:'PASS',blockedUnverified:'PASS'}));
