@@ -205,7 +205,6 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
     capabilityInvocation = { ...invocation.invocation, verification: invocationVerification };
   }
   const activeProvider = provider || makeProvider(env, capabilityGate.selection, materializedCapabilityArtifact, capabilityInvocation);
-  const activeProvider = provider || makeProvider(env, capabilityGate.selection, materializedCapabilityArtifact);
   const attemptPath = policy.attemptLedgerPath || join(root, '.elite', 'attempts.jsonl');
   const inspectResult = await inspect({ root, goal, maxContextBytes: policy.maxContextBytes || 900_000, decomposer: activeProvider });
   if (capabilityGate.selection) inspectResult.context = JSON.stringify({ capabilitySelection: capabilityGate.selection, inspected: JSON.parse(inspectResult.context) }).slice(0, policy.maxContextBytes || 900_000);
