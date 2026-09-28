@@ -62,7 +62,7 @@ function makeProvider(env, capabilitySelection, capabilityArtifact, capabilityIn
     const invocationResultLine = capabilityInvocationResult ? `\nDocumented capability invocation result (verified evidence): ${JSON.stringify(capabilityInvocationResult)}\nUse this result to inform planning and repair decisions; do not re-invoke it.` : '';
     const prompt = role === 'repair'
       ? `You are Elite repair planner. Goal: ${goal}\nFailure: ${JSON.stringify(failure)}\nFailed plan: ${JSON.stringify(failedPlan)}\nRepository context: ${context}\nDo not repeat the failed strategy. Produce a materially different repair hypothesis. Constraints: ${JSON.stringify(constraints)}${capabilityLine}${invocationResultLine}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}.`
-      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.${capabilityLine}`;
+      : `You are Elite planning agent. Goal: ${goal}\nRepository context: ${context}\nUse the supplied decomposition and complete its subtasks in dependency order. Constraints: ${JSON.stringify(constraints)}\nReturn JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}. Use the smallest safe change set.${capabilityLine}${invocationResultLine}`;
     return ask(prompt, env);
   };
 }
@@ -75,11 +75,11 @@ function makeReviewer(env, injectedProvider) {
   };
 }
 
-async function execute({ changes, goal }) {
+async function execute({ changes, goal, capabilityInvocationResult = null }) {
   const attack = adversarialProbe({ goal, changes });
   if (!attack.ok) return { ok: false, reason: 'adversarial_gate', evidence: attack };
   for (const change of changes) { await mkdir(dirname(change.target), { recursive: true }); await writeFile(change.target, change.content, 'utf8'); }
-  return { ok: true, summary: `applied ${changes.length} planned change(s)`, evidence: { adversarial: attack } };
+  return { ok: true, summary: `applied ${changes.length} planned change(s)`, evidence: { adversarial: attack, capabilityInvocationConsumed: Boolean(capabilityInvocationResult), capabilityInvocationTaskId: capabilityInvocationResult?.taskId || null } };
 }
 
 async function test({ root, changes }) {
@@ -234,7 +234,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
   const project = projectScope(policy.project || 'default');
   if (capabilityGate.selection || invocationGate.result) policy = { ...policy, capabilitySelection: capabilityGate.selection, capabilityArtifact: materializedCapabilityArtifact || null, capabilityInvocationResult: invocationGate.result || null };
   const counterfactual = inspectResult.counterfactual;
-  const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute, test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
+  const result = await runEliteTask(goal, { root, policy, journalPath, provider: guardedProvider, inspect: () => inspectResult, execute: args => execute({ ...args, capabilityInvocationResult: invocationGate.result }), test, review: args => review({ ...args, env, provider, approval: policy.approval }), verify: args => verify({ ...args, prediction }) });
   const proof = createProof({ goal, result, dna: inspectResult.dna, impact: predictImpact({ dna: inspectResult.dna, changedFiles: result.changedFiles }), tests: result.evidence });
   const taskVerified = ['TASK_VERIFIED', 'VERIFIED', 'VERIFIED_NOOP', 'NOOP_VERIFIED'].includes(result.status);
   const patch = Array.isArray(result.patch) ? result.patch : Object.fromEntries((result.changedFiles || []).map(path => [path, null]));
