@@ -88,7 +88,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
         await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:result.state,retry:{retry:false}});
         return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
       }
-      executionTask={...executionTask,capabilityInvocation:invocation.invocation,requestedCapabilities:['ai.local.ollama']};
+      executionTask={...executionTask,capabilityArtifactInvocation:invocation.invocation,requestedCapabilities:['ai.local.ollama']};
     }
     const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github,'ai.local.ollama':executionTask.capabilityArtifactInvocation?{authorized:true,reachable:true}:caps['ai.local.ollama']},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
     const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
