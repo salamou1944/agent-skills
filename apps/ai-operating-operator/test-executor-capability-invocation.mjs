@@ -8,7 +8,7 @@ const result=await executeTask({
   requestedCapabilities:['capability.artifact'],
   allowedActions:['capability.artifact'],
   capabilityArtifact:{repo:'example/repo',revision:'0123456789abcdef0123456789abcdef01234567',file:'SKILL.md',sha256,bytes:content.length,content},
-  capabilityInvocation:{mode:'artifact_read',adapter:'capability.artifact',verifier:'capability-artifact-independent-verifier-v1'}
+  capabilityArtifactInvocation:{mode:'artifact_read',adapter:'capability.artifact',verifier:'capability-artifact-independent-verifier-v1'}
 },{
   capabilities:{'capability.artifact':{authorized:true,reachable:true}},
   adapters:{'capability.artifact':{status:'ADAPTER_READY'}},
