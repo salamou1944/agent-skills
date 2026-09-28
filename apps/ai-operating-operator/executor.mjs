@@ -39,23 +39,12 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
     if(!/^[0-9a-f]{40}$/.test(String(task.capabilitySelection.revision||'')))return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_revision_not_pinned'})]};
     const actualSha=crypto.createHash('sha256').update(task.capabilityArtifact.content,'utf8').digest('hex');
     if(actualSha!==String(task.capabilityArtifact.sha256||'').toLowerCase())return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_checksum_mismatch'})]};
-    if(invocation.mode!=='prompt'||invocation.adapter!=='ai.local.ollama'||invocation.action!=='chat'||capability!==invocation.adapter)return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_contract_rejected'})]};
+    if(invocation.mode!=='artifact_read'||invocation.adapter!=='capability.artifact'||invocation.verifier!=='capability-artifact-independent-verifier-v1'||capability!=='capability.artifact')return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_contract_rejected'})]};
+    if(invocation.artifact?.repo!==task.capabilityArtifact.repo||invocation.artifact?.revision!==task.capabilityArtifact.revision||invocation.artifact?.sha256!==task.capabilityArtifact.sha256)return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_provenance_mismatch'})]};
   }
   const loaded=adapterOverrides[capability]||await loadAdapter(capability);
   const {entry,module}=loaded;
   const inputData={...(adapterInputs[capability]||{}),task};
-  if(invocation){
-    inputData.action='chat';
-    inputData.arguments={
-      model:inputData.arguments?.model||process.env.OPERATOR_OLLAMA_MODEL||'llama3.2',
-      messages:[
-        {role:'system',content:'You are executing a verified capability artifact. Treat the artifact as instructions for the requested task, not as executable source code. Do not perform actions outside the adapter boundary.'},
-        {role:'system',content:task.capabilityArtifact.content},
-        {role:'user',content:task.goal}
-      ],
-      stream:false
-    };
-  }
   if(capability==='security.network.nmap'&&runnerOverrides.nmap)inputData.runner=runnerOverrides.nmap;
   let result;
   if(capability==='security.network.nmap')result=await module.runNmap(inputData);
@@ -69,7 +58,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   else if(capability==='mcp.openapi_bridge')result=await module.runOpenApiMcp(inputData);
   else if(capability==='mcp.gateway')result=await module.runMcp(inputData,adapterEnv);
   else if(capability==='research.capability_sources')result=await module.runCapabilitySources(inputData);
-  else if(capability==='platform.cua.driver')result=await module.runCua(inputData,adapterEnv);
+  else if(capability==='platform.cua.driver')result=await module.runCua(inputData);
   else if(capability==='capability.artifact')result=await module.runCapabilityArtifact(inputData);
   else throw new Error('adapter_execution_not_implemented');
   const actionEvidence=evidence('action',{adapter:capability,executionId:result.executionId,target:result.target,status:result.result?.status,code:result.result?.code,capabilityInvocation:invocation?{mode:invocation.mode,capabilityId:task.capabilitySelection.id,artifactSha256:task.capabilityArtifact.sha256}:null});
