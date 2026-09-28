@@ -22,6 +22,8 @@ jobs:
       - run: node --check apps/ai-operating-operator/runtime.mjs
       - run: node --check apps/ai-operating-operator/server.mjs
       - run: node --check apps/ai-operating-operator/executor.mjs
+      - run: node --check apps/ai-operating-operator/capability-invocation.mjs
+      - run: node --check apps/ai-operating-operator/adapters/capability-artifact-adapter.mjs
       - run: node --check apps/ai-operating-operator/run-ledger.mjs
       - run: node --check apps/ai-operating-operator/account-probes.mjs
       - run: node --check apps/ai-operating-operator/review-gate.mjs
@@ -41,6 +43,8 @@ jobs:
       - run: node apps/ai-operating-operator/adapters/test-github-adapter.mjs
       - run: node apps/ai-operating-operator/test-skill-router.mjs
       - run: node apps/ai-operating-operator/test-executor.mjs
+      - run: node apps/ai-operating-operator/test-executor-capability-invocation.mjs
+      - run: node apps/ai-operating-operator/test-capability-invocation-boundary.mjs
       - name: Run verified capability invocation boundary test
         run: node apps/ai-operating-operator/test-capability-invocation.mjs
       - run: node apps/ai-operating-operator/test-background-runtime.mjs
