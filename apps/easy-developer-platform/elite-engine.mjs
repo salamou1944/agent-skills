@@ -40,8 +40,7 @@ async function git(root, args, timeout = 30_000) { try { const { stdout, stderr 
 
 async function inspect({ root, goal, maxContextBytes, decomposer }) {
   const base = await inspectRepository({ root, goal, maxContextBytes });
-  const files = (await git(root, ['ls-files'])).stdout.split('
-').filter(Boolean);
+  const files = (await git(root, ['ls-files'])).stdout.split('\\n').filter(Boolean);
   const imports = await scanImports(root, files.filter(p => /\.(mjs|js|cjs)$/.test(p)));
   const dna = await buildEngineeringDNA({ root, files, imports, goal });
   const counterfactuals = generateCounterfactuals({ goal, context: base.context, constraints: {} });
