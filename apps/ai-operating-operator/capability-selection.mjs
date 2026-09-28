@@ -22,7 +22,7 @@ export async function selectVerifiedCapability({query,compatibility=null,allowed
   if(!selected)return {decision:'BLOCKED_EXTERNAL_DEPENDENCY',selected:null,candidates:evaluated,evidence:{query,searchedCandidates:evaluated.length,verifiedCandidates:evaluated.filter(x=>x.gate.eligible).length}};
   return {
     decision:'ADAPT_AND_VERIFY',
-    selected:{id:selected.id,repo:selected.repo,revision:selected.revision,capabilityType:selected.capabilityType,capability:selected.capability,evidenceLevel:selected.evidenceLevel,license:selected.license,compatibility:selected.compatibility,dedupeKey:selected.dedupeKey,artifact:selected.artifact||null},
+    selected:{id:selected.id,repo:selected.repo,revision:selected.revision,capabilityType:selected.capabilityType,capability:selected.capability,evidenceLevel:selected.evidenceLevel,license:selected.license,compatibility:selected.compatibility,dedupeKey:selected.dedupeKey,artifact:selected.artifact||null,invocation:selected.invocation||null},
     candidates:evaluated,
     evidence:{query,searchedCandidates:evaluated.length,selectedId:selected.id,sourceRevision:selected.revision,verificationStatus:selected.evidenceLevel}
   };
