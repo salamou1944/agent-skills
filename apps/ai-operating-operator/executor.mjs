@@ -36,6 +36,8 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   if(!plan.executionAllowed){const blocked=plan.capabilities.find(x=>x.status!=='AVAILABLE');return {taskId:task.taskId,state:blocked?.status||'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'execution_gate'})]};}
   if(plan.executableAdapters.length!==1)return {taskId:task.taskId,state:'REVIEW_REQUIRED',plan,evidence:[evidence('action',{accepted:false,reason:'single_adapter_boundary'})]};
   const capability=plan.executableAdapters[0];
+  if(task.capabilityInvocation && task.capabilityInvocation.adapter!==capability)
+    return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_adapter_mismatch',expected:task.capabilityInvocation.adapter,actual:capability})]};
   const {entry,module}=await loadAdapter(capability);
   const inputData={...(adapterInputs[capability]||{}),task};
   if(capability==='security.network.nmap'&&runnerOverrides.nmap)inputData.runner=runnerOverrides.nmap;
