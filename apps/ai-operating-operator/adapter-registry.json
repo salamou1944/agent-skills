@@ -79,6 +79,12 @@
       "status": "ADAPTER_READY",
       "independentVerifier": "capability-sources-independent-verifier-v1",
       "scope": "read-only pinned five-source capability corpus; explicit capability_sources_read authorization"
+    },
+    "capability.artifact": {
+      "module": "./adapters/capability-artifact-adapter.mjs",
+      "status": "ADAPTER_READY",
+      "independentVerifier": "capability-artifact-independent-verifier-v1",
+      "scope": "verified artifact_read invocation only; no source execution"
     }
   }
 }
