@@ -43,7 +43,7 @@ try {
     }
   },{
     capabilities:{'ai.local.ollama':{authorized:true,reachable:true}},
-    adapterOverrides:{'ai.local.ollama':{entry:{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1'},module:fakeAdapter}},
+    adapterOverrides:{'ai.local.ollama':{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1',...fakeAdapter}},
     verifierOverrides:{'ai.local.ollama':fakeAdapter}
   });
   assert.equal(invocationCount,1);
