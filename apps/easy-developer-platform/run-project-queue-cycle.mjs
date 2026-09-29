@@ -29,7 +29,7 @@ function closeVerifiedTask(result){
   const wrapped={...result,taskId:task.id,contract:taskContract,noopAuthorized:result.status==='NOOP' ? true : result.noopAuthorized,evidence:result.evidence||[]};
   const gate=validateTaskResult(taskContract,wrapped);
   if(!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
-  closeSoldierRun(soldierRun,wrapped);
+  closeSoldierRun(soldierRun.run ?? soldierRun,wrapped);
   return wrapped;
 }
 
