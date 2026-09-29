@@ -91,7 +91,7 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
       }
       executionTask={...executionTask,capabilityInvocation:invocation.invocation,requestedCapabilities:Array.from(new Set([...(executionTask.requestedCapabilities||[]),prepared.task.capabilitySelection.invocation.adapter]))};
     }
-    const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github,[executionTask.capabilityArtifactInvocation?.adapter||prepared.task.capabilitySelection?.invocation?.adapter||'']:executionTask.capabilityArtifactInvocation?{authorized:true,reachable:true}:undefined},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
+    const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github,[executionTask.capabilityArtifactInvocation?.adapter||prepared.task.capabilitySelection?.invocation?.adapter||'']:executionTask.capabilityArtifactInvocation?{authorized:true,reachable:true}:undefined},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env}});
     const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
     const attempt=(run.attempt||0)+1;
     const failureClass=classifyFailure(result);
@@ -124,7 +124,7 @@ async function main(){
   const adapters={'platform.github':{status:'ADAPTER_READY'}};
   while(true){
     const cycle=await processNextTask({queueDir:queue,resultDir:results,caps,adapters});
-    if(cycle.state==='IDLE')break;
+    if(cycle.state==='IDLE'||cycle.state==='FAILED')break;
   }
 }
 if(import.meta.url===`file://${process.argv[1]}`)main().catch(error=>{console.error(error);process.exitCode=1;});
