@@ -77,8 +77,10 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
     if(invocation.contractVersion!=='capability-invocation-v1'||invocation.mode!=='prompt'||invocation.action!=='chat'||capability!==invocation.adapter)return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_contract_rejected'})]};
     if(invocation.artifact?.repo!==task.capabilityArtifact.repo||invocation.artifact?.revision!==task.capabilityArtifact.revision||invocation.artifact?.sha256!==task.capabilityArtifact.sha256)return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_provenance_mismatch'})]};
   }
-  const loaded=adapterOverrides[capability]||await loadAdapter(capability);
-  const {entry,module}=loaded;
+  const override=adapterOverrides[capability]||null;
+  const loaded=override||await loadAdapter(capability);
+  const entry=override?{...registry.adapters[capability],...override}:loaded.entry;
+  const module=override?.module||override||loaded.module;
   const inputData={...(adapterInputs[capability]||{}),task};
   if(invocation){
     inputData.action=invocation.action;
