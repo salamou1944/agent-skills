@@ -25,6 +25,7 @@ export async function selectNextTask(queueDir=queue){
 export async function prepareTaskForExecution(task,{selectCapability=selectVerifiedCapability}={}){
   if(task.executionTarget!=='elite'||!task.capabilityQuery)return {ok:true,task};
   const selection=await selectCapability({query:task.capabilityQuery,compatibility:task.capabilityCompatibility||null,allowedLicenses:task.allowedLicenses||null,limit:Number(task.capabilityLimit||20)});
+  if(selection.decision==='DISCOVERY_ONLY')return {ok:false,state:'DISCOVERY_ONLY',task,selection};
   if(selection.decision!=='ADAPT_AND_VERIFY')return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',task,selection};
   return {ok:true,task:{...task,capabilitySelection:selection.selected,sourceRevision:selection.selected.revision,capabilityArtifactFile:selection.selected.artifact?.file||task.capabilityArtifactFile||null,capabilityArtifactSha256:selection.selected.artifact?.sha256||task.capabilityArtifactSha256||null,capabilityArtifactInvocation:selection.selected.invocation||task.capabilityArtifactInvocation||null,requestedCapabilities:Array.from(new Set([...(task.requestedCapabilities||[]),selection.selected.capabilityType,selection.selected.invocation?.adapter].filter(Boolean))),constraints:Array.from(new Set([...(task.constraints||[]),'capability-selected-verified']))},selection};
 }
@@ -56,7 +57,7 @@ export function classifyFailure(result){
   return null;
 }
 
-export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'},'capability.artifact':{status:'ADAPTER_READY'}},selectCapability=selectVerifiedCapability,hydrateArtifact=hydrateCapabilityArtifact,executeTaskImpl=async (task,options)=>task.executionTarget==='elite'?dispatchToElite(task,options):executeTask(task,options),sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
+export async function processNextTask({queueDir=queue,resultDir=results,caps={},adapters={'platform.github':{status:'ADAPTER_READY'}},selectCapability=selectVerifiedCapability,hydrateArtifact=hydrateCapabilityArtifact,executeTaskImpl=async (task,options)=>task.executionTarget==='elite'?dispatchToElite(task,options):executeTask(task,options),sleepImpl=(ms)=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
   const selected=await selectNextTask(queueDir);
   if(!selected)return {selected:null,state:'IDLE'};
   const {name,task}=selected;
@@ -88,9 +89,9 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
         await updateRun(run.runId,{state:result.state,attempt:(run.attempt||0)+1,resultState:result.state,completion:result.completion,evidence:result.evidence,failure:result.failure,failureClass:result.state,retry:{retry:false}});
         return {selected:name,taskId:task.taskId,runId:run.runId,state:result.state,retry:{retry:false}};
       }
-      executionTask={...executionTask,capabilityInvocation:invocation.invocation,requestedCapabilities:Array.from(new Set([...(executionTask.requestedCapabilities||[]),'capability.artifact']))};
+      executionTask={...executionTask,capabilityInvocation:invocation.invocation,requestedCapabilities:Array.from(new Set([...(executionTask.requestedCapabilities||[]),prepared.task.capabilitySelection.invocation.adapter]))};
     }
-    const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github,'capability.artifact':executionTask.capabilityInvocation?{authorized:true,reachable:true}:undefined},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
+    const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github,[executionTask.capabilityArtifactInvocation?.adapter||prepared.task.capabilitySelection?.invocation?.adapter||'']:executionTask.capabilityArtifactInvocation?{authorized:true,reachable:true}:undefined},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env,OPERATOR_GITHUB_REPOS:process.env.GITHUB_REPOSITORY}});
     const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
     const attempt=(run.attempt||0)+1;
     const failureClass=classifyFailure(result);
@@ -120,7 +121,7 @@ async function main(){
       caps.github={configured:true,authorized:true,reachable:true,canRead:true,canWrite:false,canDeploy:false,source:'github-actions-workflow-scope'};
     }
   }
-  const adapters={'platform.github':{status:'ADAPTER_READY'},'capability.artifact':{status:'ADAPTER_READY'}};
+  const adapters={'platform.github':{status:'ADAPTER_READY'}};
   while(true){
     const cycle=await processNextTask({queueDir:queue,resultDir:results,caps,adapters});
     if(cycle.state==='IDLE')break;

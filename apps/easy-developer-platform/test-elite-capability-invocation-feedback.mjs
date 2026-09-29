@@ -30,20 +30,23 @@ try {
   const result=await dispatchToElite({
     workspaceRoot:root,
     goal:'Use the verified capability invocation result in Elite planning.',
+    requestedCapabilities:['ai.local.ollama'],
+    allowedActions:['capability_invoke'],
     capabilitySelection:{id:'mufeedvh-superpowers-systematic-debugging',repo:'mufeedvh/superpowers',revision,evidenceLevel:'VERIFIED_FROM_SOURCE',license:'MIT',capabilityType:'skill',capability:'systematic debugging',artifact:{sha256},invocation},
     capabilityArtifact:{repo:'mufeedvh/superpowers',revision,file:'skills/systematic-debugging/SKILL.md',sha256,content:contentText},
     capabilityArtifactInvocation:{...invocation,artifact:{repo:'mufeedvh/superpowers',revision,file:'skills/systematic-debugging/SKILL.md',sha256}},
     project:'elite-invocation-feedback',
+    localIsolate:false,
     provider:async ({role,context,capabilityInvocation})=>{
       if(role==='planner'){providerContext=context;assert.equal(capabilityInvocation.result.verification.verifierId,'ollama-independent-verifier-v1');}
       return {summary:'no-op verified plan',changes:[]};
     }
   },{
     capabilities:{'ai.local.ollama':{authorized:true,reachable:true}},
-    adapterOverrides:{'ai.local.ollama':{entry:{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1'},module:fakeAdapter}},
+    adapterOverrides:{'ai.local.ollama':{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1',...fakeAdapter}},
     verifierOverrides:{'ai.local.ollama':fakeAdapter}
   });
-  assert.equal(invocationCount,1);
+  assert.equal(invocationCount,1,JSON.stringify({invocationCount,dispatchState:result?.state,resultState:result?.result?.state,resultResult:result?.result?.result,completion:result?.result?.completion,evidence:result?.result?.evidence}));
   assert.match(providerContext,/verified invocation output/);
   assert.equal(result.result.status,'TASK_VERIFIED');
   assert.equal(result.result.evidence.some(x=>x.kind==='capability_invocation'&&x.passed===true),true);

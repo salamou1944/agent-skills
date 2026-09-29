@@ -69,7 +69,10 @@ export async function fetchCollectionCapabilityInventory({fetchImpl=fetch}={}) {
   return payload.items.map(item=>({
     ...item,
     source:'collection_capability_inventory',
-    collectionRevision:COLLECTION_REVISION
+    collectionRevision:COLLECTION_REVISION,
+    invocation:item.invocation||null,
+    invocationStatus:item.invocation?.adapter?'DECLARED_ADAPTER':'DISCOVERY_ONLY',
+    adapterId:item.invocation?.adapter||null
   }));
 }
 export async function hydrateCapabilityInventoryArtifacts(items,{fetchImpl=fetch}={}) {

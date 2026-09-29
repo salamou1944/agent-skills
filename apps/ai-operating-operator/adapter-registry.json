@@ -15,7 +15,7 @@
       "scope": "explicit repository allowlist + task write authorization"
     },
     "platform.http": {
-      "status": "ADAPTER_READY",
+      "status": "DISCOVERY_ONLY",
       "module": "./adapters/http-adapter.mjs",
       "independentVerifier": "http-independent-verifier-v1",
       "scope": "HTTPS hosts explicitly allowlisted by OPERATOR_ALLOWED_API_HOSTS"

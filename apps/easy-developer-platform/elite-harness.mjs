@@ -5,7 +5,7 @@ import { classifyFailure, stageEvidence, buildRepairContext } from './repair-acc
 import { fingerprintPatch } from './independent-evidence-gate.mjs';
 
 const DEFAULTS = Object.freeze({ maxSteps: 24, maxRepairs: 5, maxWallMs: 15 * 60_000, maxContextBytes: 900_000 });
-const SAFE_ACTIONS = new Set(['inspect', 'plan', 'implement', 'test', 'review', 'repair', 'verify', 'checkpoint']);
+const SAFE_ACTIONS = new Set(['inspect', 'capability_invoke', 'plan', 'implement', 'test', 'review', 'repair', 'verify', 'checkpoint']);
 
 export class EliteHarnessError extends Error {
   constructor(code, message, details = {}) { super(message); this.name = 'EliteHarnessError'; this.code = code; this.details = details; }

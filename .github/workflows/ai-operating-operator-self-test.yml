@@ -49,6 +49,8 @@ jobs:
       - run: node apps/ai-operating-operator/test-capability-invocation-boundary.mjs
       - name: Run verified capability invocation boundary test
         run: node apps/ai-operating-operator/test-capability-invocation.mjs
+      - name: Run capability invocation contract E2E
+        run: node apps/ai-operating-operator/test-capability-invocation-contract-e2e.mjs
       - run: node apps/ai-operating-operator/test-background-runtime.mjs
       - run: node apps/ai-operating-operator/test-continuous-runtime.mjs
       - run: node apps/ai-operating-operator/test-elite-bridge.mjs

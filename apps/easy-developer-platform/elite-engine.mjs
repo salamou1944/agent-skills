@@ -27,12 +27,20 @@ function validateCapabilitySelection(selection) {
   if (!selection.id || !selection.repo || !selection.revision) reasons.push('identity_incomplete');
   if (!/^VERIFIED/.test(String(selection.evidenceLevel || ''))) reasons.push('evidence_not_verified');
   if (!selection.license || /unknown|unresolved|not found/i.test(String(selection.license))) reasons.push('license_unresolved');
+  const invocation = selection.invocation || null;
+  if (invocation) {
+    if (invocation.contractVersion !== 'capability-invocation-v1') reasons.push('invocation_contract_version_invalid');
+    if (invocation.mode !== 'prompt') reasons.push('invocation_mode_not_allowed');
+    if (invocation.action !== 'chat') reasons.push('invocation_action_not_allowed');
+    if (!invocation.adapter) reasons.push('invocation_adapter_missing');
+  }
   if (reasons.length) return { ok: false, reasons };
   return { ok: true, selection: {
     id: selection.id, repo: selection.repo, revision: selection.revision,
     capabilityType: selection.capabilityType || null, capability: selection.capability || null,
     evidenceLevel: selection.evidenceLevel, license: selection.license,
-    compatibility: selection.compatibility || null, dedupeKey: selection.dedupeKey || null
+    compatibility: selection.compatibility || null, dedupeKey: selection.dedupeKey || null,
+    invocation: invocation ? { contractVersion: invocation.contractVersion, mode: invocation.mode, adapter: invocation.adapter, action: invocation.action } : null
   }};
 }
 async function git(root, args, timeout = 30_000) { try { const { stdout, stderr } = await execFileAsync('git', args, { cwd: root, timeout, maxBuffer: 4_000_000 }); return { ok: true, stdout: trim(stdout), stderr: trim(stderr) }; } catch (error) { return { ok: false, stdout: trim(error.stdout), stderr: trim(error.stderr || error.message) }; } }
