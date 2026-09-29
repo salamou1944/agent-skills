@@ -76,8 +76,15 @@ if(task.id==='elite.defect-closure'){
   const records=await run('git',['grep','-nE','DEF-005|DEF-006','--','docs','apps','.github']);
   // Filter the verifier's own source match explicitly after the scan. This is
   // more robust than relying on git pathspec exclusion semantics in CI.
-  const verifierPath='apps/easy-developer-platform/run-project-queue-cycle.mjs';
-  const unresolvedRecords=records.stdout.split('\n').filter(line=>line.trim() && !line.startsWith(verifierPath+':'));
+  const ignoredSelfMatchPaths=new Set([
+    'apps/easy-developer-platform/run-project-queue-cycle.mjs',
+    'apps/easy-developer-platform/project-queue-orchestrator.mjs'
+  ]);
+  const unresolvedRecords=records.stdout.split('\n').filter(line=>{
+    if(!line.trim()) return false;
+    const path=line.split(':',1)[0];
+    return !ignoredSelfMatchPaths.has(path);
+  });
   // stderr is diagnostic output, not a correctness signal. Require a clean
   // exit and an authoritative no-match scan; do not reject successful tests
   // merely because the test runner wrote diagnostics to stderr.
