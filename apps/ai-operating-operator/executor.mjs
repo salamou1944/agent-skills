@@ -89,7 +89,6 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   let result;
   if(capability==='security.network.nmap')result=await module.runNmap(inputData);
   else if(capability==='platform.github')result=await module.runGitHub(inputData,adapterEnv);
-  else if(capability==='platform.http')result=await module.runHttp(inputData);
   else if(capability==='browser.automation')result=await module.runBrowser(inputData,adapterEnv);
   else if(capability==='research.search'||capability==='research.read')result=await module.runResearch({...inputData,action:capability.split('.')[1]});
   else if(capability==='ai.local.ollama')result=await module.runOllama(inputData);
@@ -104,7 +103,6 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   const verifier=verifierOverrides[capability]||loadVerifier(entry.independentVerifier);
   let verification;
   if(capability==='security.network.nmap')verification=verifier.verifyNmapResult({result,target:inputData.target});
-  else if(capability==='platform.http')verification=verifier.verifyHttpResult({result,expectedStatus:inputData.expectedStatus});
   else if(capability==='browser.automation')verification=verifier.verifyBrowserResult({result,action:inputData.action||'health'});
   else if(capability==='research.search'||capability==='research.read')verification=verifier.verifyResearchResult({result,action:capability.split('.')[1]});
   else if(capability==='ai.local.ollama')verification=verifier.verifyOllamaResult({result});
