@@ -46,7 +46,7 @@ try {
     adapterOverrides:{'ai.local.ollama':{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1',...fakeAdapter}},
     verifierOverrides:{'ai.local.ollama':fakeAdapter}
   });
-  assert.equal(invocationCount,1,JSON.stringify({invocationCount,dispatchState:result?.state,reason:result?.reason,resultState:result?.result?.state,resultResult:result?.result?.result,completion:result?.result?.completion,evidence:result?.result?.evidence}));
+  assert.equal(invocationCount,1,JSON.stringify({invocationCount,dispatchState:result?.state,resultState:result?.result?.state,resultResult:result?.result?.result,completion:result?.result?.completion,evidence:result?.result?.evidence}));
   assert.match(providerContext,/verified invocation output/);
   assert.equal(result.result.status,'TASK_VERIFIED');
   assert.equal(result.result.evidence.some(x=>x.kind==='capability_invocation'&&x.passed===true),true);
