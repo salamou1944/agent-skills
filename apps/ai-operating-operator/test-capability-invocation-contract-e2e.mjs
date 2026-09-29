@@ -55,8 +55,9 @@ const fakeVerifier={
   verifyOllamaResult:({result})=>{verified=true;return {verifierId:'e2e-independent-verifier',passed:result?.result?.ok===true,errors:[]};}
 };
 const artifact={repo:base.repo,revision,file:base.artifact.file,sha256,bytes:Buffer.byteLength(content,'utf8'),content};
+const invocation={...base.invocation,artifact:{repo:artifact.repo,revision:artifact.revision,file:artifact.file,sha256:artifact.sha256,bytes:artifact.bytes}};
 const invoked=await executeTask(
-  {taskId:'capability-invocation-contract-e2e',project:'agent-skills',goal:'invoke verified capability',requestedCapabilities:['ai.local.ollama'],allowedActions:['capability_invoke'],capabilitySelection:base,capabilityArtifact:artifact,capabilityArtifactInvocation:base.invocation},
+  {taskId:'capability-invocation-contract-e2e',project:'agent-skills',goal:'invoke verified capability',requestedCapabilities:['ai.local.ollama'],allowedActions:['capability_invoke'],capabilitySelection:base,capabilityArtifact:artifact,capabilityArtifactInvocation:invocation},
   {capabilities:{'ai.local.ollama':{authorized:true,reachable:true}},adapterOverrides:{'ai.local.ollama':{entry:{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1'},module:fakeAdapter}},verifierOverrides:{'ai.local.ollama':fakeVerifier}}
 );
 assert.equal(invoked.completion.ok,true);
@@ -65,7 +66,7 @@ assert.equal(verified,true);
 assert.equal(invoked.evidence.some(x=>x.kind==='independent_verification'&&x.verifierId==='e2e-independent-verifier'),true);
 
 const blocked=await executeTask(
-  {taskId:'capability-invocation-contract-unregistered',project:'agent-skills',goal:'reject unregistered adapter',requestedCapabilities:['ai.local.ollama'],allowedActions:['capability_invoke'],capabilitySelection:base,capabilityArtifact:artifact,capabilityArtifactInvocation:{...base.invocation,adapter:'evil.unregistered'}},
+  {taskId:'capability-invocation-contract-unregistered',project:'agent-skills',goal:'reject unregistered adapter',requestedCapabilities:['ai.local.ollama'],allowedActions:['capability_invoke'],capabilitySelection:base,capabilityArtifact:artifact,capabilityArtifactInvocation:{...invocation,adapter:'evil.unregistered'}},
   {capabilities:{'ai.local.ollama':{authorized:true,reachable:true}},adapterOverrides:{'ai.local.ollama':{entry:{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1'},module:fakeAdapter}},verifierOverrides:{'ai.local.ollama':fakeVerifier}}
 );
 assert.equal(blocked.state,'BLOCKED_PERMISSION');
