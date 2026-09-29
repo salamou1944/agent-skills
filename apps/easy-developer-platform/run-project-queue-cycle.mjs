@@ -29,7 +29,7 @@ function closeVerifiedTask(result){
   const wrapped={...result,taskId:task.id,contract:taskContract,noopAuthorized:result.status==='NOOP' ? true : result.noopAuthorized,evidence:result.evidence||[]};
   const gate=validateTaskResult(taskContract,wrapped);
   if(!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
-  closeSoldierRun(soldierRun,wrapped);
+  closeSoldierRun(soldierRun.run,wrapped);
   return wrapped;
 }
 
@@ -56,7 +56,7 @@ if(task.id==='elite.ci-contract-closure'){
     ];
     const contractEvidence=[
       {kind:'baseline',commit:baseline.commit},
-      {kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'CI contract suite executed'},
+      {kind:'action',ok:true,route,soldierRunId:soldierRun.run.runId,summary:'CI contract suite executed'},
       {kind:'verification',ok:true,command:'npm run test:elite:queue',summary:'All Elite queue/CI contract self-tests passed.'},
       {kind:'result',status:'NOOP',taskVerified:false,pipelineVerified:true},
       ...evidence
