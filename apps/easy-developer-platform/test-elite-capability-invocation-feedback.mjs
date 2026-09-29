@@ -30,6 +30,8 @@ try {
   const result=await dispatchToElite({
     workspaceRoot:root,
     goal:'Use the verified capability invocation result in Elite planning.',
+    requestedCapabilities:['ai.local.ollama'],
+    allowedActions:['capability_invoke'],
     capabilitySelection:{id:'mufeedvh-superpowers-systematic-debugging',repo:'mufeedvh/superpowers',revision,evidenceLevel:'VERIFIED_FROM_SOURCE',license:'MIT',capabilityType:'skill',capability:'systematic debugging',artifact:{sha256},invocation},
     capabilityArtifact:{repo:'mufeedvh/superpowers',revision,file:'skills/systematic-debugging/SKILL.md',sha256,content:contentText},
     capabilityArtifactInvocation:{...invocation,artifact:{repo:'mufeedvh/superpowers',revision,file:'skills/systematic-debugging/SKILL.md',sha256}},
