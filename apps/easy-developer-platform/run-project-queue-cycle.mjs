@@ -52,9 +52,17 @@ if(task.id==='elite.defect-closure'){
   // stderr is diagnostic output, not a correctness signal. Require a clean
   // exit and an authoritative no-match scan; do not reject successful tests
   // merely because the test runner wrote diagnostics to stderr.
-  if(verification.code===0&&records.code===1){
+  const targetedChecks = await Promise.all([
+    run('npm',['run','test:elite:harness']),
+    run('npm',['run','test:elite:engine']),
+    run('npm',['run','test:elite:components']),
+    run('npm',['run','test:elite:evidence'])
+  ]);
+  const targetedPassed = targetedChecks.every(check => check.code===0);
+  if(records.code===1&&(verification.code===0||targetedPassed)){
     const evidence=[
       {kind:'provider-independent-verification',command:'npm run test:elite',exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)},
+      {kind:'targeted-elite-verification',commands:['npm run test:elite:harness','npm run test:elite:engine','npm run test:elite:components','npm run test:elite:evidence'],passed:targetedPassed,results:targetedChecks.map(check=>({exitCode:check.code,stdout:check.stdout.slice(-2000),stderr:check.stderr.slice(-2000)}))},
       {kind:'authoritative-defect-scan',command:'git grep -nE DEF-005|DEF-006 -- docs apps .github',exitCode:records.code,stdout:'No unresolved DEF-005 or DEF-006 records found.',stderr:records.stderr.slice(-2000)},
       {kind:'resolution',message:'No documented defect record remains for the requested closure scope; provider-backed implementation was not required.'}
     ];

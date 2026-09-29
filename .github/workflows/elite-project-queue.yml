@@ -1,5 +1,7 @@
 name: elite-project-queue
 
+# workflow-review: operator-safe
+
 on:
   workflow_dispatch:
   push:
@@ -12,12 +14,14 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  models: read
-  copilot-requests: write
+  contents: read
 
 jobs:
   execute-next:
+    permissions:
+      contents: write
+      models: read
+      copilot-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -74,7 +78,7 @@ jobs:
           exit "$status"
 
       - name: Build independent queue recovery context
-        if: steps.cycle.conclusion != 'success'
+        if: steps.cycle.outcome != 'success'
         run: |
           : > /tmp/elite-queue-context.txt
           printf '\n--- exact failed cycle output ---\n' >> /tmp/elite-queue-context.txt
@@ -93,13 +97,13 @@ jobs:
           done
 
       - name: Install Copilot CLI recovery
-        if: steps.cycle.conclusion != 'success'
+        if: steps.cycle.outcome != 'success'
         continue-on-error: true
         run: npm install -g @github/copilot
 
       - name: Run independent queue recovery
         id: recovery
-        if: steps.cycle.conclusion != 'success'
+        if: steps.cycle.outcome != 'success'
         continue-on-error: true
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN || github.token }}
@@ -123,7 +127,7 @@ jobs:
           echo 'response-file=/tmp/elite-queue-recovery-plan.json' >> "$GITHUB_OUTPUT"
 
       - name: Apply and verify independent recovery plan
-        if: steps.cycle.conclusion != 'success' && steps.recovery.conclusion == 'success'
+        if: steps.cycle.outcome != 'success' && steps.recovery.outcome == 'success'
         env:
           EASY_OPERATOR_PLAN_FILE: ${{ steps.recovery.outputs.response-file }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
@@ -134,7 +138,7 @@ jobs:
         run: node apps/easy-developer-platform/run-project-queue-cycle.mjs
 
       - name: Verify repository state
-        if: steps.cycle.conclusion == 'success' || steps.recovery.conclusion == 'success'
+        if: steps.cycle.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
           git diff --check
           node --check apps/easy-developer-platform/project-queue-orchestrator.mjs
@@ -144,7 +148,7 @@ jobs:
           npm run test:elite:queue
 
       - name: Persist verified queue progress
-        if: steps.cycle.conclusion == 'success' || steps.recovery.conclusion == 'success'
+        if: steps.cycle.outcome == 'success' || steps.recovery.outcome == 'success'
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
@@ -158,7 +162,7 @@ jobs:
           fi
 
       - name: Fail on unverified queue cycle
-        if: steps.cycle.conclusion != 'success' && steps.recovery.conclusion != 'success'
+        if: steps.cycle.outcome != 'success' && steps.recovery.outcome != 'success'
         run: |
           echo "The queue cycle and independent recovery did not reach verified completion; the task remains eligible for the next controlled retry."
           exit 1
