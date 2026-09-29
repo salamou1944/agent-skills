@@ -2,6 +2,7 @@ name: AI Operating Operator background worker
 on:
   push:
     paths:
+      - '.github/workflows/ai-operating-operator-background.yml'
       - 'apps/ai-operating-operator/runtime/tasks/**'
       - 'apps/ai-operating-operator/capability-feed.mjs'
       - 'apps/ai-operating-operator/adapters/capability-sources-adapter.mjs'
