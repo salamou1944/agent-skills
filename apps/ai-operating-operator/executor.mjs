@@ -8,6 +8,7 @@ import * as nmapAdapter from './adapters/nmap-adapter.mjs';
 import * as githubAdapter from './adapters/github-adapter.mjs';
 import * as httpAdapter from './adapters/http-adapter.mjs';
 import * as browserAdapter from './adapters/browser-adapter.mjs';
+import * as researchAdapter from './adapters/research-adapter.mjs';
 import * as cuaAdapter from './adapters/cua-adapter.mjs';
 import * as ollamaAdapter from './adapters/ollama-adapter.mjs';
 import * as workspaceAdapter from './adapters/workspace-adapter.mjs';
@@ -25,8 +26,8 @@ const ADAPTER_MODULES=Object.freeze({
   'security.network.nmap':nmapAdapter,
   'platform.github':githubAdapter,
   'platform.http':httpAdapter,
-  'research.search':browserAdapter,
-  'research.read':browserAdapter,
+  'research.search':researchAdapter,
+  'research.read':researchAdapter,
   'browser.automation':browserAdapter,
   'platform.cua.driver':cuaAdapter,
   'ai.local.ollama':ollamaAdapter,
@@ -42,7 +43,7 @@ const VERIFIER_MODULES=Object.freeze({
   'http-independent-verifier-v1':httpVerifier,
   'cua-independent-verifier-v1':cuaVerifier,
   'browser-independent-verifier-v1':browserAdapter,
-  'research-independent-verifier-v1':browserAdapter,
+  'research-independent-verifier-v1':researchAdapter,
   'ollama-independent-verifier-v1':ollamaAdapter,
   'workspace-independent-verifier-v1':workspaceAdapter,
   'api-catalog-independent-verifier-v1':apiCatalogAdapter,
