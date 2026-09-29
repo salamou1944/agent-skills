@@ -9,12 +9,15 @@ on:
     - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
-  contents: write
+  # workflow-review: operator-safe
+  contents: read
 concurrency:
   group: ai-operating-operator-background
   cancel-in-progress: false
 jobs:
   worker:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
