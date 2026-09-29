@@ -1,0 +1,70 @@
+{
+  "taskId": "curriculum-capture-2026-09-26-01",
+  "state": "EVIDENCE_CAPTURED",
+  "evidence": [
+    {
+      "evidenceId": "638c559a-e5f5-4f6b-9960-16703953c012",
+      "kind": "action",
+      "capturedAt": "2026-09-29T20:48:17.930Z",
+      "adapter": "platform.github",
+      "executionId": "50d82dc2-0fc0-4dc6-ae7d-e40f4cef4d59",
+      "capabilityInvocation": null
+    },
+    {
+      "evidenceId": "e1c2482d-c3a3-439c-b6cb-879ac997172f",
+      "kind": "verification",
+      "capturedAt": "2026-09-29T20:48:17.931Z",
+      "verifierId": "github-independent-verifier-v1",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "evidenceId": "eefe31fa-b587-4231-9b04-9f63af95c393",
+      "kind": "independent_verification",
+      "capturedAt": "2026-09-29T20:48:17.931Z",
+      "verifierId": "github-independent-verifier-v1",
+      "passed": true,
+      "errors": []
+    }
+  ],
+  "verification": {
+    "verifierId": "github-independent-verifier-v1",
+    "passed": true,
+    "errors": [],
+    "executionId": "50d82dc2-0fc0-4dc6-ae7d-e40f4cef4d59"
+  },
+  "result": {
+    "executionId": "50d82dc2-0fc0-4dc6-ae7d-e40f4cef4d59",
+    "adapter": "platform.github",
+    "action": "read_file",
+    "repo": "rohitg00/ai-engineering-from-scratch",
+    "status": 200,
+    "ok": true,
+    "data": {
+      "name": "README.md",
+      "path": "README.md",
+      "sha": "fa3bdfe6f7161c0e8176a288443c7e528b0fb9be",
+      "size": 110543,
+      "url": "https://api.github.com/repos/rohitg00/ai-engineering-from-scratch/contents/README.md?ref=main",
+      "html_url": "https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/README.md",
+      "git_url": "https://api.github.com/repos/rohitg00/ai-engineering-from-scratch/git/blobs/fa3bdfe6f7161c0e8176a288443c7e528b0fb9be",
+      "download_url": "https://raw.githubusercontent.com/rohitg00/ai-engineering-from-scratch/main/README.md",
+      "type": "file",
+      "encoding": "base64",
+      "_links": {
+        "self": "https://api.github.com/repos/rohitg00/ai-engineering-from-scratch/contents/README.md?ref=main",
+        "git": "https://api.github.com/repos/rohitg00/ai-engineering-from-scratch/git/blobs/fa3bdfe6f7161c0e8176a288443c7e528b0fb9be",
+        "html": "https://github.com/rohitg00/ai-engineering-from-scratch/blob/main/README.md"
+      }
+    }
+  },
+  "completion": {
+    "ok": true,
+    "errors": []
+  },
+  "runId": "2ee3c5d2-48b6-4d85-9bf3-207a0348730d",
+  "failureClass": null,
+  "retry": {
+    "retry": false
+  }
+}
