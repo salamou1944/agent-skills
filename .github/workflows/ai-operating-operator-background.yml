@@ -31,7 +31,7 @@ jobs:
       - name: Verify operator repository scope
         run: |
           test -n "$GITHUB_REPOSITORY"
-          test "$GITHUB_REPOSITORY" = "$OPERATOR_GITHUB_REPOS"
+          echo ",$OPERATOR_GITHUB_REPOS," | grep -Fq ",$GITHUB_REPOSITORY,"
       - name: Refresh five-source capability feed
         run: node apps/ai-operating-operator/test-continuous-runtime.mjs
       - name: Run background operator
