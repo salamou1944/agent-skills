@@ -46,9 +46,10 @@ function providerBlocker(error){
 // acceptance contract rather than relying on an LLM-generated plan.
 if(task.id==='elite.defect-closure'){
   const verification=await run('npm',['run','test:elite']);
-  const defect005=['DEF','005'].join('-');
-  const defect006=['DEF','006'].join('-');
-  const records=await run('git',['grep','-nE',`${defect005}|${defect006}`,'--','docs','apps','.github']);
+  // Scan the documented defect scope, while excluding this verifier itself.
+  // The verifier contains the literal IDs in its own command, so scanning the
+  // entire repository would self-match and falsely keep closure blocked.
+  const records=await run('git',['grep','-nE','DEF-005|DEF-006','--','docs','apps','.github',':!apps/easy-developer-platform/run-project-queue-cycle.mjs']);
   // stderr is diagnostic output, not a correctness signal. Require a clean
   // exit and an authoritative no-match scan; do not reject successful tests
   // merely because the test runner wrote diagnostics to stderr.
@@ -63,7 +64,7 @@ if(task.id==='elite.defect-closure'){
     const evidence=[
       {kind:'provider-independent-verification',command:'npm run test:elite',exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)},
       {kind:'targeted-elite-verification',commands:['npm run test:elite:harness','npm run test:elite:engine','npm run test:elite:components','npm run test:elite:evidence'],passed:targetedPassed,results:targetedChecks.map(check=>({exitCode:check.code,stdout:check.stdout.slice(-2000),stderr:check.stderr.slice(-2000)}))},
-      {kind:'authoritative-defect-scan',command:'git grep -nE DEF-005|DEF-006 -- docs apps .github',exitCode:records.code,stdout:'No unresolved DEF-005 or DEF-006 records found.',stderr:records.stderr.slice(-2000)},
+      {kind:'authoritative-defect-scan',command:'git grep -nE DEF-005|DEF-006 -- docs apps .github :!apps/easy-developer-platform/run-project-queue-cycle.mjs',exitCode:records.code,stdout:'No unresolved DEF-005 or DEF-006 records found.',stderr:records.stderr.slice(-2000)},
       {kind:'resolution',message:'No documented defect record remains for the requested closure scope; provider-backed implementation was not required.'}
     ];
     const contractEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'defect closure scan executed'},{kind:'verification',ok:true,command:'npm run test:elite + authoritative defect scan',summary:'No unresolved defect records found.'},{kind:'result',status:'NOOP',taskVerified:false,pipelineVerified:true},...evidence];
