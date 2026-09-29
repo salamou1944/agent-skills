@@ -77,7 +77,7 @@ if(task.id==='elite.defect-closure'){
   // Filter the verifier's own source match explicitly after the scan. This is
   // more robust than relying on git pathspec exclusion semantics in CI.
   const verifierPath='apps/easy-developer-platform/run-project-queue-cycle.mjs';
-  const unresolvedRecords=records.stdout.split('\\n').filter(line=>line.trim() && !line.startsWith(verifierPath+':'));
+  const unresolvedRecords=records.stdout.split('\n').filter(line=>line.trim() && !line.startsWith(verifierPath+':'));
   // stderr is diagnostic output, not a correctness signal. Require a clean
   // exit and an authoritative no-match scan; do not reject successful tests
   // merely because the test runner wrote diagnostics to stderr.
