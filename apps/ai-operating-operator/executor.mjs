@@ -6,7 +6,6 @@ import {createTask,evidence,verifyCompletion} from './operator-core.mjs';
 import {buildExecutionPlan} from './skill-router.mjs';
 import * as nmapAdapter from './adapters/nmap-adapter.mjs';
 import * as githubAdapter from './adapters/github-adapter.mjs';
-import * as httpAdapter from './adapters/http-adapter.mjs';
 import * as browserAdapter from './adapters/browser-adapter.mjs';
 import * as researchAdapter from './adapters/research-adapter.mjs';
 import * as cuaAdapter from './adapters/cua-adapter.mjs';
@@ -18,14 +17,12 @@ import * as mcpAdapter from './adapters/mcp-adapter.mjs';
 import * as capabilitySourcesAdapter from './adapters/capability-sources-adapter.mjs';
 import * as nmapVerifier from './verifiers/nmap-verifier.mjs';
 import * as githubVerifier from './verifiers/github-verifier.mjs';
-import * as httpVerifier from './verifiers/http-verifier.mjs';
 import * as cuaVerifier from './verifiers/cua-verifier.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const ADAPTER_MODULES=Object.freeze({
   'security.network.nmap':nmapAdapter,
   'platform.github':githubAdapter,
-  'platform.http':httpAdapter,
   'research.search':researchAdapter,
   'research.read':researchAdapter,
   'browser.automation':browserAdapter,
@@ -40,7 +37,6 @@ const ADAPTER_MODULES=Object.freeze({
 const VERIFIER_MODULES=Object.freeze({
   'nmap-independent-verifier-v1':nmapVerifier,
   'github-independent-verifier-v1':githubVerifier,
-  'http-independent-verifier-v1':httpVerifier,
   'cua-independent-verifier-v1':cuaVerifier,
   'browser-independent-verifier-v1':browserAdapter,
   'research-independent-verifier-v1':researchAdapter,
