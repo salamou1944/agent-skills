@@ -67,7 +67,7 @@ export async function executeTask(input,{capabilities={},adapterInputs={},runner
   const invocation=task.capabilityArtifactInvocation||null;
   if(invocation){
     const registered=registry.adapters[invocation.adapter];
-    if(!registered||registered.status!=='ADAPTER_READY'||!ADAPTER_MODULES[invocation.adapter])return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_adapter_not_registered'})]};
+    if(!registered||registered.status!=='ADAPTER_READY'||(!ADAPTER_MODULES[invocation.adapter]&&!adapterOverrides[invocation.adapter]))return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_adapter_not_registered'})]};
     if(invocation.adapter!==capability)return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_adapter_mismatch'})]};
     if(!task.capabilitySelection?.id||!task.capabilityArtifact?.content||!task.capabilityArtifact?.sha256)return {taskId:task.taskId,state:'BLOCKED_EXTERNAL_DEPENDENCY',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_artifact_missing'})]};
     if(!(task.allowedActions||[]).includes('capability_invoke'))return {taskId:task.taskId,state:'BLOCKED_PERMISSION',plan,evidence:[evidence('action',{accepted:false,reason:'capability_invocation_not_authorized'})]};
