@@ -88,6 +88,7 @@ export async function runEliteTask(goal, deps = {}) {
   const test = deps.test || (async () => ({ ok: true, summary: 'No test runner configured' }));
   const review = deps.review || (async () => ({ ok: true, summary: 'No reviewer configured' }));
   const verify = deps.verify || (async () => ({ ok: true, summary: 'No verifier configured' }));
+  const invokeCapability = deps.invokeCapability;
   if (!String(goal || '').trim()) throw new EliteHarnessError('goal_required', 'A non-empty goal is required');
   if (typeof provider !== 'function') throw new EliteHarnessError('provider_required', 'An inference provider is required');
   const step = async (phase, payload, fn) => { if (++state.steps > policy.maxSteps) throw new EliteHarnessError('step_budget_exhausted', 'Maximum task steps exceeded'); if (Date.now() - started > policy.maxWallMs) throw new EliteHarnessError('wall_clock_budget_exhausted', 'Maximum task duration exceeded'); state.phase = phase; await journal.append(phase, payload); return fn(); };
@@ -95,8 +96,15 @@ export async function runEliteTask(goal, deps = {}) {
     state.stageEvidence.push(stageEvidence('detect', { goalHash: hash(goal) }));
     const inspected = await step('inspect', { goalHash: hash(goal) }, () => inspect({ root, goal, maxContextBytes: policy.maxContextBytes }));
     state.stageEvidence.push(stageEvidence('inspect', { contextHash: hash(String(inspected?.context || '')) }, [state.stageEvidence.at(-1).evidenceId]));
-    const context = String(inspected?.context || '').slice(0, policy.maxContextBytes);
-    let plan = normalizePlan(await step('plan', { contextHash: hash(context) }, () => provider({ role: 'planner', goal, context, constraints: { requireVerification: policy.requireVerification, protectedPaths: [...policy.forbidden] } })));
+    let context = String(inspected?.context || '').slice(0, policy.maxContextBytes);
+    let capabilityInvocation = null;
+    if (typeof invokeCapability === 'function') {
+      capabilityInvocation = await step('capability_invoke', { capabilityId: deps.capabilitySelection?.id || null, revision: deps.capabilitySelection?.revision || null }, () => invokeCapability({ goal, capabilitySelection: deps.capabilitySelection || null, capabilityArtifact: deps.capabilityArtifact || null, context }));
+      if (!capabilityInvocation || capabilityInvocation.ok !== true) throw new EliteHarnessError('capability_invocation_failed', capabilityInvocation?.reason || 'Capability invocation did not produce a verified result');
+      state.evidence.push(capabilityInvocation.evidence || { kind: 'capability_invocation', passed: true, result: capabilityInvocation.result || null });
+      context = `${context}\nVerified capability invocation result: ${JSON.stringify(capabilityInvocation.result || capabilityInvocation).slice(0, 120000)}`.slice(0, policy.maxContextBytes);
+    }
+    let plan = normalizePlan(await step('plan', { contextHash: hash(context), capabilityInvocation: Boolean(capabilityInvocation) }, () => provider({ role: 'planner', goal, context, capabilityInvocation, constraints: { requireVerification: policy.requireVerification, protectedPaths: [...policy.forbidden] } })));
     state.planHash = hash(JSON.stringify(plan));
     while (true) {
       const changes = validateChanges(root, plan.changes, policy), originals = await snapshot(changes);
@@ -129,7 +137,7 @@ export async function runEliteTask(goal, deps = {}) {
         const reproduce = stageEvidence('reproduce', { failure: classification }, [rootCause.evidenceId]);
         state.stageEvidence.push(reproduce, rootCause);
         await journal.append('repair', { repair: state.repairs, error: error.message, code: error.code || 'unknown', classification });
-        plan = normalizePlan(await provider({ role: 'repair', goal, failedPlan: plan, failure: buildRepairContext({ goal, failure, previousPlan: plan, inspectContext: context, attempt: state.repairs }), context }));
+        plan = normalizePlan(await provider({ role: 'repair', goal, failedPlan: plan, failure: buildRepairContext({ goal, failure, previousPlan: plan, inspectContext: context, attempt: state.repairs }), context, capabilityInvocation }));
         state.planHash = hash(JSON.stringify(plan));
       }
     }

@@ -33,7 +33,7 @@ export function getEliteBridgeStatus(){
   }
 }
 
-export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAULT_TIMEOUT_MS}={}){
+export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAULT_TIMEOUT_MS,capabilities={},adapters={},adapterInputs={},adapterEnv=process.env,adapterOverrides={},verifierOverrides={}}={}){
   const url=endpoint();
   const task=createTask(input);
   if(!url && process.env.ELITE_LOCAL_ENGINE==='1'){
@@ -45,7 +45,14 @@ export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAUL
     if(!(resolvedRoot===allowedRoot||resolvedRoot.startsWith(allowedRoot+'/'))) return {ok:false,state:'BLOCKED_PERMISSION',taskId:task.taskId,evidence:[evidence('action',{accepted:false,reason:'workspace_root_outside_allowlist'})]};
     try{
       const {runEliteEngine}=await import(LOCAL_ENGINE_MODULE);
-      const result=await runEliteEngine(task.goal,{root:resolvedRoot,isolate:true,capabilitySelection:task.capabilitySelection||null,capabilityArtifact:task.capabilityArtifact||null,policy:{project:task.project||'ai-operating-operator',requireVerification:true,requireReview:true,maxRepairs:3},provider:typeof input.provider==='function'?input.provider:undefined});
+      const invokeCapability=task.capabilityArtifactInvocation?async ({goal,capabilitySelection,capabilityArtifact})=>{
+        const adapter=String(task.capabilityArtifactInvocation?.adapter||'');
+        const invocationTask={...task,executionTarget:null,goal,requestedCapabilities:[adapter],allowedActions:['capability_invoke'],capabilitySelection,capabilityArtifact,capabilityArtifactInvocation:task.capabilityArtifactInvocation};
+        const invocationResult=await (await import('./executor.mjs')).executeTask(invocationTask,{capabilities,adapters,adapterInputs,adapterEnv,adapterOverrides,verifierOverrides});
+        const passed=invocationResult?.completion?.ok===true && invocationResult?.verification?.passed===true;
+        return {ok:passed,result:invocationResult,evidence:{kind:'capability_invocation',passed,verifierId:invocationResult?.verification?.verifierId||null,executionState:invocationResult?.state||null,sourceRevision:capabilitySelection?.revision||null}};
+      }:null;
+      const result=await runEliteEngine(task.goal,{root:resolvedRoot,isolate:true,capabilitySelection:task.capabilitySelection||null,capabilityArtifact:task.capabilityArtifact||null,invokeCapability,policy:{project:task.project||'ai-operating-operator',requireVerification:true,requireReview:true,maxRepairs:3},provider:typeof input.provider==='function'?input.provider:undefined});
       const verificationPassed=['TASK_VERIFIED','VERIFIED','VERIFIED_NOOP','NOOP_VERIFIED'].includes(result?.status)&&Boolean(result?.evidence);
       const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[evidence('action',{adapter:'elite-local-engine',status:result?.status,changedFiles:result?.changedFiles||[]}),...(Array.isArray(result?.evidence)?result.evidence:[]),evidence('verification',{verifierId:'elite-engine-independent-verification',passed:verificationPassed,errors:verificationPassed?[]:['elite_engine_not_verified']}),evidence('independent_verification',{verifierId:'elite-engine-independent-verification',passed:verificationPassed,errors:verificationPassed?[]:['elite_engine_not_verified']})],verification:{verifierId:'elite-engine-independent-verification',passed:verificationPassed,errors:verificationPassed?[]:['elite_engine_not_verified']}};
       return {...report,completion:verifyCompletion(task,report),result};

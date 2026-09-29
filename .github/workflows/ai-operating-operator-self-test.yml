@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - 'apps/ai-operating-operator/**'
+      - 'apps/easy-developer-platform/elite-*.mjs'
       - '.github/workflows/ai-operating-operator-self-test.yml'
 jobs:
   test:
@@ -22,6 +23,8 @@ jobs:
       - run: node --check apps/ai-operating-operator/runtime.mjs
       - run: node --check apps/ai-operating-operator/server.mjs
       - run: node --check apps/ai-operating-operator/executor.mjs
+      - run: node --check apps/easy-developer-platform/elite-harness.mjs
+      - run: node --check apps/easy-developer-platform/elite-engine.mjs
       - run: node --check apps/ai-operating-operator/capability-invocation.mjs
       - run: node --check apps/ai-operating-operator/run-ledger.mjs
       - run: node --check apps/ai-operating-operator/account-probes.mjs
@@ -63,6 +66,8 @@ jobs:
         run: node apps/ai-operating-operator/test-capability-artifact-hydration.mjs
       - name: Run Elite capability materialization test
         run: node apps/easy-developer-platform/test-elite-capability-materialization.mjs
+      - name: Run Elite capability invocation feedback test
+        run: node apps/easy-developer-platform/test-elite-capability-invocation-feedback.mjs
 
       - name: Run Elite capability contract test
         run: node apps/easy-developer-platform/test-elite-capability-contract.mjs
