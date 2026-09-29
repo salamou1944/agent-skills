@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/ai-operating-operator-background.yml'
       - 'apps/ai-operating-operator/runtime/tasks/**'
+      - 'apps/ai-operating-operator/worker.mjs'
       - 'apps/ai-operating-operator/capability-feed.mjs'
       - 'apps/ai-operating-operator/adapters/capability-sources-adapter.mjs'
   schedule:
@@ -20,7 +21,7 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       GITHUB_TOKEN: ${{ secrets.OPERATOR_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
