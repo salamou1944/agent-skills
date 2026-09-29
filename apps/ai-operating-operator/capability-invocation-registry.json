@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "policy": "Only registered capability artifacts may be invoked.",
+  "capabilities": {
+    "mufeedvh-superpowers-systematic-debugging": {
+      "mode": "skill",
+      "adapter": "research.capability_sources",
+      "verifier": "capability-sources-independent-verifier-v1",
+      "status": "READY"
+    },
+    "mufeedvh-code2prompt-core": {
+      "mode": "component",
+      "adapter": "workspace.recovery",
+      "verifier": "workspace-independent-verifier-v1",
+      "status": "READY"
+    }
+  }
+}
+{
+  "id": "mufeedvh-code2prompt-core",
+  "repo": "mufeedvh/code2prompt",
+  "revision": "66585136062c04275ddd5a01c5518a4d78c4aa76",
+  "artifact": {
+    "file": "crates/code2prompt-core/src/lib.rs",
+    "sha256": "9e38ed19281460ed13cb7872b94053a6171b197933f918d82540c7c53d2d8d05",
+    "bytes": 1964,
+    "artifactStatus": "VERIFIED_FETCH"
+  },
+  "invocation": {
+    "mode": "DISCOVERY_ONLY",
+    "adapter": null,
+    "verifier": null
+  }
+}
+"invocation": {
+  "mode": "ADAPTER",
+  "adapter": "research.capability_sources",
+  "verifier": "capability-sources-independent-verifier-v1"
+}
