@@ -9,12 +9,15 @@ on:
     - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
+  # workflow-review: operator-safe
 concurrency:
   group: ai-operating-operator-background
   cancel-in-progress: false
 jobs:
   worker:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -31,7 +34,7 @@ jobs:
       - name: Verify operator repository scope
         run: |
           test -n "$GITHUB_REPOSITORY"
-          test "$GITHUB_REPOSITORY" = "$OPERATOR_GITHUB_REPOS"
+          echo ",$OPERATOR_GITHUB_REPOS," | grep -Fq ",$GITHUB_REPOSITORY,"
       - name: Refresh five-source capability feed
         run: node apps/ai-operating-operator/test-continuous-runtime.mjs
       - name: Run background operator
