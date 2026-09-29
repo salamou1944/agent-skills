@@ -154,7 +154,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "5527bb09cabef7ea834f2c0bcda7e1bf658548c1"
+          "commit": "7c168c1bdd334d3c9c8f49a4e1b3eb1d52d0f189"
         },
         {
           "kind": "action",
@@ -176,14 +176,14 @@
         },
         {
           "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 9818:AD713:5D0AC9:6C20EC:6ABC0084)\n",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 803B:93B27:1D1326B:1F6FD8E:6ABC046C)\n",
           "errorClass": "all_providers_exhausted",
           "task": "elite.defect-closure",
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
       "scope": "apps/easy-developer-platform/defects",
-      "updatedAt": "2026-09-29T18:16:37.818Z"
+      "updatedAt": "2026-09-29T18:33:18.254Z"
     },
     "elite.ci-contract-closure": {
       "status": "BLOCKED",
@@ -8716,6 +8716,43 @@
       ],
       "scope": "apps/easy-developer-platform/defects",
       "at": "2026-09-29T18:16:37.818Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "7c168c1bdd334d3c9c8f49a4e1b3eb1d52d0f189"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "09",
+            "soldier": "test-qa",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 803B:93B27:1D1326B:1F6FD8E:6ABC046C)\n",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.defect-closure",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/defects",
+      "at": "2026-09-29T18:33:18.254Z"
     }
   ]
 }
