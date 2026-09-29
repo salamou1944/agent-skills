@@ -44,6 +44,30 @@ function providerBlocker(error){
 
 // These closures are provider-independent because they verify the complete
 // acceptance contract rather than relying on an LLM-generated plan.
+// CI-contract closure is provider-independent: its acceptance contract is the
+// deterministic local queue/workflow contract suite. Do not invoke an LLM merely
+// to decide whether these self-tests passed.
+if(task.id==='elite.ci-contract-closure'){
+  const verification=await run('npm',['run','test:elite:queue']);
+  if(verification.code===0){
+    const evidence=[
+      {kind:'provider-independent-verification',command:'npm run test:elite:queue',exitCode:verification.code,stdout:verification.stdout.slice(-5000),stderr:verification.stderr.slice(-3000)},
+      {kind:'resolution',message:'Elite CI contract suite passed deterministically; provider-backed recovery was not required.'}
+    ];
+    const contractEvidence=[
+      {kind:'baseline',commit:baseline.commit},
+      {kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'CI contract suite executed'},
+      {kind:'verification',ok:true,command:'npm run test:elite:queue',summary:'All Elite queue/CI contract self-tests passed.'},
+      {kind:'result',status:'NOOP',taskVerified:false,pipelineVerified:true},
+      ...evidence
+    ];
+    closeVerifiedTask({status:'NOOP',verification:{passed:true,summary:'Provider-independent Elite CI contract closure verified'},evidence:contractEvidence});
+    await markTask(stateFile,task.id,'NOOP',contractEvidence);
+    console.log(JSON.stringify({status:'NOOP',task,verification:'passed',evidence},null,2));
+    process.exit(0);
+  }
+}
+
 if(task.id==='elite.defect-closure'){
   const verification=await run('npm',['run','test:elite']);
   // Scan the documented defect scope, while excluding this verifier itself.
