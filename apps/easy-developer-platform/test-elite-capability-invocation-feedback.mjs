@@ -34,6 +34,7 @@ try {
     capabilityArtifact:{repo:'mufeedvh/superpowers',revision,file:'skills/systematic-debugging/SKILL.md',sha256,content:contentText},
     capabilityArtifactInvocation:{...invocation,artifact:{repo:'mufeedvh/superpowers',revision,file:'skills/systematic-debugging/SKILL.md',sha256}},
     project:'elite-invocation-feedback',
+    localIsolate:false,
     provider:async ({role,context,capabilityInvocation})=>{
       if(role==='planner'){providerContext=context;assert.equal(capabilityInvocation.result.verification.verifierId,'ollama-independent-verifier-v1');}
       return {summary:'no-op verified plan',changes:[]};
