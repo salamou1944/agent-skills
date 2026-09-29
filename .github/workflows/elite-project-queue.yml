@@ -1,5 +1,7 @@
 name: elite-project-queue
 
+# workflow-review: operator-safe
+
 on:
   workflow_dispatch:
   push:
@@ -12,12 +14,14 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  models: read
-  copilot-requests: write
+  contents: read
 
 jobs:
   execute-next:
+    permissions:
+      contents: write
+      models: read
+      copilot-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
