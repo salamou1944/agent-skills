@@ -9,8 +9,8 @@ on:
     - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
-  # workflow-review: operator-safe
   contents: read
+  # workflow-review: operator-safe
 concurrency:
   group: ai-operating-operator-background
   cancel-in-progress: false
