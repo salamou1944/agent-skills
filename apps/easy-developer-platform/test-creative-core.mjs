@@ -54,8 +54,10 @@ assert.equal(outputBlock.decision, 'BLOCK');
 assert.deepEqual(outputBlock.inventedClaims, ['best shoe in Algeria']);
 
 const provider = providerStatus();
-assert.equal(provider.status, 'DISABLED');
-assert.equal(provider.generationEnabled, false);
+assert.equal(provider.status, 'READY');
+assert.equal(provider.generationEnabled, true);
+assert.equal(provider.externalProvider.status, 'DISABLED');
+assert.equal(provider.externalProvider.generationEnabled, false);
 assert.deepEqual(provider.contract, ['analyzeAsset', 'generateCreative', 'validateOutput']);
 
 console.log(JSON.stringify({
