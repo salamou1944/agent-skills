@@ -35,11 +35,12 @@ const fakeOllama={
     if(prompt.includes('task decomposition specialist')){
       return {executionId:'bot-decompose-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({subtasks:[]})}}}};
     }
-    plannerCalls++;
-    const content=plannerCalls===1
-      ? {summary:'intentional first-attempt syntax defect',changes:[{path:'repair-target.mjs',content:'export default ;'}]}
-      : {summary:'stable plan',changes:[]};
-    return {executionId:'bot-plan-'+plannerCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify(content)}}}};
+    if(prompt.includes("You are Elite's planning agent")){
+      plannerCalls++;
+      const content={summary:'intentional first-attempt syntax defect',changes:[{path:'repair-target.mjs',content:'export default ;'}]};
+      return {executionId:'bot-plan-'+plannerCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify(content)}}}};
+    }
+    return {executionId:'bot-inference-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({summary:'no-op',changes:[]})}}}};
   },
   verifyOllamaResult:({result})=>({verifierId:'ollama-independent-verifier-v1',passed:Boolean(result?.result?.ok===true),errors:[]})
 };
