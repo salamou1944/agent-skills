@@ -284,7 +284,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "267b25e393da926217052c8adf5b257ef20e7e90"
+          "commit": "2d6fb175256524e81f0eaf1d3fcc44d69d40a096"
         },
         {
           "kind": "action",
@@ -307,7 +307,7 @@
         },
         {
           "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 2B82:1E628B:63E4D0:74DDD6:6ABD5388)\n",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: E042:32D00B:87DE4B:96FDDF:6ABD8C3D)\n",
           "errorClass": "all_providers_exhausted",
           "task": "elite.release-evidence",
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
@@ -318,15 +318,15 @@
           "state": {
             "started": true,
             "running": false,
-            "lastRunAt": "2026-09-30T18:22:36.232Z",
-            "lastSuccessAt": "2026-09-30T18:22:56.286Z",
+            "lastRunAt": "2026-09-30T22:24:29.190Z",
+            "lastSuccessAt": "2026-09-30T22:24:51.673Z",
             "lastError": null,
             "sourceCount": 5,
-            "documents": 42,
-            "changed": 42,
+            "documents": 41,
+            "changed": 41,
             "collectionSourceCount": 60,
-            "collectionDocumentCount": 27,
-            "collectionFailures": 33,
+            "collectionDocumentCount": 26,
+            "collectionFailures": 34,
             "collectionCapabilityCount": 18
           }
         },
@@ -351,7 +351,7 @@
         }
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
-      "updatedAt": "2026-09-30T18:23:05.465Z"
+      "updatedAt": "2026-09-30T22:25:04.060Z"
     },
     "mony.pipeline-live-readiness": {
       "status": "BLOCKED",
@@ -9650,6 +9650,81 @@
       ],
       "scope": "apps/revenue-engine/live-readiness",
       "at": "2026-09-30T18:23:44.738Z"
+    },
+    {
+      "id": "elite.release-evidence",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "2d6fb175256524e81f0eaf1d3fcc44d69d40a096"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "12",
+            "soldier": "deployment-ops",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          },
+          "executionPath": "provider-fallback"
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: E042:32D00B:87DE4B:96FDDF:6ABD8C3D)\n",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.release-evidence",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        },
+        {
+          "kind": "bot-capability-feed",
+          "ok": true,
+          "state": {
+            "started": true,
+            "running": false,
+            "lastRunAt": "2026-09-30T22:24:29.190Z",
+            "lastSuccessAt": "2026-09-30T22:24:51.673Z",
+            "lastError": null,
+            "sourceCount": 5,
+            "documents": 41,
+            "changed": 41,
+            "collectionSourceCount": 60,
+            "collectionDocumentCount": 26,
+            "collectionFailures": 34,
+            "collectionCapabilityCount": 18
+          }
+        },
+        {
+          "kind": "bot-capability-selection",
+          "ok": true,
+          "decision": "ADAPT_AND_VERIFY",
+          "selectedId": "mufeedvh-superpowers-systematic-debugging",
+          "adapter": "ai.local.ollama"
+        },
+        {
+          "kind": "bot-capability-artifact",
+          "ok": true,
+          "state": null,
+          "reason": null
+        },
+        {
+          "kind": "bot-elite-execution",
+          "ok": false,
+          "state": "BLOCKED_EXTERNAL_DEPENDENCY",
+          "status": null
+        }
+      ],
+      "scope": "apps/easy-developer-platform/release-evidence",
+      "at": "2026-09-30T22:25:04.060Z"
     }
   ]
 }
