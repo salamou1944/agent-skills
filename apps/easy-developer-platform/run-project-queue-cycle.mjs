@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { execute as autonomousExecute } from './autonomous-coder.mjs';
+import { executeQueueTask } from './elite-queue-executor.mjs';
 import { TASKS, loadState, selectNext, markTask } from './project-queue-orchestrator.mjs';
 import { routeMission } from './army-14-mission-router.mjs';
 import { createTaskContract, validateTaskResult } from './task-contract.mjs';
@@ -128,12 +128,12 @@ if(task.id==='mony.first-revenue-blocker'){
 }
 
 let coding;
-try { coding=await autonomousExecute(task.goal); }
+try { coding=await executeQueueTask(task); }
 catch(error){
   const blocker=providerBlocker(error);
   const evidence=blocker
     ? [{kind:'provider-blocked',error:blocker.message,errorClass:blocker.code,task:task.id,action:'Use the configured provider fallback or resolve the provider dependency before retrying this queue task.'}]
-    : [{kind:'autonomous-coder',error:error.message}];
+    : [{kind:'queue-executor',error:error.message}];
   const failureEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:false,route},{kind:'verification',ok:false},{kind:'result',status:blocker?'BLOCKED':'FAILED'},...evidence];
   await markTask(stateFile,task.id,blocker?'BLOCKED':'FAILED',failureEvidence);
   console.error(JSON.stringify({status:blocker?'BLOCKED':'FAILED',task:task.id,error:error.message,evidence},null,2));
@@ -141,7 +141,7 @@ catch(error){
 }
 
 if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
-  await markTask(stateFile,task.id,coding.status==='BLOCKED'?'BLOCKED':'FAILED',[{kind:'autonomous-coder',status:coding.status,summary:coding.summary||null}]);
+  await markTask(stateFile,task.id,coding.status==='BLOCKED'?'BLOCKED':'FAILED',[{kind:'queue-executor',executionPath:coding.executionPath||null,status:coding.status,summary:coding.summary||null}]);
   console.error(JSON.stringify({status:coding.status,task:task.id,summary:coding.summary||null},null,2));
   process.exit(1);
 }
@@ -152,7 +152,7 @@ const evidence=[
   {kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
   {kind:'verification',ok:verification.code===0,command:task.verify,exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)},
   {kind:'result',status:coding.status,taskVerified:coding.status==='VERIFIED',pipelineVerified:true},
-  {kind:'autonomous-coder',status:coding.status,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
+  {kind:'queue-executor',executionPath:coding.executionPath||null,status:coding.status,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
   {kind:'verification-command',command:task.verify,exitCode:verification.code,stdout:verification.stdout.slice(-4000),stderr:verification.stderr.slice(-4000)}
 ];
 

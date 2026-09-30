@@ -24,7 +24,7 @@ export async function selectNextTask(queueDir=queue){
 
 export async function prepareTaskForExecution(task,{selectCapability=selectVerifiedCapability}={}){
   if(task.executionTarget!=='elite'||!task.capabilityQuery)return {ok:true,task};
-  const selection=await selectCapability({query:task.capabilityQuery,compatibility:task.capabilityCompatibility||null,allowedLicenses:task.allowedLicenses||null,limit:Number(task.capabilityLimit||20)});
+  const selection=await selectCapability({query:task.capabilityQuery,compatibility:task.capabilityCompatibility||null,allowedLicenses:task.allowedLicenses||null,requiredAdapter:task.capabilityAdapter||null,limit:Number(task.capabilityLimit||20)});
   if(selection.decision==='DISCOVERY_ONLY')return {ok:false,state:'DISCOVERY_ONLY',task,selection};
   if(selection.decision!=='ADAPT_AND_VERIFY')return {ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',task,selection};
   return {ok:true,task:{...task,capabilitySelection:selection.selected,sourceRevision:selection.selected.revision,capabilityArtifactFile:selection.selected.artifact?.file||task.capabilityArtifactFile||null,capabilityArtifactSha256:selection.selected.artifact?.sha256||task.capabilityArtifactSha256||null,capabilityArtifactInvocation:selection.selected.invocation||task.capabilityArtifactInvocation||null,requestedCapabilities:Array.from(new Set([...(task.requestedCapabilities||[]),selection.selected.capabilityType,selection.selected.invocation?.adapter].filter(Boolean))),constraints:Array.from(new Set([...(task.constraints||[]),'capability-selected-verified']))},selection};

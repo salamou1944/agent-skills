@@ -35,7 +35,7 @@
     "test:elite:dna": "node apps/easy-developer-platform/test-elite-dna.mjs",
     "test:elite:unique": "node apps/easy-developer-platform/test-elite-unique-intelligence.mjs",
     "test:elite:deployment-recovery": "node apps/easy-developer-platform/test-elite-deployment-recovery.mjs",
-    "test:elite:queue": "node apps/easy-developer-platform/test-project-queue-orchestrator.mjs",
+    "test:elite:queue": "node apps/easy-developer-platform/test-project-queue-orchestrator.mjs && node --test apps/easy-developer-platform/test-elite-queue-bot-routing.mjs",
     "test:elite:provider-resilience": "node --test apps/easy-developer-platform/test-elite-provider-resilience.mjs",
     "test:elite:benchmark": "node apps/easy-developer-platform/elite-benchmark.mjs",
     "test:elite:soldiers": "node --test apps/easy-developer-platform/test-elite-soldiers.mjs",
@@ -65,7 +65,8 @@
     "test:lab:luna-frontier": "node --test apps/army14-evolution-lab/test-luna-frontier-experiments.mjs",
     "test:lab:luna-meta": "node --test apps/army14-evolution-lab/test-luna-meta-evolution.mjs",
     "test:lab:luna-unknown": "node --test apps/army14-evolution-lab/test-luna-unknown-capability-discovery.mjs",
-    "test:army14:worker-health": "node --test apps/easy-developer-platform/test-army-14-railway-worker-health.mjs"
+    "test:army14:worker-health": "node --test apps/easy-developer-platform/test-army-14-railway-worker-health.mjs",
+    "test:elite:queue-bot": "node --test apps/easy-developer-platform/test-elite-queue-bot-routing.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
