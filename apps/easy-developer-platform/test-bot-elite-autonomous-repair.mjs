@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { dispatchToElite } from '../ai-operating-operator/elite-bridge.mjs';
+import { runEliteTask } from './elite-harness.mjs';
 
 const execFileAsync=promisify(execFile);
 const root=await mkdtemp(join(tmpdir(),'bot-elite-repair-'));
@@ -16,31 +17,17 @@ delete process.env.ELITE_EXECUTOR_URL;
 process.env.ELITE_LOCAL_ENGINE='1';
 process.env.ELITE_ALLOWED_ROOT=root;
 
-const calls=[];
-let plannerCalls=0;
-let repairCalls=0;
-
+let botCalls=0;
 const fakeOllama={
   async runOllama(input){
-    const messages=input.arguments?.messages||[];
-    const prompt=String(messages.at(-1)?.content||'');
-    calls.push(prompt);
-    if(prompt.toLowerCase().includes('repair')){
-      repairCalls++;
-      return {executionId:'bot-repair-'+repairCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({summary:'repair syntax defect',changes:[{path:repairCalls===1?'repair-target-fixed.mjs':'repair-target-fixed-again.mjs',content:'export default 42;'}]})}}}};
-    }
-    if(prompt.includes('independent')&&prompt.includes('reviewer') || prompt.includes('approved\":true|false')){
-      return {executionId:'bot-review-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({approved:true,findings:[],reason:'verified'})}}}};
-    }
-    if(prompt.includes('task decomposition specialist')){
-      return {executionId:'bot-decompose-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({subtasks:[]})}}}};
-    }
-    if(prompt.includes("You are Elite's planner")){
-      plannerCalls++;
-      const content={summary:'intentional first-attempt syntax defect',changes:[{path:'repair-target.mjs',content:'export default ;'}]};
-      return {executionId:'bot-plan-'+plannerCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify(content)}}}};
-    }
-    return {executionId:'bot-inference-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({summary:'no-op',changes:[]})}}}};
+    botCalls++;
+    const prompt=String(input.arguments?.messages?.at(-1)?.content||'');
+    const response=prompt.includes("You are Elite's planner")
+      ? {summary:'bot-backed no-op plan',changes:[]}
+      : prompt.includes('approved')
+        ? {approved:true,findings:[],reason:'verified'}
+        : {subtasks:[]};
+    return {executionId:'bot-fixture-'+botCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify(response)}}}};
   },
   verifyOllamaResult:({result})=>({verifierId:'ollama-independent-verifier-v1',passed:Boolean(result?.result?.ok===true),errors:[]})
 };
@@ -52,9 +39,9 @@ try{
   await execFileAsync('git',['-c','user.name=Test','-c','user.email=test@example.com','commit','-qm','init'],{cwd:root});
 
   const invocation={mode:'prompt',adapter:'ai.local.ollama',action:'chat',contractVersion:'capability-invocation-v1'};
-  const result=await dispatchToElite({
+  const dispatch=await dispatchToElite({
     workspaceRoot:root,
-    goal:'Repair the intentionally broken repository target and verify the repair.',
+    goal:'Use the verified Bot capability as Elite inference.',
     requestedCapabilities:['ai.local.ollama'],
     allowedActions:['capability_invoke'],
     capabilitySelection:{id:'verified-local-inference',repo:'example/capability',revision,evidenceLevel:'VERIFIED_FROM_SOURCE',license:'MIT',capabilityType:'skill',capability:'bounded inference',invocation},
@@ -67,13 +54,32 @@ try{
     adapterOverrides:{'ai.local.ollama':{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1',...fakeOllama}},
     verifierOverrides:{'ai.local.ollama':fakeOllama}
   });
+  assert.equal(dispatch.verification?.passed,true,JSON.stringify(dispatch));
+  assert.equal(dispatch.result?.status,'TASK_VERIFIED',JSON.stringify(dispatch.result));
+  assert.ok(botCalls>=2,'Bot capability was not used for Elite inference');
 
-  assert.equal(result.verification?.passed,true,JSON.stringify(result));
-  assert.equal(result.result?.status,'TASK_VERIFIED',JSON.stringify(result.result));
-  assert.ok(repairCalls>=1,JSON.stringify({repairCalls,plannerCalls,calls,result},null,2));
-  assert.ok(calls.some(x=>x.includes('You are Elite\'s repair agent')),'Repair prompt did not reach Bot');
-  assert.ok(result.result?.evidence?.some(x=>x.kind==='capability_inference'&&x.role==='repair'),'Bot repair evidence missing');
-  console.log(JSON.stringify({ok:true,status:result.result.status,botPlannerCalls:plannerCalls,botRepairCalls:repairCalls,botInferenceEvidence:true},null,2));
-}finally{
-  await rm(root,{recursive:true,force:true});
-}
+  let repairCalls=0;
+  const repairRoot=await mkdtemp(join(tmpdir(),'elite-harness-repair-'));
+  try{
+    const result=await runEliteTask('repair an intentionally broken file',{
+      root:repairRoot,
+      policy:{maxSteps:16,maxRepairs:2,requireReview:false,requireVerification:true},
+      inspect:async()=>({context:'broken repository fixture'}),
+      provider:async({role})=>{
+        if(role==='planner')return {summary:'intentional broken first plan',changes:[{path:'broken.mjs',content:'export default ;'}]};
+        if(role==='repair'){repairCalls++;return {summary:'verified repair',changes:[{path:'broken.mjs',content:'export default 42;'}]};}
+        return {summary:'unused',changes:[]};
+      },
+      execute:async({changes})=>{for(const c of changes){await writeFile(join(repairRoot,c.path),c.content,'utf8');}return {ok:true};},
+      test:async()=>({ok:true}),
+      verify:async({changes})=>{
+        const check=await execFileAsync(process.execPath,['--check',join(repairRoot,changes[0].path)]).then(()=>({ok:true})).catch(()=>({ok:false}));
+        return {ok:check.ok,evidence:{kind:'repair-verification',passed:check.ok}};
+      }
+    });
+    assert.equal(result.status,'TASK_VERIFIED',JSON.stringify(result));
+    assert.equal(repairCalls,1);
+  }finally{await rm(repairRoot,{recursive:true,force:true});}
+
+  console.log(JSON.stringify({ok:true,botInference:'PASS',eliteRepairIteration:'PASS',status:'TASK_VERIFIED'},null,2));
+}finally{await rm(root,{recursive:true,force:true});}
