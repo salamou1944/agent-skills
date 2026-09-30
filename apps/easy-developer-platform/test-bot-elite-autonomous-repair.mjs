@@ -69,7 +69,7 @@ try{
 
   assert.equal(result.verification?.passed,true,JSON.stringify(result));
   assert.equal(result.result?.status,'TASK_VERIFIED',JSON.stringify(result.result));
-  assert.ok(repairCalls>=1,'Bot-backed repair was not invoked');
+  assert.ok(repairCalls>=1,JSON.stringify({repairCalls,plannerCalls,calls,result},null,2));
   assert.ok(calls.some(x=>x.includes('You are Elite\'s repair agent')),'Repair prompt did not reach Bot');
   assert.ok(result.result?.evidence?.some(x=>x.kind==='capability_inference'&&x.role==='repair'),'Bot repair evidence missing');
   console.log(JSON.stringify({ok:true,status:result.result.status,botPlannerCalls:plannerCalls,botRepairCalls:repairCalls,botInferenceEvidence:true},null,2));
