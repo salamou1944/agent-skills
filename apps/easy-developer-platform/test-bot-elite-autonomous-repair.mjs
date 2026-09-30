@@ -22,7 +22,7 @@ const fakeOllama={
   async runOllama(input){
     botCalls++;
     const prompt=String(input.arguments?.messages?.at(-1)?.content||'');
-    if(botCalls>1){
+    if(prompt.includes("You are Elite's")){
       assert.equal(input.arguments?.format,'json','Ollama inference must request structured JSON output');
       assert.equal(input.arguments?.options?.temperature,0,'Ollama inference must be deterministic');
     }
