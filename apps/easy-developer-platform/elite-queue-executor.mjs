@@ -24,7 +24,8 @@ export async function executeQueueTask(task,{
     try{
       const prepared=await prepare(task);
       evidence.push({kind:'bot-capability-selection',ok:prepared.ok===true,decision:prepared.selection?.decision||null,selectedId:prepared.selection?.selected?.id||null,adapter:prepared.task?.capabilityArtifactInvocation?.adapter||null});
-      if(prepared.ok===true&&prepared.task?.capabilityArtifactInvocation?.adapter===OLLAMA){
+      const invocationAdapter=prepared.task?.capabilityArtifactInvocation?.adapter||prepared.task?.capabilitySelection?.invocation?.adapter||null;
+      if(prepared.ok===true&&invocationAdapter===OLLAMA){
         const artifact=await hydrate(prepared.task.capabilitySelection,{file:prepared.task.capabilityArtifactFile||'README.md',expectedSha256:prepared.task.capabilityArtifactSha256||null});
         evidence.push({kind:'bot-capability-artifact',ok:artifact.ok===true,state:artifact.state||null,reason:artifact.reason||null});
         if(artifact.ok===true){
