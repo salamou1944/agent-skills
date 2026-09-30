@@ -141,8 +141,12 @@ catch(error){
 }
 
 if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
-  await markTask(stateFile,task.id,coding.status==='BLOCKED'?'BLOCKED':'FAILED',[{kind:'queue-executor',executionPath:coding.executionPath||null,status:coding.status,summary:coding.summary||null}]);
-  console.error(JSON.stringify({status:coding.status,task:task.id,summary:coding.summary||null},null,2));
+  const failureEvidence=[
+    {kind:'queue-executor',executionPath:coding.executionPath||null,status:coding.status,summary:coding.summary||null},
+    ...(Array.isArray(coding.evidence)?coding.evidence:[])
+  ];
+  await markTask(stateFile,task.id,coding.status==='BLOCKED'?'BLOCKED':'FAILED',failureEvidence);
+  console.error(JSON.stringify({status:coding.status,task:task.id,summary:coding.summary||null,evidence:failureEvidence},null,2));
   process.exit(1);
 }
 
