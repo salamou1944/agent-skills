@@ -35,7 +35,7 @@ const fakeOllama={
     if(prompt.includes('task decomposition specialist')){
       return {executionId:'bot-decompose-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({subtasks:[]})}}}};
     }
-    if(prompt.includes("You are Elite's planning agent")){
+    if(prompt.includes("You are Elite's planner")){
       plannerCalls++;
       const content={summary:'intentional first-attempt syntax defect',changes:[{path:'repair-target.mjs',content:'export default ;'}]};
       return {executionId:'bot-plan-'+plannerCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify(content)}}}};
