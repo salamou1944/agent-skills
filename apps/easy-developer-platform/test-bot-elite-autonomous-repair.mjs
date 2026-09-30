@@ -28,7 +28,7 @@ const fakeOllama={
     if(prompt.includes('independent')&&prompt.includes('reviewer')){
       return {executionId:'bot-review-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({approved:true,findings:[],reason:'verified'})}}}};
     }
-    if(prompt.includes('You are Elite\'s decomposer')){
+    if(prompt.includes('task decomposition specialist')){
       return {executionId:'bot-decompose-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({subtasks:[]})}}}};
     }
     plannerCalls++;
