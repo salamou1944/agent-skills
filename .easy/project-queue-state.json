@@ -150,40 +150,88 @@
       "updatedAt": "2026-09-17T00:46:00.000Z"
     },
     "elite.defect-closure": {
-      "status": "BLOCKED",
+      "status": "NOOP",
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "10becee3f06548ac4943ec5ede3e99ecd0f2cf94"
+          "commit": "fe43b29c484f930319ed09b508438e367370bd9c"
         },
         {
           "kind": "action",
-          "ok": false,
+          "ok": true,
           "route": {
             "soldierId": "09",
             "soldier": "test-qa",
             "score": 2,
             "reason": "keyword-domain-match"
-          }
+          },
+          "summary": "defect closure scan executed"
         },
         {
           "kind": "verification",
-          "ok": false
+          "ok": true,
+          "command": "npm run test:elite + authoritative defect scan",
+          "summary": "No unresolved defect records found."
         },
         {
           "kind": "result",
-          "status": "BLOCKED"
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
         },
         {
-          "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: FBCB:6936C:60666:6B4C2:6ABC30DE)\n",
-          "errorClass": "all_providers_exhausted",
-          "task": "elite.defect-closure",
-          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+          "kind": "provider-independent-verification",
+          "command": "npm run test:elite",
+          "exitCode": 0,
+          "stdout": "rvisor contract is a control loop with completion and evidence gates\nok 2 - Supervisor contract is a control loop with completion and evidence gates\n  ---\n  duration_ms: 1.340776\n  type: 'test'\n  ...\n# Subtest: Autonomous coder has a verified no-op, protected paths, optional provider fallback, bounded provider execution, and plan execution\nok 3 - Autonomous coder has a verified no-op, protected paths, optional provider fallback, bounded provider execution, and plan execution\n  ---\n  duration_ms: 2.531031\n  type: 'test'\n  ...\n# Subtest: Project queue recovery uses current Copilot CLI fallback and exact failure evidence\nok 4 - Project queue recovery uses current Copilot CLI fallback and exact failure evidence\n  ---\n  duration_ms: 1.972297\n  type: 'test'\n  ...\n# Subtest: Quota-exhausted 429 immediately falls through to the configured fallback provider\nok 5 - Quota-exhausted 429 immediately falls through to the configured fallback provider\n  ---\n  duration_ms: 72.644409\n  type: 'test'\n  ...\n# Subtest: Rate-limited 429 honors Retry-After and recovers before invoking fallback\nok 6 - Rate-limited 429 honors Retry-After and recovers before invoking fallback\n  ---\n  duration_ms: 1.441655\n  type: 'test'\n  ...\n# Subtest: Rate-limited 429 can recover from a reset header expressed as an epoch timestamp\nok 7 - Rate-limited 429 can recover from a reset header expressed as an epoch timestamp\n  ---\n  duration_ms: 0.719895\n  type: 'test'\n  ...\n# Subtest: Retired primary provider endpoint falls through only to an explicitly configured fallback\nok 8 - Retired primary provider endpoint falls through only to an explicitly configured fallback\n  ---\n  duration_ms: 0.643463\n  type: 'test'\n  ...\n# Subtest: No fallback endpoint means a retired primary fails fast without probing a dead default\nok 9 - No fallback endpoint means a retired primary fails fast without probing a dead default\n  ---\n  duration_ms: 8137.434175\n  type: 'test'\n  ...\n# Subtest: Transient provider failures retry with bounded attempts before surfacing the failure\nok 10 - Transient provider failures retry with bounded attempts before surfacing the failure\n  ---\n  duration_ms: 3533.553786\n  type: 'test'\n  ...\n# Subtest: Timeouts are bounded and can recover through an explicit fallback\nok 11 - Timeouts are bounded and can recover through an explicit fallback\n  ---\n  duration_ms: 10.677608\n  type: 'test'\n  ...\n# Subtest: Elite workspace Guardian detects secrets before provider execution\nok 12 - Elite workspace Guardian detects secrets before provider execution\n  ---\n  duration_ms: 5.626612\n  type: 'test'\n  ...\n# Subtest: Supervisor workflow has bounded execution, Copilot recovery, and post-change verification\nok 13 - Supervisor workflow has bounded execution, Copilot recovery, and post-change verification\n  ---\n  duration_ms: 3.512137\n  type: 'test'\n  ...\n# Subtest: ask accepts EASY_GITHUB_TOKEN when passed through the provider environment object\nok 14 - ask accepts EASY_GITHUB_TOKEN when passed through the provider environment object\n  ---\n  duration_ms: 0.959505\n  type: 'test'\n  ...\n# Subtest: Provider exhaustion activates Copilot CLI as the final recovery route\nok 15 - Provider exhaustion activates Copilot CLI as the final recovery route\n  ---\n  duration_ms: 0.702664\n  type: 'test'\n  ...\n1..15\n# tests 15\n# suites 0\n# pass 15\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11875.486537\nTAP version 13\n# Subtest: pipeline verification is not task verification\nok 1 - pipeline verification is not task verification\n  ---\n  duration_ms: 1.665505\n  type: 'test'\n  ...\n# Subtest: verified task is task and pipeline verified\nok 2 - verified task is task and pipeline verified\n  ---\n  duration_ms: 0.16611\n  type: 'test'\n  ...\n# Subtest: verified noop is explicit and can be disallowed\nok 3 - verified noop is explicit and can be disallowed\n  ---\n  duration_ms: 0.226453\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 62.722966\n",
+          "stderr": ""
+        },
+        {
+          "kind": "targeted-elite-verification",
+          "commands": [
+            "npm run test:elite:harness",
+            "npm run test:elite:engine",
+            "npm run test:elite:components",
+            "npm run test:elite:evidence"
+          ],
+          "passed": true,
+          "results": [
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:harness\n> node --test apps/easy-developer-platform/test-elite-harness.mjs\n\nTAP version 13\n# Subtest: harness exposes bounded policy and protected-path enforcement\nok 1 - harness exposes bounded policy and protected-path enforcement\n  ---\n  duration_ms: 1.587608\n  type: 'test'\n  ...\n# Subtest: harness completes only after implementation, tests, review, and verification\nok 2 - harness completes only after implementation, tests, review, and verification\n  ---\n  duration_ms: 29.718376\n  type: 'test'\n  ...\n# Subtest: failed verification rolls back before bounded repair and then succeeds\nok 3 - failed verification rolls back before bounded repair and then succeeds\n  ---\n  duration_ms: 15.033242\n  type: 'test'\n  ...\n# Subtest: journal records failure when repair budget is exhausted\nok 4 - journal records failure when repair budget is exhausted\n  ---\n  duration_ms: 12.911104\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 149.088272\n",
+              "stderr": ""
+            },
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:engine\n> node --test apps/easy-developer-platform/test-elite-engine.mjs\n\nTAP version 13\n# Subtest: integrated Elite engine executes isolated lifecycle and promotes only verified changes\nok 1 - integrated Elite engine executes isolated lifecycle and promotes only verified changes\n  ---\n  duration_ms: 199.500477\n  type: 'test'\n  ...\n# Subtest: engine entry point verifies a no-op task without a provider network call\nok 2 - engine entry point verifies a no-op task without a provider network call\n  ---\n  duration_ms: 78.433035\n  type: 'test'\n  ...\n# Subtest: engine fails closed when the base workspace is dirty\nok 3 - engine fails closed when the base workspace is dirty\n  ---\n  duration_ms: 23.070795\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 433.868286\n",
+              "stderr": ""
+            },
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:components\n> node --test apps/easy-developer-platform/test-elite-components.mjs\n\nTAP version 13\n# Subtest: test intelligence discovers targeted npm scripts\nok 1 - test intelligence discovers targeted npm scripts\n  ---\n  duration_ms: 10.665053\n  type: 'test'\n  ...\n# Subtest: security gate rejects embedded secrets and workflow edits\nok 2 - security gate rejects embedded secrets and workflow edits\n  ---\n  duration_ms: 1.34245\n  type: 'test'\n  ...\n# Subtest: benchmark harness produces deterministic pass metrics\nok 3 - benchmark harness produces deterministic pass metrics\n  ---\n  duration_ms: 0.447256\n  type: 'test'\n  ...\n# Subtest: runtime exposes health endpoint and task dispatch\nok 4 - runtime exposes health endpoint and task dispatch\n  ---\n  duration_ms: 53.991718\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 204.845498\n",
+              "stderr": ""
+            },
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:evidence\n> node --test apps/easy-developer-platform/test-independent-evidence-gate.mjs\n\nTAP version 13\n# Subtest: independent evidence accepts complete evidence from a distinct verifier\nok 1 - independent evidence accepts complete evidence from a distinct verifier\n  ---\n  duration_ms: 1.645426\n  type: 'test'\n  ...\n# Subtest: independent evidence rejects incomplete or self-reviewed completion\nok 2 - independent evidence rejects incomplete or self-reviewed completion\n  ---\n  duration_ms: 0.469798\n  type: 'test'\n  ...\n# Subtest: independent evidence rejects a mismatched patch fingerprint\nok 3 - independent evidence rejects a mismatched patch fingerprint\n  ---\n  duration_ms: 0.267751\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 113.398717\n",
+              "stderr": ""
+            }
+          ]
+        },
+        {
+          "kind": "authoritative-defect-scan",
+          "command": "git grep -nE DEF-005|DEF-006 -- docs apps .github",
+          "exitCode": 0,
+          "stdout": "No unresolved DEF-005 or DEF-006 records found after excluding the verifier self-match.",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "No documented defect record remains for the requested closure scope; provider-backed implementation was not required."
         }
       ],
       "scope": "apps/easy-developer-platform/defects",
-      "updatedAt": "2026-09-29T21:42:55.307Z"
+      "updatedAt": "2026-09-30T00:26:01.796Z"
     },
     "elite.ci-contract-closure": {
       "status": "BLOCKED",
@@ -9086,6 +9134,91 @@
       ],
       "scope": "apps/easy-developer-platform/defects",
       "at": "2026-09-29T21:42:55.307Z"
+    },
+    {
+      "id": "elite.defect-closure",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "fe43b29c484f930319ed09b508438e367370bd9c"
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "09",
+            "soldier": "test-qa",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "defect closure scan executed"
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm run test:elite + authoritative defect scan",
+          "summary": "No unresolved defect records found."
+        },
+        {
+          "kind": "result",
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "provider-independent-verification",
+          "command": "npm run test:elite",
+          "exitCode": 0,
+          "stdout": "rvisor contract is a control loop with completion and evidence gates\nok 2 - Supervisor contract is a control loop with completion and evidence gates\n  ---\n  duration_ms: 1.340776\n  type: 'test'\n  ...\n# Subtest: Autonomous coder has a verified no-op, protected paths, optional provider fallback, bounded provider execution, and plan execution\nok 3 - Autonomous coder has a verified no-op, protected paths, optional provider fallback, bounded provider execution, and plan execution\n  ---\n  duration_ms: 2.531031\n  type: 'test'\n  ...\n# Subtest: Project queue recovery uses current Copilot CLI fallback and exact failure evidence\nok 4 - Project queue recovery uses current Copilot CLI fallback and exact failure evidence\n  ---\n  duration_ms: 1.972297\n  type: 'test'\n  ...\n# Subtest: Quota-exhausted 429 immediately falls through to the configured fallback provider\nok 5 - Quota-exhausted 429 immediately falls through to the configured fallback provider\n  ---\n  duration_ms: 72.644409\n  type: 'test'\n  ...\n# Subtest: Rate-limited 429 honors Retry-After and recovers before invoking fallback\nok 6 - Rate-limited 429 honors Retry-After and recovers before invoking fallback\n  ---\n  duration_ms: 1.441655\n  type: 'test'\n  ...\n# Subtest: Rate-limited 429 can recover from a reset header expressed as an epoch timestamp\nok 7 - Rate-limited 429 can recover from a reset header expressed as an epoch timestamp\n  ---\n  duration_ms: 0.719895\n  type: 'test'\n  ...\n# Subtest: Retired primary provider endpoint falls through only to an explicitly configured fallback\nok 8 - Retired primary provider endpoint falls through only to an explicitly configured fallback\n  ---\n  duration_ms: 0.643463\n  type: 'test'\n  ...\n# Subtest: No fallback endpoint means a retired primary fails fast without probing a dead default\nok 9 - No fallback endpoint means a retired primary fails fast without probing a dead default\n  ---\n  duration_ms: 8137.434175\n  type: 'test'\n  ...\n# Subtest: Transient provider failures retry with bounded attempts before surfacing the failure\nok 10 - Transient provider failures retry with bounded attempts before surfacing the failure\n  ---\n  duration_ms: 3533.553786\n  type: 'test'\n  ...\n# Subtest: Timeouts are bounded and can recover through an explicit fallback\nok 11 - Timeouts are bounded and can recover through an explicit fallback\n  ---\n  duration_ms: 10.677608\n  type: 'test'\n  ...\n# Subtest: Elite workspace Guardian detects secrets before provider execution\nok 12 - Elite workspace Guardian detects secrets before provider execution\n  ---\n  duration_ms: 5.626612\n  type: 'test'\n  ...\n# Subtest: Supervisor workflow has bounded execution, Copilot recovery, and post-change verification\nok 13 - Supervisor workflow has bounded execution, Copilot recovery, and post-change verification\n  ---\n  duration_ms: 3.512137\n  type: 'test'\n  ...\n# Subtest: ask accepts EASY_GITHUB_TOKEN when passed through the provider environment object\nok 14 - ask accepts EASY_GITHUB_TOKEN when passed through the provider environment object\n  ---\n  duration_ms: 0.959505\n  type: 'test'\n  ...\n# Subtest: Provider exhaustion activates Copilot CLI as the final recovery route\nok 15 - Provider exhaustion activates Copilot CLI as the final recovery route\n  ---\n  duration_ms: 0.702664\n  type: 'test'\n  ...\n1..15\n# tests 15\n# suites 0\n# pass 15\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 11875.486537\nTAP version 13\n# Subtest: pipeline verification is not task verification\nok 1 - pipeline verification is not task verification\n  ---\n  duration_ms: 1.665505\n  type: 'test'\n  ...\n# Subtest: verified task is task and pipeline verified\nok 2 - verified task is task and pipeline verified\n  ---\n  duration_ms: 0.16611\n  type: 'test'\n  ...\n# Subtest: verified noop is explicit and can be disallowed\nok 3 - verified noop is explicit and can be disallowed\n  ---\n  duration_ms: 0.226453\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 62.722966\n",
+          "stderr": ""
+        },
+        {
+          "kind": "targeted-elite-verification",
+          "commands": [
+            "npm run test:elite:harness",
+            "npm run test:elite:engine",
+            "npm run test:elite:components",
+            "npm run test:elite:evidence"
+          ],
+          "passed": true,
+          "results": [
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:harness\n> node --test apps/easy-developer-platform/test-elite-harness.mjs\n\nTAP version 13\n# Subtest: harness exposes bounded policy and protected-path enforcement\nok 1 - harness exposes bounded policy and protected-path enforcement\n  ---\n  duration_ms: 1.587608\n  type: 'test'\n  ...\n# Subtest: harness completes only after implementation, tests, review, and verification\nok 2 - harness completes only after implementation, tests, review, and verification\n  ---\n  duration_ms: 29.718376\n  type: 'test'\n  ...\n# Subtest: failed verification rolls back before bounded repair and then succeeds\nok 3 - failed verification rolls back before bounded repair and then succeeds\n  ---\n  duration_ms: 15.033242\n  type: 'test'\n  ...\n# Subtest: journal records failure when repair budget is exhausted\nok 4 - journal records failure when repair budget is exhausted\n  ---\n  duration_ms: 12.911104\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 149.088272\n",
+              "stderr": ""
+            },
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:engine\n> node --test apps/easy-developer-platform/test-elite-engine.mjs\n\nTAP version 13\n# Subtest: integrated Elite engine executes isolated lifecycle and promotes only verified changes\nok 1 - integrated Elite engine executes isolated lifecycle and promotes only verified changes\n  ---\n  duration_ms: 199.500477\n  type: 'test'\n  ...\n# Subtest: engine entry point verifies a no-op task without a provider network call\nok 2 - engine entry point verifies a no-op task without a provider network call\n  ---\n  duration_ms: 78.433035\n  type: 'test'\n  ...\n# Subtest: engine fails closed when the base workspace is dirty\nok 3 - engine fails closed when the base workspace is dirty\n  ---\n  duration_ms: 23.070795\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 433.868286\n",
+              "stderr": ""
+            },
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:components\n> node --test apps/easy-developer-platform/test-elite-components.mjs\n\nTAP version 13\n# Subtest: test intelligence discovers targeted npm scripts\nok 1 - test intelligence discovers targeted npm scripts\n  ---\n  duration_ms: 10.665053\n  type: 'test'\n  ...\n# Subtest: security gate rejects embedded secrets and workflow edits\nok 2 - security gate rejects embedded secrets and workflow edits\n  ---\n  duration_ms: 1.34245\n  type: 'test'\n  ...\n# Subtest: benchmark harness produces deterministic pass metrics\nok 3 - benchmark harness produces deterministic pass metrics\n  ---\n  duration_ms: 0.447256\n  type: 'test'\n  ...\n# Subtest: runtime exposes health endpoint and task dispatch\nok 4 - runtime exposes health endpoint and task dispatch\n  ---\n  duration_ms: 53.991718\n  type: 'test'\n  ...\n1..4\n# tests 4\n# suites 0\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 204.845498\n",
+              "stderr": ""
+            },
+            {
+              "exitCode": 0,
+              "stdout": "\n> test:elite:evidence\n> node --test apps/easy-developer-platform/test-independent-evidence-gate.mjs\n\nTAP version 13\n# Subtest: independent evidence accepts complete evidence from a distinct verifier\nok 1 - independent evidence accepts complete evidence from a distinct verifier\n  ---\n  duration_ms: 1.645426\n  type: 'test'\n  ...\n# Subtest: independent evidence rejects incomplete or self-reviewed completion\nok 2 - independent evidence rejects incomplete or self-reviewed completion\n  ---\n  duration_ms: 0.469798\n  type: 'test'\n  ...\n# Subtest: independent evidence rejects a mismatched patch fingerprint\nok 3 - independent evidence rejects a mismatched patch fingerprint\n  ---\n  duration_ms: 0.267751\n  type: 'test'\n  ...\n1..3\n# tests 3\n# suites 0\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 113.398717\n",
+              "stderr": ""
+            }
+          ]
+        },
+        {
+          "kind": "authoritative-defect-scan",
+          "command": "git grep -nE DEF-005|DEF-006 -- docs apps .github",
+          "exitCode": 0,
+          "stdout": "No unresolved DEF-005 or DEF-006 records found after excluding the verifier self-match.",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "No documented defect record remains for the requested closure scope; provider-backed implementation was not required."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/defects",
+      "at": "2026-09-30T00:26:01.796Z"
     }
   ]
 }
