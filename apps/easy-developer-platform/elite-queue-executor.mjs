@@ -53,6 +53,12 @@ export async function executeQueueTask(task,{
       evidence.push({kind:'bot-elite-fallback',ok:false,error:String(error?.message||error)});
     }
   }
-  const coding=await providerExecutor(task.goal);
-  return {...coding,executionPath:'provider-fallback',evidence:[...(coding.evidence||[]),...evidence]};
+  try{
+    const coding=await providerExecutor(task.goal);
+    return {...coding,executionPath:'provider-fallback',evidence:[...(coding.evidence||[]),...evidence]};
+  }catch(error){
+    error.evidence=[...(Array.isArray(error.evidence)?error.evidence:[]),...evidence];
+    error.executionPath='provider-fallback';
+    throw error;
+  }
 }

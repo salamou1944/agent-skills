@@ -134,7 +134,14 @@ catch(error){
   const evidence=blocker
     ? [{kind:'provider-blocked',error:blocker.message,errorClass:blocker.code,task:task.id,action:'Use the configured provider fallback or resolve the provider dependency before retrying this queue task.'}]
     : [{kind:'queue-executor',error:error.message}];
-  const failureEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:false,route},{kind:'verification',ok:false},{kind:'result',status:blocker?'BLOCKED':'FAILED'},...evidence];
+  const failureEvidence=[
+    {kind:'baseline',commit:baseline.commit},
+    {kind:'action',ok:false,route,executionPath:error?.executionPath||null},
+    {kind:'verification',ok:false},
+    {kind:'result',status:blocker?'BLOCKED':'FAILED'},
+    ...evidence,
+    ...(Array.isArray(error?.evidence)?error.evidence:[])
+  ];
   await markTask(stateFile,task.id,blocker?'BLOCKED':'FAILED',failureEvidence);
   console.error(JSON.stringify({status:blocker?'BLOCKED':'FAILED',task:task.id,error:error.message,evidence},null,2));
   process.exit(1);
