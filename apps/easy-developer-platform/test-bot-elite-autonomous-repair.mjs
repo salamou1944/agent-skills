@@ -29,7 +29,7 @@ const fakeOllama={
       repairCalls++;
       return {executionId:'bot-repair-'+repairCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({summary:'repair syntax defect',changes:[{path:'repair-target-fixed.mjs',content:'export default 42;'}]})}}}};
     }
-    if(prompt.includes('independent')&&prompt.includes('reviewer')){
+    if(prompt.includes('independent')&&prompt.includes('reviewer') || prompt.includes('approved\":true|false')){
       return {executionId:'bot-review-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({approved:true,findings:[],reason:'verified'})}}}};
     }
     if(prompt.includes('task decomposition specialist')){
