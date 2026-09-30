@@ -25,7 +25,7 @@ const fakeOllama={
     const messages=input.arguments?.messages||[];
     const prompt=String(messages.at(-1)?.content||'');
     calls.push(prompt);
-    if(prompt.includes('You are Elite\'s repair agent')){
+    if(prompt.includes('repair agent inside Elite')){
       repairCalls++;
       return {executionId:'bot-repair-'+repairCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({summary:'repair syntax defect',changes:[{path:'repair-target.mjs',content:'export default 42;'}]})}}}};
     }
