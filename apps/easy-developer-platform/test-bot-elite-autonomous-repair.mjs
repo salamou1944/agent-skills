@@ -30,11 +30,11 @@ const fakeOllama={
       assert.match(prompt,/Use the verified Bot capability as Elite inference/,'Elite inference goal was dropped before reaching Ollama');
       assert.match(prompt,/Verified bounded inference capability for Elite planning and repair/,'verified capability artifact was not supplied to Ollama');
     }
-    const response=prompt.includes("You are Elite's planner")
+    const response=prompt.includes("You are Elite's independent")
+      ? {approved:true,findings:[],reason:'verified'}
+      : prompt.includes("You are Elite's planner")
       ? {summary:'bot-backed no-op plan',changes:[]}
-      : prompt.includes('approved')
-        ? {approved:true,findings:[],reason:'verified'}
-        : {subtasks:[]};
+      : {subtasks:[]};
     return {executionId:'bot-fixture-'+botCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify(response)}}}};
   },
   verifyOllamaResult:({result})=>({verifierId:'ollama-independent-verifier-v1',passed:Boolean(result?.result?.ok===true),errors:[]})
