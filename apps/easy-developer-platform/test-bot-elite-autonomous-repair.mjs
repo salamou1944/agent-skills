@@ -22,6 +22,10 @@ const fakeOllama={
   async runOllama(input){
     botCalls++;
     const prompt=String(input.arguments?.messages?.at(-1)?.content||'');
+    if(botCalls===1){
+      assert.match(prompt,/Use the verified Bot capability as Elite inference/,'Elite inference goal was dropped before reaching Ollama');
+      assert.match(prompt,/Verified bounded inference capability for Elite planning and repair/,'verified capability artifact was not supplied to Ollama');
+    }
     const response=prompt.includes("You are Elite's planner")
       ? {summary:'bot-backed no-op plan',changes:[]}
       : prompt.includes('approved')
