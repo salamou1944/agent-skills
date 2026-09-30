@@ -33,6 +33,63 @@ export function getEliteBridgeStatus(){
   }
 }
 
+function extractJsonPlan(content){
+  const text=String(content||'').trim().replace(/^\`\`\`(?:json)?/i,'').replace(/\`\`\`$/,'').trim();
+  try{return JSON.parse(text)}catch{
+    const start=text.indexOf('{'),end=text.lastIndexOf('}');
+    if(start<0||end<=start)throw new Error('capability_inference_non_json');
+    return JSON.parse(text.slice(start,end+1));
+  }
+}
+
+function buildCapabilityInferenceProvider(task,{capabilities,adapters,adapterInputs,adapterEnv,adapterOverrides,verifierOverrides,evidenceLog}){
+  const invocation=task.capabilityArtifactInvocation;
+  if(invocation?.adapter!=='ai.local.ollama') return null;
+  return async ({role='planner',goal,context,failedPlan=null,failure=null,constraints={}})=>{
+    const prompt=role==='repair'
+      ? `You are the repair agent inside Elite. Diagnose the failed implementation and return the smallest safe corrected plan. Goal: ${goal}
+Failure: ${JSON.stringify(failure)}
+Failed plan: ${JSON.stringify(failedPlan)}
+Repository context: ${String(context||'').slice(0,120000)}
+Constraints: ${JSON.stringify(constraints)}
+Return JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}`
+      : role==='reviewer'||role==='final'
+      ? `You are Elite's independent ${role} reviewer. Review the proposed change for the goal below. Return JSON only: {"approved":true|false,"findings":["..."],"reason":"..."}.
+Goal: ${goal}
+Context: ${String(context||'').slice(0,120000)}
+`
+      : `You are Elite's ${role}. Produce the smallest safe implementation plan for this goal. Repository context: ${String(context||'').slice(0,120000)}
+Constraints: ${JSON.stringify(constraints)}
+Return JSON only: {"summary":"...","changes":[{"path":"relative/path","content":"full file content"}]}`;
+    const inferenceTask={...task,taskId:`${task.taskId}:inference:${role}:${crypto.randomUUID()}`,goal:prompt,requestedCapabilities:['ai.local.ollama'],allowedActions:['chat'],capabilitySelection:null,capabilityArtifact:null,capabilityArtifactInvocation:null};
+    const result=await (await import('./executor.mjs')).executeTask(inferenceTask,{
+      capabilities,adapters,adapterInputs:{
+        ...adapterInputs,
+        'ai.local.ollama':{
+          ...(adapterInputs?.['ai.local.ollama']||{}),
+          action:'chat',
+          arguments:{
+            model:adapterInputs?.['ai.local.ollama']?.arguments?.model||process.env.OPERATOR_OLLAMA_MODEL||'llama3.2',
+            messages:[
+              {role:'system',content:'You are a bounded inference component. Return only the requested JSON. Do not execute tools or commands.'},
+              {role:'user',content:prompt}
+            ],
+            stream:false
+          }
+        }
+      },
+      adapterEnv,
+      adapterOverrides,
+      verifierOverrides
+    });
+    if(result?.completion?.ok!==true||result?.verification?.passed!==true) throw new Error(`capability_inference_failed:${result?.state||'unknown'}`);
+    const content=result?.result?.result?.data?.message?.content;
+    const plan=extractJsonPlan(content);
+    evidenceLog.push({kind:'capability_inference',role,adapter:'ai.local.ollama',passed:true,taskId:result.taskId,executionId:result.result?.executionId||null});
+    return plan;
+  };
+}
+
 export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAULT_TIMEOUT_MS,capabilities={},adapters={},adapterInputs={},adapterEnv=process.env,adapterOverrides={},verifierOverrides={}}={}){
   const url=endpoint();
   const task=createTask(input);
@@ -52,7 +109,18 @@ export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAUL
         const passed=invocationResult?.completion?.ok===true && invocationResult?.verification?.passed===true;
         return {ok:passed,result:invocationResult,evidence:{kind:'capability_invocation',passed,verifierId:invocationResult?.verification?.verifierId||null,executionState:invocationResult?.state||null,sourceRevision:capabilitySelection?.revision||null}};
       }:null;
-      const result=await runEliteEngine(task.goal,{root:resolvedRoot,isolate:input.localIsolate!==false,capabilitySelection:task.capabilitySelection||null,capabilityArtifact:task.capabilityArtifact||null,invokeCapability,policy:{project:task.project||'ai-operating-operator',requireVerification:true,requireReview:true,maxRepairs:3},provider:typeof input.provider==='function'?input.provider:undefined});
+      const inferenceEvidence=[];
+      const capabilityProvider=buildCapabilityInferenceProvider(task,{capabilities,adapters,adapterInputs,adapterEnv,adapterOverrides,verifierOverrides,evidenceLog:inferenceEvidence});
+      const result=await runEliteEngine(task.goal,{
+        root:resolvedRoot,
+        isolate:input.localIsolate!==false,
+        capabilitySelection:task.capabilitySelection||null,
+        capabilityArtifact:task.capabilityArtifact||null,
+        invokeCapability,
+        policy:{project:task.project||'ai-operating-operator',requireVerification:true,requireReview:true,maxRepairs:3},
+        provider:typeof input.provider==='function'?input.provider:capabilityProvider
+      });
+      if(inferenceEvidence.length) result.evidence=[...(Array.isArray(result.evidence)?result.evidence:[]),...inferenceEvidence];
       const verificationPassed=['TASK_VERIFIED','VERIFIED','VERIFIED_NOOP','NOOP_VERIFIED'].includes(result?.status)&&Boolean(result?.evidence);
       const report={taskId:task.taskId,state:'EVIDENCE_CAPTURED',evidence:[evidence('action',{adapter:'elite-local-engine',status:result?.status,changedFiles:result?.changedFiles||[]}),...(Array.isArray(result?.evidence)?result.evidence:[]),evidence('verification',{verifierId:'elite-engine-independent-verification',passed:verificationPassed,errors:verificationPassed?[]:['elite_engine_not_verified']}),evidence('independent_verification',{verifierId:'elite-engine-independent-verification',passed:verificationPassed,errors:verificationPassed?[]:['elite_engine_not_verified']})],verification:{verifierId:'elite-engine-independent-verification',passed:verificationPassed,errors:verificationPassed?[]:['elite_engine_not_verified']}};
       return {...report,completion:verifyCompletion(task,report),result};
