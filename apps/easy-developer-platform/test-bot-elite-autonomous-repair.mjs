@@ -27,7 +27,7 @@ const fakeOllama={
     calls.push(prompt);
     if(prompt.includes('repair agent inside Elite')){
       repairCalls++;
-      return {executionId:'bot-repair-'+repairCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({summary:'repair syntax defect',changes:[{path:'repair-target-fixed.mjs',content:'export default 42;'}]})}}}};
+      return {executionId:'bot-repair-'+repairCalls,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({summary:'repair syntax defect',changes:[{path:repairCalls===1?'repair-target-fixed.mjs':'repair-target-fixed-again.mjs',content:'export default 42;'}]})}}}};
     }
     if(prompt.includes('independent')&&prompt.includes('reviewer') || prompt.includes('approved\":true|false')){
       return {executionId:'bot-review-'+calls.length,target:'fake-ollama',result:{status:200,ok:true,data:{message:{content:JSON.stringify({approved:true,findings:[],reason:'verified'})}}}};
