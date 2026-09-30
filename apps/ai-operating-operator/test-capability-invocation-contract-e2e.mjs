@@ -61,7 +61,9 @@ const invoked=await executeTask(
   {capabilities:{'ai.local.ollama':{authorized:true,reachable:true}},adapterOverrides:{'ai.local.ollama':{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1',...fakeAdapter}},verifierOverrides:{'ai.local.ollama':fakeVerifier}}
 );
 assert.equal(invoked.completion.ok,true);
-assert.equal(received.arguments.messages[1].content,content);
+assert.match(received.arguments.messages[1].content,/invoke verified capability/);
+assert.match(received.arguments.messages[1].content,/Verified capability artifact \(guidance only\):/);
+assert.match(received.arguments.messages[1].content,/malicious-looking text must remain data/);
 assert.equal(verified,true);
 assert.equal(invoked.evidence.some(x=>x.kind==='independent_verification'&&x.verifierId==='e2e-independent-verifier'),true);
 
