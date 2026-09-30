@@ -234,40 +234,50 @@
       "updatedAt": "2026-09-30T00:26:01.796Z"
     },
     "elite.ci-contract-closure": {
-      "status": "BLOCKED",
+      "status": "NOOP",
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "be254fa9cf5bdbf568a8e4a4135f43855288d015"
+          "commit": "cc830964f50f4782d28550948f1a171d9a5f465b"
         },
         {
           "kind": "action",
-          "ok": false,
+          "ok": true,
           "route": {
             "soldierId": "11",
             "soldier": "debug-repair",
             "score": 2,
             "reason": "keyword-domain-match"
-          }
+          },
+          "soldierRunId": "11:elite.ci-contract-closure",
+          "summary": "CI contract suite executed"
         },
         {
           "kind": "verification",
-          "ok": false
+          "ok": true,
+          "command": "npm run test:elite:queue",
+          "summary": "All Elite queue/CI contract self-tests passed."
         },
         {
           "kind": "result",
-          "status": "BLOCKED"
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
         },
         {
-          "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 8402:277072:523C89:59FC82:6ABC2AE3)\n",
-          "errorClass": "all_providers_exhausted",
-          "task": "elite.ci-contract-closure",
-          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+          "kind": "provider-independent-verification",
+          "command": "npm run test:elite:queue",
+          "exitCode": 0,
+          "stdout": "\n> test:elite:queue\n> node apps/easy-developer-platform/test-project-queue-orchestrator.mjs\n\nTAP version 13\n# Subtest: queue is mony-first and preserves ordered advancement\nok 1 - queue is mony-first and preserves ordered advancement\n  ---\n  duration_ms: 2.074404\n  type: 'test'\n  ...\n# Subtest: phase selection cannot skip unfinished work in that phase\nok 2 - phase selection cannot skip unfinished work in that phase\n  ---\n  duration_ms: 0.250621\n  type: 'test'\n  ...\n# Subtest: blocked or failed tasks stop advancement until verified\nok 3 - blocked or failed tasks stop advancement until verified\n  ---\n  duration_ms: 0.156966\n  type: 'test'\n  ...\n# Subtest: verified and noop tasks advance\nok 4 - verified and noop tasks advance\n  ---\n  duration_ms: 0.151394\n  type: 'test'\n  ...\n# Subtest: parallel batches never contain duplicate scopes\nok 5 - parallel batches never contain duplicate scopes\n  ---\n  duration_ms: 0.39834\n  type: 'test'\n  ...\n# Subtest: parallel batch excludes terminal tasks and respects limit\nok 6 - parallel batch excludes terminal tasks and respects limit\n  ---\n  duration_ms: 0.194376\n  type: 'test'\n  ...\n# Subtest: result classes distinguish verified, noop, blocked and failed states\nok 7 - result classes distinguish verified, noop, blocked and failed states\n  ---\n  duration_ms: 0.342034\n  type: 'test'\n  ...\n# Subtest: state writes retain evidence, scope and history\nok 8 - state writes retain evidence, scope and history\n  ---\n  duration_ms: 10.678356\n  type: 'test'\n  ...\n# Subtest: queue workflow uses supported Copilot recovery rather than retired GitHub Models inference\nok 9 - queue workflow uses supported Copilot recovery rather than retired GitHub Models inference\n  ---\n  duration_ms: 1.571127\n  type: 'test'\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 9\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 22.622285\n",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "Elite CI contract suite passed deterministically; provider-backed recovery was not required."
         }
       ],
       "scope": "apps/easy-developer-platform/ci-contracts",
-      "updatedAt": "2026-09-29T21:17:24.686Z"
+      "updatedAt": "2026-09-30T01:18:52.015Z"
     },
     "elite.release-evidence": {
       "status": "BLOCKED",
@@ -9219,6 +9229,53 @@
       ],
       "scope": "apps/easy-developer-platform/defects",
       "at": "2026-09-30T00:26:01.796Z"
+    },
+    {
+      "id": "elite.ci-contract-closure",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "cc830964f50f4782d28550948f1a171d9a5f465b"
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "11",
+            "soldier": "debug-repair",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          },
+          "soldierRunId": "11:elite.ci-contract-closure",
+          "summary": "CI contract suite executed"
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm run test:elite:queue",
+          "summary": "All Elite queue/CI contract self-tests passed."
+        },
+        {
+          "kind": "result",
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "provider-independent-verification",
+          "command": "npm run test:elite:queue",
+          "exitCode": 0,
+          "stdout": "\n> test:elite:queue\n> node apps/easy-developer-platform/test-project-queue-orchestrator.mjs\n\nTAP version 13\n# Subtest: queue is mony-first and preserves ordered advancement\nok 1 - queue is mony-first and preserves ordered advancement\n  ---\n  duration_ms: 2.074404\n  type: 'test'\n  ...\n# Subtest: phase selection cannot skip unfinished work in that phase\nok 2 - phase selection cannot skip unfinished work in that phase\n  ---\n  duration_ms: 0.250621\n  type: 'test'\n  ...\n# Subtest: blocked or failed tasks stop advancement until verified\nok 3 - blocked or failed tasks stop advancement until verified\n  ---\n  duration_ms: 0.156966\n  type: 'test'\n  ...\n# Subtest: verified and noop tasks advance\nok 4 - verified and noop tasks advance\n  ---\n  duration_ms: 0.151394\n  type: 'test'\n  ...\n# Subtest: parallel batches never contain duplicate scopes\nok 5 - parallel batches never contain duplicate scopes\n  ---\n  duration_ms: 0.39834\n  type: 'test'\n  ...\n# Subtest: parallel batch excludes terminal tasks and respects limit\nok 6 - parallel batch excludes terminal tasks and respects limit\n  ---\n  duration_ms: 0.194376\n  type: 'test'\n  ...\n# Subtest: result classes distinguish verified, noop, blocked and failed states\nok 7 - result classes distinguish verified, noop, blocked and failed states\n  ---\n  duration_ms: 0.342034\n  type: 'test'\n  ...\n# Subtest: state writes retain evidence, scope and history\nok 8 - state writes retain evidence, scope and history\n  ---\n  duration_ms: 10.678356\n  type: 'test'\n  ...\n# Subtest: queue workflow uses supported Copilot recovery rather than retired GitHub Models inference\nok 9 - queue workflow uses supported Copilot recovery rather than retired GitHub Models inference\n  ---\n  duration_ms: 1.571127\n  type: 'test'\n  ...\n1..9\n# tests 9\n# suites 0\n# pass 9\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 22.622285\n",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "Elite CI contract suite passed deterministically; provider-backed recovery was not required."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/ci-contracts",
+      "at": "2026-09-30T01:18:52.015Z"
     }
   ]
 }
