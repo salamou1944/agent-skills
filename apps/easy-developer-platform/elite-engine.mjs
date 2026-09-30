@@ -213,7 +213,7 @@ async function runCore(goal, { root, policy, env, journalPath, provider, metrics
       const ledger = await readAttemptLedger(attemptPath);
       const gate = rejectRepeatedStrategy(ledger, { plan, failureCode: args.failure?.code, failureMessage: args.failure?.message });
       const immune = immuneGate({ knownFailures: ledger, failureCode: args.failure?.code, failureMessage: args.failure?.message, changedFiles: plan?.changes?.map(x => x.path) || [], strategy: plan?.summary });
-      if (!gate.ok || !immune.ok) throw Object.assign(new Error('Elite refused to repeat a failed strategy'), { code: gate.reason || immune.reason });
+      if (!gate.ok || !immune.ok) throw Object.assign(new Error(`Elite refused to repeat a failed strategy:${gate.reason || immune.reason}`), { code: gate.reason || immune.reason, details: { gate, immune } });
       await recordAttempt(attemptPath, { goal, plan, failureCode: args.failure?.code, failureMessage: args.failure?.message, strategy: plan.summary });
     }
     return plan;
