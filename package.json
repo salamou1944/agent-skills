@@ -29,7 +29,7 @@
     "revenue:affiliate:test": "node apps/revenue-engine/test-elevenlabs-affiliate-adapter.mjs",
     "test:elite": "node --test apps/easy-developer-platform/test-elite-code-supervisor.mjs && node --test apps/easy-developer-platform/task-result-gate.test.mjs && node apps/easy-developer-platform/test-bot-elite-autonomous-repair.mjs",
     "test:elite:harness": "node --test apps/easy-developer-platform/test-elite-harness.mjs",
-    "test:elite:engine": "node --test apps/easy-developer-platform/test-elite-engine.mjs",
+    "test:elite:engine": "node --test apps/easy-developer-platform/test-elite-engine.mjs && node apps/easy-developer-platform/test-bot-elite-autonomous-repair.mjs",
     "test:elite:components": "node --test apps/easy-developer-platform/test-elite-components.mjs",
     "test:elite:planner": "node apps/easy-developer-platform/test-elite-planner.mjs",
     "test:elite:dna": "node apps/easy-developer-platform/test-elite-dna.mjs",
