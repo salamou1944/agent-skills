@@ -284,7 +284,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "5d1ea4597e145dee66e80b6ff2b8c8c30acd0572"
+          "commit": "5314bcac004d55f4c0180e7901ab9707f4427529"
         },
         {
           "kind": "action",
@@ -306,14 +306,14 @@
         },
         {
           "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: DC02:12C00D:FC2FEB:135F370:6ABC7D46)\n",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 6C22:5088C:775112:86ABC1:6ABCB150)\n",
           "errorClass": "all_providers_exhausted",
           "task": "elite.release-evidence",
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
         }
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
-      "updatedAt": "2026-09-30T03:08:56.899Z"
+      "updatedAt": "2026-09-30T06:50:57.672Z"
     },
     "mony.pipeline-live-readiness": {
       "status": "BLOCKED",
@@ -9387,6 +9387,43 @@
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
       "at": "2026-09-30T03:08:56.899Z"
+    },
+    {
+      "id": "elite.release-evidence",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "5314bcac004d55f4c0180e7901ab9707f4427529"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "12",
+            "soldier": "deployment-ops",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          }
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 6C22:5088C:775112:86ABC1:6ABCB150)\n",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.release-evidence",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        }
+      ],
+      "scope": "apps/easy-developer-platform/release-evidence",
+      "at": "2026-09-30T06:50:57.672Z"
     }
   ]
 }
