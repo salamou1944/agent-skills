@@ -44,7 +44,7 @@ export function closeSoldierRun(run, result) {
   }
   if (result.status === 'BLOCKED') return transitionSoldierRun(current,'blocked',{runId:current.runId,evidenceId:'blocked',kind:'result',ok:false,reason:'blocked-with-evidence'});
   if (result.status === 'FAILED') return transitionSoldierRun(current,'recovering',{runId:current.runId,evidenceId:'recovery',kind:'result',ok:false,reason:'failed-with-recovery-path'});
-  return transitionSoldierRun(current,'completed',{runId:current.runId,kind:'result',ok:true,status:result.status});
+  return transitionSoldierRun(current,'completed',{runId:current.runId,evidenceId:'result',kind:'result',ok:true,status:result.status});
 }
 
 export function directorSnapshot() {
