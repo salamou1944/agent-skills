@@ -20,7 +20,7 @@ const task={
 };
 const options={capabilities:{'ai.local.ollama':{authorized:true,reachable:true}},adapterOverrides:{'ai.local.ollama':{status:'ADAPTER_READY',independentVerifier:'ollama-independent-verifier-v1',...fakeAdapter}},verifierOverrides:{'ai.local.ollama':fakeAdapter}};
 const result=await executeTask(task,options);
-assert.equal(invoked,true);assert.equal(received.arguments.messages[1].content,contentText);assert.equal(result.state,'EVIDENCE_CAPTURED');assert.equal(result.completion.ok,true);assert.equal(result.verification.verifierId,'ollama-independent-verifier-v1');
+assert.equal(invoked,true);assert.match(received.arguments.messages[1].content,/Apply the verified systematic debugging skill to this task\./);assert.match(received.arguments.messages[1].content,/Verified systematic-debugging skill:/);assert.equal(result.state,'EVIDENCE_CAPTURED');assert.equal(result.completion.ok,true);assert.equal(result.verification.verifierId,'ollama-independent-verifier-v1');
 const tampered={...task,capabilityArtifact:{...task.capabilityArtifact,content:contentText+' tampered'}};
 const blocked=await executeTask(tampered,options);assert.equal(blocked.state,'BLOCKED_EXTERNAL_DEPENDENCY');assert.equal(blocked.evidence[0].reason,'capability_invocation_checksum_mismatch');
 const unregistered={...task,capabilityArtifactInvocation:{...task.capabilityArtifactInvocation,adapter:'unknown.adapter'}};
