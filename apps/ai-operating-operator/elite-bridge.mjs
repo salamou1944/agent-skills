@@ -74,7 +74,9 @@ Return JSON only: {"summary":"...","changes":[{"path":"relative/path","content":
               {role:'system',content:'You are a bounded inference component. Return only the requested JSON. Do not execute tools or commands.'},
               {role:'user',content:prompt}
             ],
-            stream:false
+            stream:false,
+            format:'json',
+            options:{temperature:0}
           }
         }
       },
