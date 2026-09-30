@@ -23,7 +23,7 @@ jobs:
       models: read
       copilot-requests: write
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -51,6 +51,19 @@ jobs:
       - name: Verify queue contract
         run: npm run test:elite:queue
 
+      - name: Start verified local Ollama inference
+        env:
+          OLLAMA_MODEL: qwen2.5-coder:1.5b
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          nohup ollama serve >/tmp/ollama.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:11434/api/version >/dev/null; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:11434/api/version
+          ollama pull "$OLLAMA_MODEL"
+
       - name: Execute next verified mony task
         id: cycle
         continue-on-error: true
@@ -70,6 +83,10 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           ELITE_QUEUE_STATE: .easy/project-queue-state.json
+          ELITE_LOCAL_ENGINE: "1"
+          ELITE_ALLOWED_ROOT: ${{ github.workspace }}
+          OPERATOR_OLLAMA_URL: http://127.0.0.1:11434
+          OPERATOR_OLLAMA_MODEL: qwen2.5-coder:1.5b
         run: |
           set +e
           node apps/easy-developer-platform/run-project-queue-cycle.mjs 2>&1 | tee /tmp/elite-cycle-result.txt
