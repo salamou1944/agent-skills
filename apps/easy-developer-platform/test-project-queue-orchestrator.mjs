@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TASKS, selectNext, selectParallelBatch, classifyResult, markTask } from './project-queue-orchestrator.mjs';
+import { providerBlocker } from './provider-blocker.mjs';
 import { mkdtemp, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -55,6 +56,19 @@ test('result classes distinguish verified, noop, blocked and failed states',()=>
   assert.equal(classifyResult('BLOCKED_WITH_EVIDENCE'),'BLOCKED');
   assert.equal(classifyResult('FAILED'),'FAILED');
   assert.throws(()=>classifyResult('SUCCESS')); 
+});
+
+test('provider HTTP 5xx errors are classified as external blockers',()=>{
+  for(const status of [500,503,599]){
+    assert.deepEqual(providerBlocker(new Error(`provider_http_${status}`)),{code:`http_${status}`,message:`provider_http_${status}`});
+  }
+  assert.equal(providerBlocker(new Error('provider_http_600')),null);
+  assert.equal(providerBlocker(new Error('provider_http_401')),null);
+});
+
+test('provider fallback exhaustion remains a blocker',()=>{
+  const error=new Error('all_providers_exhausted:primary:provider_http_429');
+  assert.deepEqual(providerBlocker(error),{code:'all_providers_exhausted',message:error.message});
 });
 
 test('state writes retain evidence, scope and history',async()=>{

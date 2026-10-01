@@ -284,7 +284,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "25cc818b3a555f19fc9fe3a3538f3c16d9488118"
+          "commit": "71e47124bfac867ea1ba580c00fb753aa2d1d0af"
         },
         {
           "kind": "action",
@@ -307,7 +307,7 @@
         },
         {
           "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:timeout",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:provider_non_json",
           "errorClass": "all_providers_exhausted",
           "task": "elite.release-evidence",
           "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
@@ -318,15 +318,15 @@
           "state": {
             "started": true,
             "running": false,
-            "lastRunAt": "2026-10-01T01:22:03.064Z",
-            "lastSuccessAt": "2026-10-01T01:22:27.234Z",
+            "lastRunAt": "2026-10-01T01:50:16.626Z",
+            "lastSuccessAt": "2026-10-01T01:50:30.988Z",
             "lastError": null,
             "sourceCount": 5,
-            "documents": 43,
-            "changed": 43,
+            "documents": 38,
+            "changed": 38,
             "collectionSourceCount": 60,
-            "collectionDocumentCount": 28,
-            "collectionFailures": 32,
+            "collectionDocumentCount": 23,
+            "collectionFailures": 37,
             "collectionCapabilityCount": 18
           }
         },
@@ -346,12 +346,12 @@
         {
           "kind": "bot-elite-execution",
           "ok": false,
-          "state": "BLOCKED_PERMISSION",
+          "state": "BLOCKED_EXTERNAL_DEPENDENCY",
           "status": null
         }
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
-      "updatedAt": "2026-10-01T01:24:28.410Z"
+      "updatedAt": "2026-10-01T01:52:04.644Z"
     },
     "mony.pipeline-live-readiness": {
       "status": "BLOCKED",
@@ -9875,6 +9875,81 @@
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
       "at": "2026-10-01T01:24:28.410Z"
+    },
+    {
+      "id": "elite.release-evidence",
+      "status": "BLOCKED",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "71e47124bfac867ea1ba580c00fb753aa2d1d0af"
+        },
+        {
+          "kind": "action",
+          "ok": false,
+          "route": {
+            "soldierId": "12",
+            "soldier": "deployment-ops",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          },
+          "executionPath": "provider-fallback"
+        },
+        {
+          "kind": "verification",
+          "ok": false
+        },
+        {
+          "kind": "result",
+          "status": "BLOCKED"
+        },
+        {
+          "kind": "provider-blocked",
+          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:provider_non_json",
+          "errorClass": "all_providers_exhausted",
+          "task": "elite.release-evidence",
+          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+        },
+        {
+          "kind": "bot-capability-feed",
+          "ok": true,
+          "state": {
+            "started": true,
+            "running": false,
+            "lastRunAt": "2026-10-01T01:50:16.626Z",
+            "lastSuccessAt": "2026-10-01T01:50:30.988Z",
+            "lastError": null,
+            "sourceCount": 5,
+            "documents": 38,
+            "changed": 38,
+            "collectionSourceCount": 60,
+            "collectionDocumentCount": 23,
+            "collectionFailures": 37,
+            "collectionCapabilityCount": 18
+          }
+        },
+        {
+          "kind": "bot-capability-selection",
+          "ok": true,
+          "decision": "ADAPT_AND_VERIFY",
+          "selectedId": "mufeedvh-superpowers-systematic-debugging",
+          "adapter": "ai.local.ollama"
+        },
+        {
+          "kind": "bot-capability-artifact",
+          "ok": true,
+          "state": null,
+          "reason": null
+        },
+        {
+          "kind": "bot-elite-execution",
+          "ok": false,
+          "state": "BLOCKED_EXTERNAL_DEPENDENCY",
+          "status": null
+        }
+      ],
+      "scope": "apps/easy-developer-platform/release-evidence",
+      "at": "2026-10-01T01:52:04.644Z"
     }
   ]
 }
