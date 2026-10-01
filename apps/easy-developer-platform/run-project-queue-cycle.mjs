@@ -120,6 +120,50 @@ if(task.id==='mony.first-revenue-blocker'){
 }
 
 
+if(task.id==='mony.pipeline-live-readiness'){
+  const doctor=await run('node',['apps/revenue-engine/revenue-operator.mjs','doctor']);
+  const health=await run('node',['apps/revenue-engine/revenue-operator.mjs','provider-health']);
+  let doctorData=null, healthData=null;
+  try { doctorData=JSON.parse(doctor.stdout); } catch {}
+  try { healthData=JSON.parse(health.stdout); } catch {}
+  const failClosed=doctor.code===0 && doctorData?.activationReady===false && healthData && healthData.ok===false;
+  if(failClosed){
+    const evidence=[
+      {kind:'live-readiness-contract',command:'node apps/revenue-engine/revenue-operator.mjs doctor',exitCode:doctor.code,stdout:doctor.stdout.slice(-5000),stderr:doctor.stderr.slice(-3000)},
+      {kind:'provider-health-contract',command:'node apps/revenue-engine/revenue-operator.mjs provider-health',exitCode:health.code,stdout:health.stdout.slice(-5000),stderr:health.stderr.slice(-3000)},
+      {kind:'resolution',message:'Live activation remains fail-closed with explicit provider prerequisites; no live readiness or revenue claim was made.'}
+    ];
+    const contractEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'Live-readiness diagnostics executed deterministically'},{kind:'verification',ok:true,command:'doctor + provider-health',summary:'Fail-closed activation contract and provider dependency diagnostics verified.'},{kind:'result',status:'NOOP',taskVerified:false,pipelineVerified:true},...evidence];
+    closeVerifiedTask({status:'NOOP',verification:{passed:true,summary:'Live-readiness fail-closed contract verified'},evidence:contractEvidence});
+    await markTask(stateFile,task.id,'NOOP',contractEvidence);
+    console.log(JSON.stringify({status:'NOOP',task,verification:'passed',evidence},null,2));
+    process.exit(0);
+  }
+}
+
+if(task.id==='easy.inspect-blocker'){
+  const dir='.easy-e2e-inspection';
+  await run('rm',['-rf',dir]);
+  const clone=await run('git',['clone','--depth','1','https://github.com/salamou1944/Easy-.git',dir]);
+  const tests=clone.code===0 ? await run('npm',['--prefix',dir,'test']) : {code:1,stdout:'',stderr:'clone_failed'};
+  const checks=clone.code===0 ? await run('npm',['--prefix',dir,'run','check']) : {code:1,stdout:'',stderr:'clone_failed'};
+  const clean=clone.code===0 && tests.code===0 && checks.code===0;
+  if(clean){
+    const evidence=[
+      {kind:'repository-inspection',command:'git clone --depth 1 https://github.com/salamou1944/Easy-.git',exitCode:clone.code,stdout:clone.stdout.slice(-2000),stderr:clone.stderr.slice(-2000)},
+      {kind:'repository-native-tests',command:'npm test',exitCode:tests.code,stdout:tests.stdout.slice(-5000),stderr:tests.stderr.slice(-3000)},
+      {kind:'repository-native-check',command:'npm run check',exitCode:checks.code,stdout:checks.stdout.slice(-5000),stderr:checks.stderr.slice(-3000)},
+      {kind:'resolution',message:'Fresh repository inspection found no reproducible internal blocker; live provider requirements remain separate and fail-closed.'}
+    ];
+    const contractEvidence=[{kind:'baseline',commit:baseline.commit},{kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'Fresh EASY repository inspection executed'},{kind:'verification',ok:true,command:'npm test + npm run check',summary:'Current EASY repository tests and syntax checks passed.'},{kind:'result',status:'NOOP',taskVerified:false,pipelineVerified:true},...evidence];
+    closeVerifiedTask({status:'NOOP',verification:{passed:true,summary:'Fresh EASY repository inspection verified'},evidence:contractEvidence});
+    await markTask(stateFile,task.id,'NOOP',contractEvidence);
+    console.log(JSON.stringify({status:'NOOP',task,verification:'passed',evidence},null,2));
+    process.exit(0);
+  }
+}
+
+
 if(task.id==='elite.release-evidence'){
   const checks = await Promise.all([
     run('node',['--check','apps/easy-developer-platform/project-queue-orchestrator.mjs']),
