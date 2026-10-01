@@ -170,7 +170,7 @@ if(task.id==='easy.creative-engine'){
 }
 
 if(task.id==='easy.inspect-blocker'){
-  const dir='.easy-e2e-inspection';
+  const dir='/tmp/elite-easy-inspection';
   await run('rm',['-rf',dir]);
   const clone=await run('git',['clone','--depth','1','https://github.com/salamou1944/Easy-.git',dir]);
   const tests=clone.code===0 ? await run('npm',['--prefix',dir,'test']) : {code:1,stdout:'',stderr:'clone_failed'};
