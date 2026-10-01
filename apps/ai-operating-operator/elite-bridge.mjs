@@ -23,7 +23,7 @@ function safeUrl(value){
 
 export function getEliteBridgeStatus(){
   const url=endpoint();
-  if(!url && process.env.ELITE_LOCAL_ENGINE==='1') return {configured:true,authorized:true,reachable:true,state:'CONFIGURED_NOT_VERIFIED',mode:'local',source:'agent-skills/apps/easy-developer-platform/elite-engine.mjs'};
+  if(process.env.ELITE_LOCAL_ENGINE==='1') return {configured:true,authorized:true,reachable:true,state:'CONFIGURED_NOT_VERIFIED',mode:'local',source:'agent-skills/apps/easy-developer-platform/elite-engine.mjs'};
   if(!url) return {configured:false,authorized:false,reachable:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',reason:'ELITE_EXECUTOR_URL_missing'};
   try{
     const u=safeUrl(url);
@@ -93,9 +93,10 @@ Return JSON only: {"summary":"...","changes":[{"path":"relative/path","content":
 }
 
 export async function dispatchToElite(input={},{fetchImpl=fetch,timeoutMs=DEFAULT_TIMEOUT_MS,capabilities={},adapters={},adapterInputs={},adapterEnv=process.env,adapterOverrides={},verifierOverrides={}}={}){
-  const url=endpoint();
+  const localMode=process.env.ELITE_LOCAL_ENGINE==='1';
+  const url=localMode?'':endpoint();
   const task=createTask(input);
-  if(!url && process.env.ELITE_LOCAL_ENGINE==='1'){
+  if(localMode){
     const root=String(input.workspaceRoot||'').trim();
     const allowed=String(process.env.ELITE_ALLOWED_ROOT||'').trim();
     if(!root||!allowed) return {ok:false,state:'BLOCKED_PERMISSION',taskId:task.taskId,evidence:[evidence('action',{accepted:false,reason:'local_engine_root_not_authorized'})]};
