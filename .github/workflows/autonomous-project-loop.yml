@@ -1,4 +1,6 @@
 name: autonomous-project-loop
+
+# workflow-review: operator-safe
 on:
   workflow_dispatch:
   push:
@@ -16,10 +18,13 @@ concurrency:
   group: autonomous-project-loop
   cancel-in-progress: false
 permissions:
-  contents: write
-  copilot-requests: write
+  contents: read
+
 jobs:
   loop:
+    permissions:
+      contents: write
+      copilot-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
