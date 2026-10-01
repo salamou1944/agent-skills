@@ -455,6 +455,63 @@
       ],
       "scope": "easy/inspection",
       "updatedAt": "2026-10-01T04:12:37.838Z"
+    },
+    "easy.creative-engine": {
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "dd93268bb5c6b4f8df7aff69f4eb07995ed3e5da"
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "02",
+            "soldier": "builder",
+            "score": 1,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "Deterministic EASY Creative Engine acceptance verification executed"
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm test + npm run check",
+          "summary": "Current EASY Creative Engine engineering contracts passed."
+        },
+        {
+          "kind": "result",
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "repository-acceptance-tests",
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 test\n> node --test test/*.test.mjs\n\nTAP version 13\n# Subtest: creative orchestrator uses deterministic fallback when no provider is configured\nok 1 - creative orchestrator uses deterministic fallback when no provider is configured\n  ---\n  duration_ms: 1.533598\n  type: 'test'\n  ...\n# Subtest: creative orchestrator rejects provider output that loses authoritative facts and falls back safely\nok 2 - creative orchestrator rejects provider output that loses authoritative facts and falls back safely\n  ---\n  duration_ms: 0.341045\n  type: 'test'\n  ...\n# Subtest: creative orchestrator accepts a provider only when Product Integrity passes\nok 3 - creative orchestrator accepts a provider only when Product Integrity passes\n  ---\n  duration_ms: 0.234316\n  type: 'test'\n  ...\n# Subtest: customer demo is explicitly non-production and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.420926\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.602128\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 2.539311\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.681119\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.367355\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 1.989146\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.43492\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.317261\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.123056\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 2.400021\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.167352\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.417198\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.426103\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.347568\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.246359\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 0.87482\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a review-ready fallback without making it publishable\nok 20 - seller workflow produces a review-ready fallback without making it publishable\n  ---\n  duration_ms: 2.190331\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.379377\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.580431\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.351585\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 157.718194\n",
+          "stderr": ""
+        },
+        {
+          "kind": "repository-native-check",
+          "command": "npm run check",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 check\n> node --check src/*.mjs\n\n",
+          "stderr": ""
+        },
+        {
+          "kind": "creative-engine-contract",
+          "message": "Product DNA, Product Integrity, provider acceptance, deterministic fallback, and fail-closed production persistence contracts are covered by the current EASY test suite."
+        },
+        {
+          "kind": "external-provider-boundary",
+          "status": "BLOCKED_EXTERNAL_DEPENDENCY",
+          "message": "Live provider generation remains unverified because configured OpenAI access is quota-blocked; this does not invalidate the deterministic engineering contract."
+        }
+      ],
+      "scope": "easy/creative",
+      "updatedAt": "2026-10-01T22:47:09.027Z"
     }
   },
   "history": [
@@ -10160,6 +10217,64 @@
       ],
       "scope": "easy/inspection",
       "at": "2026-10-01T04:12:37.838Z"
+    },
+    {
+      "id": "easy.creative-engine",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "dd93268bb5c6b4f8df7aff69f4eb07995ed3e5da"
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "02",
+            "soldier": "builder",
+            "score": 1,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "Deterministic EASY Creative Engine acceptance verification executed"
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm test + npm run check",
+          "summary": "Current EASY Creative Engine engineering contracts passed."
+        },
+        {
+          "kind": "result",
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "repository-acceptance-tests",
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 test\n> node --test test/*.test.mjs\n\nTAP version 13\n# Subtest: creative orchestrator uses deterministic fallback when no provider is configured\nok 1 - creative orchestrator uses deterministic fallback when no provider is configured\n  ---\n  duration_ms: 1.533598\n  type: 'test'\n  ...\n# Subtest: creative orchestrator rejects provider output that loses authoritative facts and falls back safely\nok 2 - creative orchestrator rejects provider output that loses authoritative facts and falls back safely\n  ---\n  duration_ms: 0.341045\n  type: 'test'\n  ...\n# Subtest: creative orchestrator accepts a provider only when Product Integrity passes\nok 3 - creative orchestrator accepts a provider only when Product Integrity passes\n  ---\n  duration_ms: 0.234316\n  type: 'test'\n  ...\n# Subtest: customer demo is explicitly non-production and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.420926\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.602128\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 2.539311\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.681119\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.367355\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 1.989146\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.43492\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.317261\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.123056\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 2.400021\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.167352\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.417198\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.426103\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.347568\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.246359\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 0.87482\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a review-ready fallback without making it publishable\nok 20 - seller workflow produces a review-ready fallback without making it publishable\n  ---\n  duration_ms: 2.190331\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.379377\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.580431\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.351585\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 157.718194\n",
+          "stderr": ""
+        },
+        {
+          "kind": "repository-native-check",
+          "command": "npm run check",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 check\n> node --check src/*.mjs\n\n",
+          "stderr": ""
+        },
+        {
+          "kind": "creative-engine-contract",
+          "message": "Product DNA, Product Integrity, provider acceptance, deterministic fallback, and fail-closed production persistence contracts are covered by the current EASY test suite."
+        },
+        {
+          "kind": "external-provider-boundary",
+          "status": "BLOCKED_EXTERNAL_DEPENDENCY",
+          "message": "Live provider generation remains unverified because configured OpenAI access is quota-blocked; this does not invalidate the deterministic engineering contract."
+        }
+      ],
+      "scope": "easy/creative",
+      "at": "2026-10-01T22:47:09.027Z"
     }
   ]
-}
+}\n
