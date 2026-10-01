@@ -4,7 +4,7 @@ import { executeQueueTask } from './elite-queue-executor.mjs';
 
 test('project queue routes eligible Elite tasks through verified Bot capability before provider fallback', async()=>{
   const calls=[];
-  const task={taskId:'queue-bot-proof',goal:'repair queue task',executionTarget:'elite',capabilityQuery:'verified coding skill'};
+  const task={taskId:'queue-bot-proof',goal:'repair queue task',executionTarget:'elite',capabilityQuery:'systematic debugging'};
   const result=await executeQueueTask(task,{
     syncFeed:async()=>({ok:true}),
     prepare:async()=>({ok:true,task:{...task,capabilitySelection:{id:'cap-1',revision:'a'.repeat(40),artifact:{sha256:'abc'},invocation:{adapter:'ai.local.ollama'}},capabilityArtifactFile:'SKILL.md'}}),
@@ -19,7 +19,7 @@ test('project queue routes eligible Elite tasks through verified Bot capability 
 });
 
 test('project queue preserves provider fallback when no verified Ollama capability is available', async()=>{
-  const task={taskId:'queue-fallback-proof',goal:'repair queue task',executionTarget:'elite',capabilityQuery:'verified coding skill'};
+  const task={taskId:'queue-fallback-proof',goal:'repair queue task',executionTarget:'elite',capabilityQuery:'systematic debugging'};
   const result=await executeQueueTask(task,{
     syncFeed:async()=>({ok:true}),
     prepare:async()=>({ok:false,state:'BLOCKED_EXTERNAL_DEPENDENCY',selection:{decision:'BLOCKED_EXTERNAL_DEPENDENCY'}}),
