@@ -13,7 +13,7 @@ const root=await mkdtemp(join(tmpdir(),'bot-elite-repair-'));
 const artifactContent='Verified bounded inference capability for Elite planning and repair.';
 const sha256=crypto.createHash('sha256').update(artifactContent,'utf8').digest('hex');
 const revision='a'.repeat(40);
-delete process.env.ELITE_EXECUTOR_URL;
+process.env.ELITE_EXECUTOR_URL='https://remote.example.invalid';
 process.env.ELITE_LOCAL_ENGINE='1';
 process.env.ELITE_ALLOWED_ROOT=root;
 
