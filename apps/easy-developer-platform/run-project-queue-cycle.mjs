@@ -119,6 +119,42 @@ if(task.id==='mony.first-revenue-blocker'){
   }
 }
 
+
+if(task.id==='elite.release-evidence'){
+  const checks = await Promise.all([
+    run('node',['--check','apps/easy-developer-platform/project-queue-orchestrator.mjs']),
+    run('node',['--check','apps/easy-developer-platform/run-project-queue-cycle.mjs']),
+    run('node',['--check','apps/easy-developer-platform/autonomous-coder.mjs']),
+    run('npm',['run','test:elite:queue']),
+    run('npm',['run','test:revenue:all']),
+    run('git',['diff','--check'])
+  ]);
+  if(checks.every(check=>check.code===0)){
+    const evidence=[
+      {kind:'release-readiness-syntax',commands:['node --check apps/easy-developer-platform/project-queue-orchestrator.mjs','node --check apps/easy-developer-platform/run-project-queue-cycle.mjs','node --check apps/easy-developer-platform/autonomous-coder.mjs'],passed:true},
+      {kind:'release-readiness-queue-contract',command:'npm run test:elite:queue',exitCode:0,stdout:checks[3].stdout.slice(-4000),stderr:checks[3].stderr.slice(-2000)},
+      {kind:'release-readiness-revenue-suite',command:'npm run test:revenue:all',exitCode:0,stdout:checks[4].stdout.slice(-4000),stderr:checks[4].stderr.slice(-2000)},
+      {kind:'release-readiness-git-integrity',command:'git diff --check',exitCode:0},
+      {kind:'resolution',message:'Current repository release-readiness checks passed deterministically; no provider or fabricated deployment evidence was required.'}
+    ];
+    const contractEvidence=[
+      {kind:'baseline',commit:baseline.commit},
+      {kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:'Deterministic final release-readiness evidence pass executed'},
+      {kind:'verification',ok:true,command:'syntax + npm run test:elite:queue + npm run test:revenue:all + git diff --check',summary:'Current release-readiness checks passed.'},
+      {kind:'result',status:'VERIFIED',taskVerified:true,pipelineVerified:true},
+      ...evidence
+    ];
+    closeVerifiedTask({status:'VERIFIED',verification:{passed:true,summary:'Provider-independent release-readiness evidence verified'},evidence:contractEvidence});
+    await markTask(stateFile,task.id,'VERIFIED',contractEvidence);
+    console.log(JSON.stringify({status:'VERIFIED',task,verification:'passed',evidence},null,2));
+    process.exit(0);
+  }
+  const evidence=checks.map((check,index)=>({kind:'release-readiness-check',index,exitCode:check.code,stdout:check.stdout.slice(-1500),stderr:check.stderr.slice(-1500)}));
+  await markTask(stateFile,task.id,'FAILED',evidence);
+  console.error(JSON.stringify({status:'FAILED',task:task.id,evidence},null,2));
+  process.exit(1);
+}
+
 let coding;
 try { coding=await executeQueueTask(task); }
 catch(error){
