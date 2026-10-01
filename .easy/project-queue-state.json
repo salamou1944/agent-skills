@@ -346,41 +346,56 @@
       "updatedAt": "2026-10-01T03:10:20.995Z"
     },
     "mony.pipeline-live-readiness": {
-      "status": "BLOCKED",
+      "status": "NOOP",
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "3c3f795fbc54a747f69f40a3356eb3abbbbac4d3"
+          "commit": "491e5b1d1e270e28ff3ccc67221f8857bfc966e6"
         },
         {
           "kind": "action",
-          "ok": false,
+          "ok": true,
           "route": {
             "soldierId": "07",
             "soldier": "integration",
             "score": 2,
             "reason": "keyword-domain-match"
           },
-          "executionPath": "provider-fallback"
+          "summary": "Live-readiness diagnostics executed deterministically"
         },
         {
           "kind": "verification",
-          "ok": false
+          "ok": true,
+          "command": "doctor + provider-health",
+          "summary": "Fail-closed activation contract and provider dependency diagnostics verified."
         },
         {
           "kind": "result",
-          "status": "BLOCKED"
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
         },
         {
-          "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: E453:23A250:66355C:774957:6ABD53AE)\n",
-          "errorClass": "all_providers_exhausted",
-          "task": "mony.pipeline-live-readiness",
-          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+          "kind": "live-readiness-contract",
+          "command": "node apps/revenue-engine/revenue-operator.mjs doctor",
+          "exitCode": 0,
+          "stdout": "{\n  \"ok\": true,\n  \"mode\": \"dry-run\",\n  \"providers\": {\n    \"discovery\": false,\n    \"affiliate\": false,\n    \"publishing\": false,\n    \"billing\": false,\n    \"analytics\": false\n  },\n  \"missingProviders\": [\n    \"discovery\",\n    \"affiliate\",\n    \"publishing\",\n    \"billing\",\n    \"analytics\"\n  ],\n  \"configuredProviders\": 0,\n  \"liveEndpoints\": {\n    \"discovery\": false,\n    \"affiliate\": false,\n    \"publishing\": false,\n    \"billing\": false,\n    \"analytics\": false\n  },\n  \"affiliateAdapters\": [\n    {\n      \"name\": \"elevenlabs-affiliate\",\n      \"configured\": false\n    },\n    {\n      \"name\": \"hostinger-affiliate\",\n      \"configured\": false\n    },\n    {\n      \"name\": \"payoneer-affiliate\",\n      \"configured\": false\n    }\n  ],\n  \"activation\": \"dry-run-ready\",\n  \"activationReady\": false,\n  \"nextAction\": \"use_dry_run_or_fixture_boundaries_until_live_evidence_exists\",\n  \"livePrerequisites\": [\n    \"configure_provider_categories:discovery,affiliate,publishing,billing,analytics\",\n    \"run_revenue:provider-health\",\n    \"collect_provider_integration_evidence\",\n    \"record_confirmed_provider_event\"\n  ],\n  \"affiliateEvidenceLadder\": [\n    \"configured\",\n    \"reachable\",\n    \"click_observed\",\n    \"signup_observed\",\n    \"conversion_observed\",\n    \"commission_confirmed\",\n    \"payout_confirmed\"\n  ],\n  \"rule\": \"provider variable alone never activates production; provider configuration/reachability is not attribution or revenue evidence; claims require provider-originated events at the corresponding evidence level.\"\n}\n",
+          "stderr": ""
+        },
+        {
+          "kind": "provider-health-contract",
+          "command": "node apps/revenue-engine/revenue-operator.mjs provider-health",
+          "exitCode": 0,
+          "stdout": "{\n  \"ok\": false,\n  \"providers\": {\n    \"discovery\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-discovery\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"affiliate\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-affiliate\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"publishing\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-publishing\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"billing\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-billing\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"analytics\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-analytics\",\n      \"reason\": \"endpoint_missing\"\n    }\n  }\n}\n",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "Live activation remains fail-closed with explicit provider prerequisites; no live readiness or revenue claim was made."
         }
       ],
       "scope": "apps/revenue-engine/live-readiness",
-      "updatedAt": "2026-09-30T18:23:44.738Z"
+      "updatedAt": "2026-10-01T03:45:20.520Z"
     },
     "easy.inspect-blocker": {
       "status": "BLOCKED",
@@ -10009,6 +10024,59 @@
       ],
       "scope": "apps/easy-developer-platform/release-evidence",
       "at": "2026-10-01T03:10:20.995Z"
+    },
+    {
+      "id": "mony.pipeline-live-readiness",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "491e5b1d1e270e28ff3ccc67221f8857bfc966e6"
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "07",
+            "soldier": "integration",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "Live-readiness diagnostics executed deterministically"
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "doctor + provider-health",
+          "summary": "Fail-closed activation contract and provider dependency diagnostics verified."
+        },
+        {
+          "kind": "result",
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "live-readiness-contract",
+          "command": "node apps/revenue-engine/revenue-operator.mjs doctor",
+          "exitCode": 0,
+          "stdout": "{\n  \"ok\": true,\n  \"mode\": \"dry-run\",\n  \"providers\": {\n    \"discovery\": false,\n    \"affiliate\": false,\n    \"publishing\": false,\n    \"billing\": false,\n    \"analytics\": false\n  },\n  \"missingProviders\": [\n    \"discovery\",\n    \"affiliate\",\n    \"publishing\",\n    \"billing\",\n    \"analytics\"\n  ],\n  \"configuredProviders\": 0,\n  \"liveEndpoints\": {\n    \"discovery\": false,\n    \"affiliate\": false,\n    \"publishing\": false,\n    \"billing\": false,\n    \"analytics\": false\n  },\n  \"affiliateAdapters\": [\n    {\n      \"name\": \"elevenlabs-affiliate\",\n      \"configured\": false\n    },\n    {\n      \"name\": \"hostinger-affiliate\",\n      \"configured\": false\n    },\n    {\n      \"name\": \"payoneer-affiliate\",\n      \"configured\": false\n    }\n  ],\n  \"activation\": \"dry-run-ready\",\n  \"activationReady\": false,\n  \"nextAction\": \"use_dry_run_or_fixture_boundaries_until_live_evidence_exists\",\n  \"livePrerequisites\": [\n    \"configure_provider_categories:discovery,affiliate,publishing,billing,analytics\",\n    \"run_revenue:provider-health\",\n    \"collect_provider_integration_evidence\",\n    \"record_confirmed_provider_event\"\n  ],\n  \"affiliateEvidenceLadder\": [\n    \"configured\",\n    \"reachable\",\n    \"click_observed\",\n    \"signup_observed\",\n    \"conversion_observed\",\n    \"commission_confirmed\",\n    \"payout_confirmed\"\n  ],\n  \"rule\": \"provider variable alone never activates production; provider configuration/reachability is not attribution or revenue evidence; claims require provider-originated events at the corresponding evidence level.\"\n}\n",
+          "stderr": ""
+        },
+        {
+          "kind": "provider-health-contract",
+          "command": "node apps/revenue-engine/revenue-operator.mjs provider-health",
+          "exitCode": 0,
+          "stdout": "{\n  \"ok\": false,\n  \"providers\": {\n    \"discovery\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-discovery\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"affiliate\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-affiliate\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"publishing\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-publishing\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"billing\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-billing\",\n      \"reason\": \"endpoint_missing\"\n    },\n    \"analytics\": {\n      \"ok\": false,\n      \"status\": \"provider-unavailable\",\n      \"provider\": \"http-analytics\",\n      \"reason\": \"endpoint_missing\"\n    }\n  }\n}\n",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "Live activation remains fail-closed with explicit provider prerequisites; no live readiness or revenue claim was made."
+        }
+      ],
+      "scope": "apps/revenue-engine/live-readiness",
+      "at": "2026-10-01T03:45:20.520Z"
     }
   ]
 }
