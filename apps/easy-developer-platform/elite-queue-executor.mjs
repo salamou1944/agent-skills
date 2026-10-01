@@ -29,7 +29,7 @@ export async function executeQueueTask(task,{
         const artifact=await hydrate(prepared.task.capabilitySelection,{file:prepared.task.capabilityArtifactFile||'README.md',expectedSha256:prepared.task.capabilityArtifactSha256||null});
         evidence.push({kind:'bot-capability-artifact',ok:artifact.ok===true,state:artifact.state||null,reason:artifact.reason||null});
         if(artifact.ok===true){
-          const result=await botExecutor({...prepared.task,capabilityArtifact:artifact.artifact},{
+          const result=await botExecutor({...prepared.task,workspaceRoot:prepared.task.workspaceRoot||process.env.EASY_OPERATOR_WORKSPACE||process.cwd(),capabilityArtifact:artifact.artifact},{
             capabilities:{[OLLAMA]:{authorized:true,reachable:true}},
             adapters:{[OLLAMA]:{status:'ADAPTER_READY'}},
             adapterInputs:{
