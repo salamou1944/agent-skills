@@ -44,7 +44,7 @@ export async function executeQueueTask(task,{
             ...botOptions
           });
           const verified=result?.completion?.ok===true&&result?.verification?.passed===true;
-          evidence.push({kind:'bot-elite-execution',ok:verified,state:result?.state||null,status:result?.result?.status||null});
+          evidence.push({kind:'bot-elite-execution',ok:verified,state:result?.state||null,status:result?.result?.status||null,reason:result?.reason||null,verification:result?.verification||null,completion:result?.completion||null,resultState:result?.result?.status||result?.result?.state||null});
           if(verified)return {...result,executionPath:'bot-backed-elite',evidence:[...(result.evidence||[]),...evidence]};
           if(result?.state==='FAILED')evidence.push({kind:'bot-elite-fallback',reason:'bot-backed-elite-did-not-verify'});
         }
