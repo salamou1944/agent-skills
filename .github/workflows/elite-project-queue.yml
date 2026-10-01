@@ -1,6 +1,7 @@
 name: elite-project-queue
 
 # workflow-review: operator-safe
+# queue-retrigger: 2026-10-01 verified bot-evidence cycle
 
 on:
   workflow_dispatch:
