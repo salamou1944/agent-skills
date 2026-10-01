@@ -398,40 +398,63 @@
       "updatedAt": "2026-10-01T03:45:20.520Z"
     },
     "easy.inspect-blocker": {
-      "status": "BLOCKED",
+      "status": "NOOP",
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "7d247dc73065269a1cac187e5e964320bc3699a0"
+          "commit": "a051045035da5920d66d3f0907ef47c547712533"
         },
         {
           "kind": "action",
-          "ok": false,
+          "ok": true,
           "route": {
             "soldierId": "01",
             "soldier": "architect",
             "score": 1,
             "reason": "keyword-domain-match"
-          }
+          },
+          "summary": "Fresh EASY repository inspection executed"
         },
         {
           "kind": "verification",
-          "ok": false
+          "ok": true,
+          "command": "npm test + npm run check",
+          "summary": "Current EASY repository tests and syntax checks passed."
         },
         {
           "kind": "result",
-          "status": "BLOCKED"
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
         },
         {
-          "kind": "provider-blocked",
-          "error": "all_providers_exhausted:primary:provider_http_429,copilot-cli:copilot_cli_failed:\nYou have exceeded your monthly quota (Request ID: 4413:23F7B3:2E37FBB:3774F4E:6AB80EE7)\n",
-          "errorClass": "all_providers_exhausted",
-          "task": "easy.inspect-blocker",
-          "action": "Use the configured provider fallback or resolve the provider dependency before retrying this queue task."
+          "kind": "repository-inspection",
+          "command": "git clone --depth 1 https://github.com/salamou1944/Easy-.git",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "Cloning into '.easy-e2e-inspection'...\n"
+        },
+        {
+          "kind": "repository-native-tests",
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 test\n> node --test test/*.test.mjs\n\nTAP version 13\n# Subtest: creative orchestrator uses deterministic fallback when no provider is configured\nok 1 - creative orchestrator uses deterministic fallback when no provider is configured\n  ---\n  duration_ms: 2.717068\n  type: 'test'\n  ...\n# Subtest: creative orchestrator rejects provider output that loses authoritative facts and falls back safely\nok 2 - creative orchestrator rejects provider output that loses authoritative facts and falls back safely\n  ---\n  duration_ms: 0.678591\n  type: 'test'\n  ...\n# Subtest: creative orchestrator accepts a provider only when Product Integrity passes\nok 3 - creative orchestrator accepts a provider only when Product Integrity passes\n  ---\n  duration_ms: 0.490068\n  type: 'test'\n  ...\n# Subtest: customer demo is explicitly non-production and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.09042\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.106277\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 3.315399\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.949258\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.507771\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 3.038692\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.503723\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.375033\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.411717\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 2.462372\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.534591\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.547766\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.773939\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.523641\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.396924\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 1.312949\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a validated review-ready result without a provider\nok 20 - seller workflow produces a validated review-ready result without a provider\n  ---\n  duration_ms: 3.456393\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.686306\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.969716\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.632585\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 226.888159\n",
+          "stderr": ""
+        },
+        {
+          "kind": "repository-native-check",
+          "command": "npm run check",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 check\n> node --check src/*.mjs\n\n",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "Fresh repository inspection found no reproducible internal blocker; live provider requirements remain separate and fail-closed."
         }
       ],
       "scope": "easy/inspection",
-      "updatedAt": "2026-09-26T18:28:57.209Z"
+      "updatedAt": "2026-10-01T04:12:37.838Z"
     }
   },
   "history": [
@@ -10077,6 +10100,66 @@
       ],
       "scope": "apps/revenue-engine/live-readiness",
       "at": "2026-10-01T03:45:20.520Z"
+    },
+    {
+      "id": "easy.inspect-blocker",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "a051045035da5920d66d3f0907ef47c547712533"
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "01",
+            "soldier": "architect",
+            "score": 1,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "Fresh EASY repository inspection executed"
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm test + npm run check",
+          "summary": "Current EASY repository tests and syntax checks passed."
+        },
+        {
+          "kind": "result",
+          "status": "NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "repository-inspection",
+          "command": "git clone --depth 1 https://github.com/salamou1944/Easy-.git",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "Cloning into '.easy-e2e-inspection'...\n"
+        },
+        {
+          "kind": "repository-native-tests",
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 test\n> node --test test/*.test.mjs\n\nTAP version 13\n# Subtest: creative orchestrator uses deterministic fallback when no provider is configured\nok 1 - creative orchestrator uses deterministic fallback when no provider is configured\n  ---\n  duration_ms: 2.717068\n  type: 'test'\n  ...\n# Subtest: creative orchestrator rejects provider output that loses authoritative facts and falls back safely\nok 2 - creative orchestrator rejects provider output that loses authoritative facts and falls back safely\n  ---\n  duration_ms: 0.678591\n  type: 'test'\n  ...\n# Subtest: creative orchestrator accepts a provider only when Product Integrity passes\nok 3 - creative orchestrator accepts a provider only when Product Integrity passes\n  ---\n  duration_ms: 0.490068\n  type: 'test'\n  ...\n# Subtest: customer demo is explicitly non-production and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.09042\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.106277\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 3.315399\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.949258\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.507771\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 3.038692\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.503723\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.375033\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.411717\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 2.462372\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.534591\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.547766\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.773939\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.523641\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.396924\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 1.312949\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a validated review-ready result without a provider\nok 20 - seller workflow produces a validated review-ready result without a provider\n  ---\n  duration_ms: 3.456393\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.686306\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.969716\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.632585\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 226.888159\n",
+          "stderr": ""
+        },
+        {
+          "kind": "repository-native-check",
+          "command": "npm run check",
+          "exitCode": 0,
+          "stdout": "\n> easy-seller-mvp@0.1.0 check\n> node --check src/*.mjs\n\n",
+          "stderr": ""
+        },
+        {
+          "kind": "resolution",
+          "message": "Fresh repository inspection found no reproducible internal blocker; live provider requirements remain separate and fail-closed."
+        }
+      ],
+      "scope": "easy/inspection",
+      "at": "2026-10-01T04:12:37.838Z"
     }
   ]
-}
+}\n
