@@ -229,7 +229,18 @@ if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
   process.exit(1);
 }
 
-const verification=await run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
+async function verifyTask(task){
+  if(!task.repo) return run('npm',['run',...task.verify.replace(/^npm run /,'').split(/\\s+/)]);
+  const dir='/tmp/elite-queue-target-'+task.id.replace(/[^a-z0-9._-]/gi,'-');
+  await run('rm',['-rf',dir]);
+  const clone=await run('git',['clone','--depth','1',`https://github.com/${task.repo}.git`,dir]);
+  if(clone.code!==0) return {code:1,stdout:clone.stdout,stderr:clone.stderr+'\\nclone_failed'};
+  const parts=task.verify.trim().split(/\\s+/);
+  if(parts[0]!=='npm') return run(parts[0],parts.slice(1));
+  const args=parts.slice(1);
+  return run('npm',['--prefix',dir,...args]);
+}
+const verification=await verifyTask(task);
 const evidence=[
   {kind:'baseline',commit:baseline.commit,stateFingerprint:taskContract.baseline.stateFingerprint},
   {kind:'action',ok:true,route,soldierRunId:soldierRun.runId,summary:coding.summary||null,changedFiles:coding.changedFiles||[]},
