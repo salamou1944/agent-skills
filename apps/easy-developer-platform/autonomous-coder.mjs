@@ -21,7 +21,7 @@ function shouldRetry(status){return status===408||status===429||status>=500}
 function parseRetryAfterMs(headers,now=Date.now()){const raw=headers?.get?.('retry-after');if(raw){const seconds=Number(raw);if(Number.isFinite(seconds)&&seconds>=0)return Math.round(seconds*1000);const date=Date.parse(raw);if(Number.isFinite(date))return Math.max(0,date-now)}for(const name of ['x-ratelimit-reset-requests','x-ratelimit-reset-tokens','x-ratelimit-reset']){const value=Number(headers?.get?.(name));if(!Number.isFinite(value)||value<0)continue;if(value>1e12)return Math.max(0,value-now);if(value>1e9)return Math.max(0,value*1000-now);return Math.max(0,value*1000)}return null}
 function retryDelay(attempt,retryAfter,maxWaitMs=DEFAULT_RATE_LIMIT_WAIT_MS){const header=Number(retryAfter);if(Number.isFinite(header)&&header>=0)return Math.min(header,maxWaitMs);const base=Math.min(1000*2**(attempt-1),15000);return Math.min(base,maxWaitMs)}
 function providerError(status){return `provider_http_${status}`}
-function isRecoverableProviderError(error){return ['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted','provider_timeout'].includes(error.message)||/^provider_http_5\d\d$/.test(error.message)}
+function isRecoverableProviderError(error){return ['provider_http_408','provider_http_404','provider_http_410','provider_http_429','provider_quota_exhausted','provider_timeout','provider_non_json'].includes(error.message)||/^provider_http_5\d\d$/.test(error.message)}
 
 export async function requestInference(prompt,{endpoint,model,token,providerRetries=3,timeoutMs=DEFAULT_PROVIDER_TIMEOUT_MS,rateLimitWaitMs=DEFAULT_RATE_LIMIT_WAIT_MS,fetchImpl=fetch,sleepImpl=sleep,telemetry}={}){
   const started=Date.now();
@@ -31,7 +31,7 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
     const timer=setTimeout(()=>controller.abort(),timeoutMs);
     try{
       const response=await fetchImpl(endpoint,{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token}`},body:JSON.stringify({model,messages:[{role:'system',content:'You are Elite Code, a senior autonomous software engineer. Return JSON only. Make minimal, evidence-driven repository changes. If no safe change is required, return an empty changes array. Never request or expose secrets. Never modify CI workflows, credentials, deployment configuration, or authentication policy.'},{role:'user',content:prompt}],temperature:0}),signal:controller.signal});
-      if(response.ok){const body=await response.json(),text=body?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw new Error('provider_empty');telemetry?.({endpoint,model,attempt,ok:true,status:response.status,latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});return extractJson(text)}
+      if(response.ok){const body=await response.json(),text=body?.choices?.[0]?.message?.content;if(typeof text!=='string'||!text.trim())throw new Error('provider_empty');let plan;try{plan=extractJson(text)}catch{throw new Error('provider_non_json')}telemetry?.({endpoint,model,attempt,ok:true,status:response.status,latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});return plan}
       let rateLimitCode='';try{const body=await response.clone().json();rateLimitCode=String(body?.error?.code||body?.error?.type||'')}catch{}
       if(response.status===429&&(rateLimitCode==='insufficient_quota'||rateLimitCode==='quota_exceeded'))throw new Error('provider_quota_exhausted');
       if(response.status===410||response.status===404){telemetry?.({endpoint,model,attempt,ok:false,status:response.status,latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});throw new Error(providerError(response.status))}
@@ -44,6 +44,7 @@ export async function requestInference(prompt,{endpoint,model,token,providerRetr
       const timedOut=error?.name==='AbortError';
       if(timedOut){telemetry?.({endpoint,model,attempt,ok:false,status:'timeout',latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});if(attempt===providerRetries)throw new Error('provider_timeout')}
       else if(error?.message==='provider_quota_exhausted'||error?.message==='provider_http_410'||error?.message==='provider_http_404')throw error;
+      else if(error?.message==='provider_non_json'){telemetry?.({endpoint,model,attempt,ok:false,status:'invalid_json',latencyMs:Date.now()-attemptStarted,totalMs:Date.now()-started});if(attempt===providerRetries)throw error;await sleepImpl(retryDelay(attempt,null,rateLimitWaitMs));}
       else if(String(error?.message||'').startsWith('provider_http_')){if(attempt===providerRetries)throw error}
       else throw error;
     }finally{clearTimeout(timer)}
