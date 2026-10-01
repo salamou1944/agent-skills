@@ -6,7 +6,7 @@
       "evidence": [
         {
           "kind": "baseline",
-          "commit": "85733c751644e936c45d290fd513dc6a29ec46f9",
+          "commit": "47731bad6a46cf67311b6bd4858d415df53118c4",
           "stateFingerprint": null
         },
         {
@@ -51,7 +51,7 @@
         }
       ],
       "scope": "apps/revenue-engine/product-listing",
-      "updatedAt": "2026-10-01T22:51:22.247Z"
+      "updatedAt": "2026-10-01T22:51:29.472Z"
     }
   },
   "history": [
@@ -107,6 +107,59 @@
       ],
       "scope": "apps/revenue-engine/product-listing",
       "at": "2026-10-01T22:51:22.247Z"
+    },
+    {
+      "id": "mony.product-listing-sales",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "47731bad6a46cf67311b6bd4858d415df53118c4",
+          "stateFingerprint": null
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "13",
+            "soldier": "product-mvp",
+            "score": 2,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "No changes needed as the goal is already satisfied.",
+          "changedFiles": []
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm run test:product-listing-sales",
+          "exitCode": 0,
+          "stdout": "\n> test:product-listing-sales\n> node apps/revenue-engine/test-product-listing-sales.mjs\n\nproduct-listing-sales: tests passed\n",
+          "stderr": ""
+        },
+        {
+          "kind": "result",
+          "status": "VERIFIED_NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "queue-executor",
+          "executionPath": "provider-fallback",
+          "status": "VERIFIED_NOOP",
+          "summary": "No changes needed as the goal is already satisfied.",
+          "changedFiles": []
+        },
+        {
+          "kind": "verification-command",
+          "command": "npm run test:product-listing-sales",
+          "exitCode": 0,
+          "stdout": "\n> test:product-listing-sales\n> node apps/revenue-engine/test-product-listing-sales.mjs\n\nproduct-listing-sales: tests passed\n",
+          "stderr": ""
+        }
+      ],
+      "scope": "apps/revenue-engine/product-listing",
+      "at": "2026-10-01T22:51:29.472Z"
     }
   ]
-}
+}\n
