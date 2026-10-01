@@ -200,7 +200,17 @@ if(task.id==='elite.release-evidence'){
 }
 
 let coding;
-try { coding=await executeQueueTask(task); }
+const previousWorkspace=process.env.EASY_OPERATOR_WORKSPACE;
+const taskWorkspace=task.repo ? '/tmp/elite-queue-target-'+task.id.replace(/[^a-z0-9._-]/gi,'-') : null;
+try {
+  if(taskWorkspace){
+    await run('rm',['-rf',taskWorkspace]);
+    const clone=await run('git',['clone','--depth','1',`https://github.com/${task.repo}.git`,taskWorkspace]);
+    if(clone.code!==0) throw new Error(`target_repo_clone_failed:${clone.stderr||clone.stdout}`);
+    process.env.EASY_OPERATOR_WORKSPACE=taskWorkspace;
+  }
+  coding=await executeQueueTask(task);
+}
 catch(error){
   const blocker=providerBlocker(error);
   const evidence=blocker
@@ -216,8 +226,12 @@ catch(error){
   ];
   await markTask(stateFile,task.id,blocker?'BLOCKED':'FAILED',failureEvidence);
   console.error(JSON.stringify({status:blocker?'BLOCKED':'FAILED',task:task.id,error:error.message,evidence},null,2));
+  if(previousWorkspace===undefined) delete process.env.EASY_OPERATOR_WORKSPACE;
+  else process.env.EASY_OPERATOR_WORKSPACE=previousWorkspace;
   process.exit(1);
 }
+if(previousWorkspace===undefined) delete process.env.EASY_OPERATOR_WORKSPACE;
+else process.env.EASY_OPERATOR_WORKSPACE=previousWorkspace;
 
 if(!['VERIFIED','VERIFIED_NOOP'].includes(coding.status)){
   const failureEvidence=[
