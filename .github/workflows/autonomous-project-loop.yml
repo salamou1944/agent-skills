@@ -1,4 +1,6 @@
 name: autonomous-project-loop
+
+# workflow-review: operator-safe
 on:
   workflow_dispatch:
   push:
@@ -16,10 +18,13 @@ concurrency:
   group: autonomous-project-loop
   cancel-in-progress: false
 permissions:
-  contents: write
-  copilot-requests: write
+  contents: read
+
 jobs:
   loop:
+    permissions:
+      contents: write
+      copilot-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -34,6 +39,19 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --ignore-scripts
+
+      - name: Start verified local Ollama inference
+        env:
+          OLLAMA_MODEL: qwen2.5-coder:1.5b
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          nohup ollama serve >/tmp/ollama.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:11434/api/version >/dev/null; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:11434/api/version
+          ollama pull "$OLLAMA_MODEL"
       - name: Run bounded autonomous queue loop
         id: loop
         continue-on-error: true
@@ -53,6 +71,10 @@ jobs:
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: "15000"
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           GITHUB_TOKEN: ${{ github.token }}
+          ELITE_LOCAL_ENGINE: "1"
+          ELITE_ALLOWED_ROOT: ${{ github.workspace }}
+          OPERATOR_OLLAMA_URL: http://127.0.0.1:11434
+          OPERATOR_OLLAMA_MODEL: qwen2.5-coder:1.5b
         run: node apps/easy-developer-platform/autonomous-project-loop.mjs --max-cycles=6 | tee /tmp/project-loop.json
       - name: Verify queue and monitor contracts
         run: |
