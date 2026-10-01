@@ -12,7 +12,7 @@ on:
 
 concurrency:
   group: elite-monorepo-state
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -130,7 +130,7 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const raw = fs.readFileSync('/tmp/elite-queue-recovery-plan.raw', 'utf8').replace(/^\uFEFF/, '').trim();
-          const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+          const cleaned = raw.replace(/^\`\`\`(?:json)?\s*/i, '').replace(/\s*\`\`\`$/i, '').trim();
           let parsed;
           try { parsed = JSON.parse(cleaned); }
           catch {
