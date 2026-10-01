@@ -143,9 +143,10 @@ if(task.id==='mony.pipeline-live-readiness'){
 
 if(task.id==='easy.inspect-blocker'){
   const dir='.easy-e2e-inspection';
+  await run('rm',['-rf',dir]);
   const clone=await run('git',['clone','--depth','1','https://github.com/salamou1944/Easy-.git',dir]);
-  const tests=clone.code===0 ? await run('npm',['test'],{cwd:dir}) : {code:1,stdout:'',stderr:'clone_failed'};
-  const checks=clone.code===0 ? await run('npm',['run','check'],{cwd:dir}) : {code:1,stdout:'',stderr:'clone_failed'};
+  const tests=clone.code===0 ? await run('npm',['--prefix',dir,'test']) : {code:1,stdout:'',stderr:'clone_failed'};
+  const checks=clone.code===0 ? await run('npm',['--prefix',dir,'run','check']) : {code:1,stdout:'',stderr:'clone_failed'};
   const clean=clone.code===0 && tests.code===0 && checks.code===0;
   if(clean){
     const evidence=[
