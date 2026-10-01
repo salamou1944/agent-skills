@@ -62,7 +62,7 @@ async function copilotPlan(prompt,{token,timeoutMs=120000,workspace='.',runImpl=
   return extractJson(result.stdout);
 }
 
-// Collection-backed fallback: reuse the Ollama runtime already provisioned by the queue before introducing any new paid provider.\n
+// Collection-backed fallback: reuse the Ollama runtime already provisioned by the queue before introducing any new paid provider.
 function providerLadder(c){const list=[];const add=(name,endpoint,model,token)=>{if(endpoint&&model&&token)list.push({name,endpoint,model,token})};add('primary',c.endpoint,c.model,c.apiKey);if(c.modelFallback)add('primary-model-fallback',c.endpoint,c.modelFallback,c.apiKey);add('secondary',c.secondaryEndpoint,c.secondaryModel,c.secondaryApiKey);add('github-copilot-compatible',c.githubEndpoint,c.githubModel,c.githubToken);if(c.localEnabled)add('local-ollama',c.localEndpoint,c.localModel,c.localToken);return list}
 
 export async function ask(prompt,c){
