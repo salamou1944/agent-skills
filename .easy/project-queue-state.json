@@ -707,6 +707,58 @@
       ],
       "scope": "easy/e2e",
       "updatedAt": "2026-10-01T23:34:32.484Z"
+    },
+    "easy.next-capability": {
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "f9185a909b5bd349a4a12f00ac3c76fc0a0d58a3",
+          "stateFingerprint": null
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "03",
+            "soldier": "ui-ux",
+            "score": 1,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "The provided code is already in a verified state. No changes are needed.",
+          "changedFiles": []
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "tion and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.348243\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.701609\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 2.703442\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.451908\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.306074\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 1.058536\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.273003\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.224061\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.122913\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 3.011861\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.291187\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.441989\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.653266\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.322845\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.269155\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 0.979037\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a review-ready fallback without making it publishable\nok 20 - seller workflow produces a review-ready fallback without making it publishable\n  ---\n  duration_ms: 2.488299\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.377939\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.625884\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.347662\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 161.941524\n",
+          "stderr": ""
+        },
+        {
+          "kind": "result",
+          "status": "VERIFIED_NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "queue-executor",
+          "executionPath": "provider-fallback",
+          "status": "VERIFIED_NOOP",
+          "summary": "The provided code is already in a verified state. No changes are needed.",
+          "changedFiles": []
+        },
+        {
+          "kind": "verification-command",
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "tion and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.348243\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.701609\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 2.703442\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.451908\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.306074\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 1.058536\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.273003\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.224061\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.122913\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 3.011861\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.291187\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.441989\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.653266\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.322845\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.269155\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 0.979037\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a review-ready fallback without making it publishable\nok 20 - seller workflow produces a review-ready fallback without making it publishable\n  ---\n  duration_ms: 2.488299\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.377939\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.625884\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.347662\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 161.941524\n",
+          "stderr": ""
+        }
+      ],
+      "scope": "easy/next-capability",
+      "updatedAt": "2026-10-02T02:33:37.068Z"
     }
   },
   "history": [
@@ -10735,6 +10787,59 @@
       ],
       "scope": "easy/e2e",
       "at": "2026-10-01T23:34:32.484Z"
+    },
+    {
+      "id": "easy.next-capability",
+      "status": "NOOP",
+      "evidence": [
+        {
+          "kind": "baseline",
+          "commit": "f9185a909b5bd349a4a12f00ac3c76fc0a0d58a3",
+          "stateFingerprint": null
+        },
+        {
+          "kind": "action",
+          "ok": true,
+          "route": {
+            "soldierId": "03",
+            "soldier": "ui-ux",
+            "score": 1,
+            "reason": "keyword-domain-match"
+          },
+          "summary": "The provided code is already in a verified state. No changes are needed.",
+          "changedFiles": []
+        },
+        {
+          "kind": "verification",
+          "ok": true,
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "tion and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.348243\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.701609\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 2.703442\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.451908\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.306074\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 1.058536\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.273003\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.224061\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.122913\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 3.011861\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.291187\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.441989\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.653266\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.322845\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.269155\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 0.979037\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a review-ready fallback without making it publishable\nok 20 - seller workflow produces a review-ready fallback without making it publishable\n  ---\n  duration_ms: 2.488299\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.377939\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.625884\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.347662\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 161.941524\n",
+          "stderr": ""
+        },
+        {
+          "kind": "result",
+          "status": "VERIFIED_NOOP",
+          "taskVerified": false,
+          "pipelineVerified": true
+        },
+        {
+          "kind": "queue-executor",
+          "executionPath": "provider-fallback",
+          "status": "VERIFIED_NOOP",
+          "summary": "The provided code is already in a verified state. No changes are needed.",
+          "changedFiles": []
+        },
+        {
+          "kind": "verification-command",
+          "command": "npm test",
+          "exitCode": 0,
+          "stdout": "tion and inspectable\nok 4 - customer demo is explicitly non-production and inspectable\n  ---\n  duration_ms: 7.348243\n  type: 'test'\n  ...\n# Subtest: customer demo does not claim that image analysis occurred\nok 5 - customer demo does not claim that image analysis occurred\n  ---\n  duration_ms: 2.701609\n  type: 'test'\n  ...\n# Subtest: buildProductDna treats seller facts as authoritative\nok 6 - buildProductDna treats seller facts as authoritative\n  ---\n  duration_ms: 2.703442\n  type: 'test'\n  ...\n# Subtest: rejects empty product input\nok 7 - rejects empty product input\n  ---\n  duration_ms: 0.451908\n  type: 'test'\n  ...\n# Subtest: integrity detects dropped authoritative facts\nok 8 - integrity detects dropped authoritative facts\n  ---\n  duration_ms: 0.306074\n  type: 'test'\n  ...\n# Subtest: creative generation is usable without external provider credentials\nok 9 - creative generation is usable without external provider credentials\n  ---\n  duration_ms: 1.058536\n  type: 'test'\n  ...\n# Subtest: instruction-like product input is treated as untrusted and excluded\nok 10 - instruction-like product input is treated as untrusted and excluded\n  ---\n  duration_ms: 0.273003\n  type: 'test'\n  ...\n# Subtest: image evidence is explicit when the demo receives an image\nok 11 - image evidence is explicit when the demo receives an image\n  ---\n  duration_ms: 0.224061\n  type: 'test'\n  ...\n# Subtest: local creative operations fail closed when tools are not configured\nok 12 - local creative operations fail closed when tools are not configured\n  ---\n  duration_ms: 2.122913\n  type: 'test'\n  ...\n# Subtest: production pipeline supports deterministic fallback without a provider\nok 13 - production pipeline supports deterministic fallback without a provider\n  ---\n  duration_ms: 3.011861\n  type: 'test'\n  ...\n# Subtest: production pipeline requires durable store\nok 14 - production pipeline requires durable store\n  ---\n  duration_ms: 0.291187\n  type: 'test'\n  ...\n# Subtest: production pipeline accepts provider output only after integrity validation\nok 15 - production pipeline accepts provider output only after integrity validation\n  ---\n  duration_ms: 0.441989\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when configured provider throws\nok 16 - production pipeline fails closed when configured provider throws\n  ---\n  duration_ms: 0.653266\n  type: 'test'\n  ...\n# Subtest: production pipeline fails closed when provider output violates Product Integrity\nok 17 - production pipeline fails closed when provider output violates Product Integrity\n  ---\n  duration_ms: 0.322845\n  type: 'test'\n  ...\n# Subtest: production pipeline rejects non-http image URLs before provider execution\nok 18 - production pipeline rejects non-http image URLs before provider execution\n  ---\n  duration_ms: 0.269155\n  type: 'test'\n  ...\n# Subtest: configured provider failure never reaches durable persistence\nok 19 - configured provider failure never reaches durable persistence\n  ---\n  duration_ms: 0.979037\n  type: 'test'\n  ...\n# Subtest: seller workflow produces a review-ready fallback without making it publishable\nok 20 - seller workflow produces a review-ready fallback without making it publishable\n  ---\n  duration_ms: 2.488299\n  type: 'test'\n  ...\n# Subtest: seller workflow accepts provider output only when Product Integrity passes\nok 21 - seller workflow accepts provider output only when Product Integrity passes\n  ---\n  duration_ms: 0.377939\n  type: 'test'\n  ...\n# Subtest: seller workflow rejects empty seller input before persistence\nok 22 - seller workflow rejects empty seller input before persistence\n  ---\n  duration_ms: 0.625884\n  type: 'test'\n  ...\n# Subtest: seller workflow does not accept provider output that drops authoritative facts\nok 23 - seller workflow does not accept provider output that drops authoritative facts\n  ---\n  duration_ms: 0.347662\n  type: 'test'\n  ...\n1..23\n# tests 23\n# suites 0\n# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 161.941524\n",
+          "stderr": ""
+        }
+      ],
+      "scope": "easy/next-capability",
+      "at": "2026-10-02T02:33:37.068Z"
     }
   ]
 }
