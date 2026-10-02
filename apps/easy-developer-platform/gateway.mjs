@@ -85,6 +85,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (req.method === 'GET' && url.pathname === '/') return send(res, 200, home, 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/customer') return send(res, 200, await publicFile('customer.html'), 'text/html; charset=utf-8');
+  if (req.method === 'GET' && url.pathname === '/p/pastel') return send(res, 200, await publicFile('pastel.html'), 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/creative') return send(res, 200, await publicFile('creative.html'), 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/operator') return send(res, 200, home, 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/integration') return proxy(req, res, platform, '/');
