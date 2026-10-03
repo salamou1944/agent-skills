@@ -13,6 +13,44 @@ This repository is the engineering core for the Elite autonomous coding system, 
 - Preserve repository boundaries and avoid copying `.elite-code-tools` into a target repository's persisted changes.
 - Prefer minimal, reversible changes and fail closed when verification is ambiguous.
 
+## ChatGPT / Codex execution layer
+
+ChatGPT, Codex, repository agents, Skills, connected Apps/Plugins, MCP tools, and GitHub integration are treated as one coordinated execution toolchain, subject to their actual permissions.
+
+Before implementing or repairing non-trivial work:
+
+1. Inspect the live repository state and applicable rules.
+2. Search `Project-/COLLECTION` for reusable resources, platforms, libraries, prompts, skills, agents, and prior evidence.
+3. Search the connected GitHub repositories for repository-native solutions.
+4. Choose the strongest authorized execution surface: Codex for coding/testing/review, Work for long multi-step research/deliverables when available, Skills for reusable procedures, and connected Apps/MCP/GitHub tools for live actions.
+5. Verify that the capability is actually available before relying on it.
+6. Execute the smallest action that increases verified completion.
+
+Do not generate a human instruction merely because an authorized agent/tool can perform the underlying action. Do not claim an agent executed anything unless execution evidence exists.
+
+### Mode selection
+
+- **Chat:** coordination, reasoning, search, and concise decisions.
+- **Work:** long multi-step research and deliverables when available.
+- **Codex:** repository editing, tests, debugging, refactoring, review, and shipping.
+- **Skills:** reusable domain procedures and progressive-disclosure instructions.
+- **Apps / Plugins / MCP:** live external systems and authorized actions.
+- **GitHub integration:** live repository inspection and mutation when permissions allow.
+
+## Collection-to-execution bridge
+
+`Project-/COLLECTION` is an execution source, not a read-only archive.
+
+For each non-trivial build, repair, or integration:
+- search COLLECTION first;
+- inspect the relevant capture/index/verification evidence;
+- reuse proven resources when compatible;
+- validate the resource in the current environment;
+- register newly discovered high-value resources in the canonical collection structure;
+- avoid duplicate records.
+
+A collection record is evidence about a resource, not proof that the resource works in the current runtime.
+
 ## Elite result semantics
 
 Elite automation must use explicit result states:
@@ -31,6 +69,10 @@ Elite automation must use explicit result states:
 - `apps/revenue-engine/` contains MONY/Revenue Engine orchestration and provider adapters.
 - `.github/agents/` contains the canonical 14 soldier profiles.
 - `.github/workflows/` contains CI and orchestration workflows. Workflow changes require explicit review and must preserve fail-closed verification.
+
+## Cost and revenue rule
+
+Prefer $0, existing-plan, or open-source paths when they meet the requirement. Do not introduce paid providers, API credits, subscriptions, or infrastructure spend without an explicit need and approval. If a provider is blocked by quota/credits, keep the system honest and fail closed; never simulate successful provider execution.
 
 ## Creating a new skill
 
