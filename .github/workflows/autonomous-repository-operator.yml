@@ -4,6 +4,14 @@ on:
   workflow_dispatch:
   repository_dispatch:
     types: [autonomous-operator]
+  push:
+    branches: [main]
+    paths:
+      - "AGENTS.md"
+      - ".github/prompts/autonomous-repository-operator.md"
+      - ".github/prompts/chatgpt-operator-bridge.md"
+      - ".github/workflows/autonomous-repository-operator.yml"
+      - "apps/easy-developer-platform/autonomous-coder.mjs"
   schedule:
     - cron: "17 * * * *"
 
@@ -122,7 +130,7 @@ jobs:
           git add -A
           git diff --cached --check
           git commit -m "chore(operator): apply verified local fallback change"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:$GITHUB_REF_NAME"
 
       - name: Create ChatGPT handoff when autonomous providers are exhausted
         if: steps.copilot.outcome != 'success' && steps.local.outcome != 'success'
