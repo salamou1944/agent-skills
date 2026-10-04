@@ -21,7 +21,7 @@ test('Elite invokes Copilot after every configured provider is exhausted', async
   assert.equal(result.summary,'copilot-recovered');
   assert.equal(events.length,1);
   assert.equal(events[0].command,'copilot');
-  assert.deepEqual(events[0].args.slice(0,3),['-s','--no-ask-user','-p']);
+  assert.deepEqual(events[0].args,['-s','--no-ask-user']);
 });
 
 test('Elite fails closed when Copilot is absent', async () => {
