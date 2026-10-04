@@ -43,7 +43,7 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /x-ratelimit-reset/);
   assert.match(coder, /AbortController/);
   assert.match(coder, /relevance\(b,goal\)/);
-  assert.match(coder, /ctx \|\|= await context\(root,goal\)/);
+  assert.match(coder, /ctx \|\|= await context\(root,goal(?:,c\.contextMaxBytes)?\)/);
   assert.match(coder, /paths\.has/);
   assert.match(coder, /copilotPlan/);
   assert.match(coder, /COPILOT_GITHUB_TOKEN/);
