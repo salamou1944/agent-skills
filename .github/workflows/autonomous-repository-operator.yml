@@ -1,0 +1,61 @@
+name: autonomous-repository-operator
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [autonomous-operator]
+  schedule:
+    - cron: "17 * * * *"
+
+concurrency:
+  group: autonomous-repository-operator
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  copilot-requests: write
+
+jobs:
+  operate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install GitHub Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Run autonomous operator
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_AUTO_UPDATE: "false"
+          COPILOT_MODEL: gpt-5.4
+        run: |
+          cat .github/prompts/autonomous-repository-operator.md > /tmp/operator-prompt.md
+          {
+            echo
+            echo "Runtime context:"
+            echo "- repository: $GITHUB_REPOSITORY"
+            echo "- ref: $GITHUB_REF"
+            echo "- sha: $GITHUB_SHA"
+            echo "- run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "Operate inside the checked-out repository. Inspect first. Modify only when useful. Verify before claiming completion."
+          } >> /tmp/operator-prompt.md
+          copilot -p "$(cat /tmp/operator-prompt.md)"             --allow-tool='shell(git:*)'             --allow-tool='shell(gh:*)'             --allow-tool=write             --allow-tool=read             --allow-tool='url(github.com)'             --no-ask-user             -s | tee /tmp/operator-output.txt
+
+      - name: Publish operator evidence
+        if: always()
+        run: |
+          echo "## Autonomous Repository Operator" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/operator-output.txt ]; then
+            cat /tmp/operator-output.txt >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No operator output was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
