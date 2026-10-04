@@ -108,12 +108,35 @@ jobs:
           EASY_GITHUB_TOKEN: ""
         run: |
           set +e
-          node apps/easy-developer-platform/autonomous-coder.mjs             "Inspect this repository and make the single highest-value safe change currently justified by the repository state. Prefer a real blocker over polish. Use existing tests and evidence. Do not modify workflows, secrets, authentication, deployment policy, or credentials. Return only a verified change or VERIFIED_NOOP."             > /tmp/local-operator-output.txt 2> /tmp/local-operator-stderr.txt
-          status=$?
-          echo "local_exit=$status" > /tmp/local-operator-status.txt
-          cat /tmp/local-operator-output.txt
+          start_epoch=$(date +%s)
+          max_seconds=$((20 * 60))
+          iteration=0
+          overall_status=0
+          : > /tmp/local-operator-output.txt
+          : > /tmp/local-operator-stderr.txt
+          while [ $(( $(date +%s) - start_epoch )) -lt "$max_seconds" ]; do
+            iteration=$((iteration + 1))
+            echo "===== local autonomous iteration $iteration =====" | tee -a /tmp/local-operator-output.txt
+            node apps/easy-developer-platform/autonomous-coder.mjs \\
+              "Inspect this repository and make the single highest-value safe change currently justified by the repository state. Prefer a real blocker over polish. Use existing tests and evidence. Do not modify workflows, secrets, authentication, deployment policy, or credentials. Return only a verified change or VERIFIED_NOOP." \\
+              >> /tmp/local-operator-output.txt 2>> /tmp/local-operator-stderr.txt
+            status=$?
+            echo "iteration=$iteration exit=$status" | tee -a /tmp/local-operator-output.txt
+            if [ "$status" -ne 0 ]; then
+              overall_status=$status
+              break
+            fi
+            if git diff --quiet && [ -z "$(git status --porcelain)" ]; then
+              echo "No repository changes this iteration; continuing full-duration execution." | tee -a /tmp/local-operator-output.txt
+            else
+              echo "Verified repository changes detected; re-scanning for the next blocker." | tee -a /tmp/local-operator-output.txt
+            fi
+            sleep 2
+          done
+          echo "local_iterations=$iteration" > /tmp/local-operator-status.txt
+          echo "local_exit=$overall_status" >> /tmp/local-operator-status.txt
           cat /tmp/local-operator-stderr.txt >&2
-          exit $status
+          exit $overall_status
 
       - name: Commit verified local changes
         if: steps.copilot.outcome != 'success' && steps.local.outcome == 'success'
