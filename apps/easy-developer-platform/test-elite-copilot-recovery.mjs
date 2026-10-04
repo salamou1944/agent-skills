@@ -37,3 +37,28 @@ test('Elite fails closed when Copilot is absent', async () => {
     copilotToken:'copilot-token', fetchImpl, runImpl,
   }), /all_providers_exhausted:primary:provider_quota_exhausted,copilot-cli:copilot_cli_failed/);
 });
+
+
+test('Elite falls through to Copilot after a provider returns an empty response', async () => {
+  const events = [];
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return {
+      ok:true,status:200,headers:new Headers(),
+      async json(){return {choices:[{message:{content:''}}]};},
+    };
+  };
+  const runImpl = async (command,args) => {
+    events.push({command,args});
+    return {ok:true,stdout:'{"summary":"copilot-recovered-empty-provider","changes":[]}',stderr:''};
+  };
+  const result = await ask('recover empty provider task', {
+    apiKey:'primary-token', endpoint:'https://primary.invalid', model:'primary',
+    providerRetries:1, providerTimeoutMs:1000,
+    copilotToken:'copilot-token', fetchImpl, runImpl,
+  });
+  assert.equal(result.summary,'copilot-recovered-empty-provider');
+  assert.equal(calls,1);
+  assert.equal(events[0].command,'copilot');
+});
