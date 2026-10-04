@@ -27,3 +27,8 @@ Priority:
 - Only then refactoring or polish.
 
 Do not wait for user input. Make the best authorized move available in this run.
+
+Workflow boundary:
+- Treat .github/workflows/** as protected infrastructure. Do not modify workflow files from autonomous execution unless an explicit human-reviewed change path authorizes it.
+- If a required improvement would change workflow infrastructure, persist the exact proposed change and blocker as evidence instead of bypassing the repository security gate.
+- Full-duration execution applies to all safe non-workflow work: after a provider failure, continue through authorized fallbacks and independently verifiable repository work until the run budget or a real blocker is reached.
