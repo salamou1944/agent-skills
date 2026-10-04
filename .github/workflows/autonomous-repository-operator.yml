@@ -30,7 +30,9 @@ jobs:
       - name: Install GitHub Copilot CLI
         run: npm install -g @github/copilot
 
-      - name: Run autonomous operator
+      - name: Run primary autonomous operator
+        id: copilot
+        continue-on-error: true
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -48,7 +50,120 @@ jobs:
             echo
             echo "Operate inside the checked-out repository. Inspect first. Modify only when useful. Verify before claiming completion."
           } >> /tmp/operator-prompt.md
-          copilot -p "$(cat /tmp/operator-prompt.md)"             --allow-tool='shell(git:*)'             --allow-tool='shell(gh:*)'             --allow-tool=write             --allow-tool=read             --allow-tool='url(github.com)'             --no-ask-user             -s | tee /tmp/operator-output.txt
+          set +e
+          copilot -p "$(cat /tmp/operator-prompt.md)"             --allow-tool='shell(git:*)'             --allow-tool='shell(gh:*)'             --allow-tool=write             --allow-tool=read             --allow-tool='url(github.com)'             --no-ask-user             -s > /tmp/operator-output.txt 2> /tmp/operator-primary-stderr.txt
+          status=$?
+          echo "primary_exit=$status" > /tmp/operator-primary-status.txt
+          cat /tmp/operator-output.txt
+          cat /tmp/operator-primary-stderr.txt >&2
+          exit $status
+
+      - name: Cache local Ollama model
+        if: steps.copilot.outcome != 'success'
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama
+          key: ollama-qwen2.5-coder-0.5b-v1
+          restore-keys: |
+            ollama-qwen2.5-coder-0.5b-
+
+      - name: Install and start local Ollama fallback
+        if: steps.copilot.outcome != 'success'
+        run: |
+          set -e
+          if ! command -v ollama >/dev/null 2>&1; then
+            curl -fsSL https://ollama.com/install.sh | sh
+          fi
+          nohup ollama serve >/tmp/ollama.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:11434/api/tags >/dev/null
+          ollama pull qwen2.5-coder:0.5b-instruct-q4_K_S
+
+      - name: Run local autonomous operator fallback
+        id: local
+        if: steps.copilot.outcome != 'success'
+        continue-on-error: true
+        env:
+          EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
+          EASY_OPERATOR_CONTEXT_MAX_BYTES: "100000"
+          EASY_OPERATOR_CODER_ATTEMPTS: "2"
+          EASY_OPERATOR_PROVIDER_RETRIES: "1"
+          EASY_OPERATOR_PROVIDER_TIMEOUT_MS: "120000"
+          OPERATOR_OLLAMA_URL: "http://127.0.0.1:11434"
+          OPERATOR_OLLAMA_MODEL: "qwen2.5-coder:0.5b-instruct-q4_K_S"
+          ELITE_LOCAL_ENGINE: "1"
+          COPILOT_GITHUB_TOKEN: ""
+          GITHUB_TOKEN: ""
+          EASY_GITHUB_TOKEN: ""
+        run: |
+          set +e
+          node apps/easy-developer-platform/autonomous-coder.mjs             "Inspect this repository and make the single highest-value safe change currently justified by the repository state. Prefer a real blocker over polish. Use existing tests and evidence. Do not modify workflows, secrets, authentication, deployment policy, or credentials. Return only a verified change or VERIFIED_NOOP."             > /tmp/local-operator-output.txt 2> /tmp/local-operator-stderr.txt
+          status=$?
+          echo "local_exit=$status" > /tmp/local-operator-status.txt
+          cat /tmp/local-operator-output.txt
+          cat /tmp/local-operator-stderr.txt >&2
+          exit $status
+
+      - name: Commit verified local changes
+        if: steps.copilot.outcome != 'success' && steps.local.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No local changes to commit."
+            exit 0
+          fi
+          git config user.name "ai-operating-operator"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "chore(operator): apply verified local fallback change"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Create ChatGPT handoff when autonomous providers are exhausted
+        if: steps.copilot.outcome != 'success' && steps.local.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          primary="$(cat /tmp/operator-primary-stderr.txt 2>/dev/null || true)"
+          local="$(cat /tmp/local-operator-stderr.txt 2>/dev/null || true)"
+          body="$(cat <<EOF
+          ## Autonomous operator handoff
+
+          **Repository:** $GITHUB_REPOSITORY
+          **Revision:** $GITHUB_SHA
+          **Run:** $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+
+          ### Status
+          The repository operator could not safely complete the task with its autonomous providers. No completion is claimed.
+
+          ### Primary provider evidence
+          ```
+          $primary
+          ```
+
+          ### Local fallback evidence
+          ```
+          $local
+          ```
+
+          ### Next connected operator
+          Consume this issue as a `[CHATGPT-HANDOFF]` queue item. Inspect the repository state again before acting. Do not assume any unverified completion.
+
+          See `.github/prompts/chatgpt-operator-bridge.md`.
+          EOF
+          )"
+          existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search '[CHATGPT-HANDOFF] in:title' --json number --jq '.[0].number' || true)"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY"               --title "[CHATGPT-HANDOFF] Autonomous operator needs connected AI execution"               --body "$body"
+          fi
 
       - name: Publish operator evidence
         if: always()
@@ -56,6 +171,16 @@ jobs:
           echo "## Autonomous Repository Operator" >> "$GITHUB_STEP_SUMMARY"
           if [ -f /tmp/operator-output.txt ]; then
             cat /tmp/operator-output.txt >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "No operator output was produced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f /tmp/local-operator-output.txt ]; then
+            echo "### Local fallback" >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/local-operator-output.txt >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f /tmp/operator-primary-stderr.txt ]; then
+            echo "### Primary stderr" >> "$GITHUB_STEP_SUMMARY"
+            tail -n 80 /tmp/operator-primary-stderr.txt >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f /tmp/local-operator-stderr.txt ]; then
+            echo "### Local stderr" >> "$GITHUB_STEP_SUMMARY"
+            tail -n 80 /tmp/local-operator-stderr.txt >> "$GITHUB_STEP_SUMMARY"
           fi
