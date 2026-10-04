@@ -74,7 +74,7 @@ export async function ask(prompt,c){
   const telemetry=c.telemetry;
   c.runImpl ||= run;
   const ladder=providerLadder(c);
-  if(!ladder.length)throw new Error('llm_provider_not_configured');
+  if(!ladder.length&&!copilotToken)throw new Error('llm_provider_not_configured');
   const failures=[];
   for(const provider of ladder){
     try{return await requestInference(prompt,{endpoint:provider.endpoint,model:provider.model,token:provider.token,providerRetries:c.providerRetries,timeoutMs:c.providerTimeoutMs,rateLimitWaitMs:c.rateLimitWaitMs,fetchImpl,sleepImpl,telemetry})}
