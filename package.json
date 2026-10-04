@@ -66,7 +66,8 @@
     "test:lab:luna-meta": "node --test apps/army14-evolution-lab/test-luna-meta-evolution.mjs",
     "test:lab:luna-unknown": "node --test apps/army14-evolution-lab/test-luna-unknown-capability-discovery.mjs",
     "test:army14:worker-health": "node --test apps/easy-developer-platform/test-army-14-railway-worker-health.mjs",
-    "test:elite:queue-bot": "node --test apps/easy-developer-platform/test-elite-queue-bot-routing.mjs"
+    "test:elite:queue-bot": "node --test apps/easy-developer-platform/test-elite-queue-bot-routing.mjs",
+    "test:elite:delivery-gate": "node --test apps/easy-developer-platform/delivery-gate.test.mjs"
   },
   "dependencies": {
     "yaml": "2.9.0"
