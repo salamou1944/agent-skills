@@ -13,6 +13,10 @@ This repository is the engineering core for the Elite autonomous coding system, 
 - Preserve repository boundaries and avoid copying `.elite-code-tools` into a target repository's persisted changes.
 - Prefer minimal, reversible changes and fail closed when verification is ambiguous.
 
+## Full-duration execution rule
+
+When an authorized execution run begins, continue for the full available run budget rather than returning early after the first failure or blocker. Try safe fallbacks, reduce scope to the smallest independently verifiable useful action when necessary, and continue to the next highest-value blocker after successful work. End only on budget exhaustion, a verified stopping condition, or a genuine permission/external-input/safety blocker. Before a genuine handoff, persist exact evidence and the next actionable step. Do not pause for confirmation when the repository contract already authorizes the action.
+
 ## ChatGPT / Codex execution layer
 
 ChatGPT, Codex, repository agents, Skills, connected Apps/Plugins, MCP tools, and GitHub integration are treated as one coordinated execution toolchain, subject to their actual permissions.
