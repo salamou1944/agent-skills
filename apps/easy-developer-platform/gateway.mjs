@@ -47,12 +47,21 @@ async function proxy(req, res, base, path) {
       headers,
       body: ['GET', 'HEAD'].includes(req.method) ? undefined : raw
     });
-    const text = await response.text();
-    res.writeHead(response.status, {
-      'content-type': response.headers.get('content-type') || 'application/json; charset=utf-8',
+    const contentType = response.headers.get('content-type') || 'application/json; charset=utf-8';
+    const responseHeaders = {
+      'content-type': contentType,
       'cache-control': 'no-store',
       'x-content-type-options': 'nosniff'
-    });
+    };
+    const artifactHeader = response.headers.get('x-easy-local-media');
+    if (artifactHeader) responseHeaders['x-easy-local-media'] = artifactHeader;
+    if (contentType.startsWith('image/')) {
+      const bytes = Buffer.from(await response.arrayBuffer());
+      res.writeHead(response.status, responseHeaders);
+      return res.end(bytes);
+    }
+    const text = await response.text();
+    res.writeHead(response.status, responseHeaders);
     res.end(text);
   } catch {
     send(res, 502, { error: 'upstream_unavailable' });
