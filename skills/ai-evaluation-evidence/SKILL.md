@@ -21,6 +21,10 @@ Turn AI application and agent evaluation into a repeatable evidence-producing en
 8. Feed failures into remediation and rerun the relevant regression cases.
 9. Reject ambiguous or missing evidence; never report a passing evaluation from an unverified sample.
 
+## Evaluation Fixture Contract
+
+For reusable machine-readable evaluations, use the provider-neutral `evaluation-fixture/v1` contract when the project adopts it. Preserve dataset/corpus revision, system commit, model/configuration, rubric and thresholds, run metadata, raw/artifact references, failures, invalid cases, and comparison/regression status. Keep credentials and secrets out of fixtures. The contract standardizes evidence shape; it does not by itself prove that an evaluation was executed.
+
 ## Evidence contract
 
 Each evaluation should record:
