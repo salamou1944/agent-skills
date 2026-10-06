@@ -12,7 +12,7 @@ const send = (res, status, data) => {
 };
 async function body(req) {
   let raw = '';
-  for await (const chunk of req) { raw += chunk; if (raw.length > 2_000_000) throw Object.assign(new Error('body_too_large'), { status: 413 }); }
+  for await (const chunk of req) { raw += chunk; if (raw.length > 6_000_000) throw Object.assign(new Error('body_too_large'), { status: 413 }); }
   if (!raw) return {};
   try { return JSON.parse(raw); } catch { throw Object.assign(new Error('invalid_json'), { status: 400 }); }
 }
