@@ -3,18 +3,19 @@ FROM node:22-bookworm-slim
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 python3-venv python3-pip \
+  && apt-get install -y --no-install-recommends ca-certificates python3 python3-venv python3-pip \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 RUN python3 -m venv /opt/rembg \
-  && /opt/rembg/bin/pip install --no-cache-dir 'rembg[cpu]>=2.0,<3'
+  && /opt/rembg/bin/pip install --no-cache-dir 'rembg[cpu,cli]>=2.0,<3'
 
 COPY . .
 
 ENV NODE_ENV=production
 ENV EASY_REMBG_PYTHON=/opt/rembg/bin/python
+ENV HOME=/tmp
 
 CMD ["node", "apps/easy-developer-platform/runtime.mjs"]
