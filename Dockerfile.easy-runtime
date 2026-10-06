@@ -10,7 +10,9 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 RUN python3 -m venv /opt/rembg \
-  && /opt/rembg/bin/pip install --no-cache-dir 'rembg[cpu,cli]>=2.0,<3'
+  && /opt/rembg/bin/pip install --no-cache-dir 'rembg[cpu,cli]>=2.0,<3' \
+  && /opt/rembg/bin/pip install --no-cache-dir 'click>=8.3,<9' \
+  && /opt/rembg/bin/python -c "import click, rembg; print('rembg', rembg.__version__, 'click', click.__version__)"
 
 COPY . .
 
