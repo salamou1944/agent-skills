@@ -75,6 +75,8 @@ jobs:
         run: node apps/easy-developer-platform/test-elite-capability-contract.mjs
       - run: node apps/ai-operating-operator/test-worker-persistence.mjs
       - run: node apps/ai-operating-operator/test-worker-cycle.mjs
+      - name: Run execution outcome and replan gate test
+        run: node apps/ai-operating-operator/test-execution-outcome.mjs
       - name: Run worker retry test
         run: node apps/ai-operating-operator/test-worker-retry.mjs
       - name: Run worker recovery test

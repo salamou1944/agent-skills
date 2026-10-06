@@ -9,6 +9,7 @@ import {dispatchToElite} from './elite-bridge.mjs';
 import {selectVerifiedCapability} from './capability-selection.mjs';
 import crypto from 'node:crypto';
 import {buildCapabilityInvocation} from './capability-invocation.mjs';
+import {evaluateExecutionOutcome,buildReplanDecision} from './execution-outcome.mjs';
 
 const ROOT=path.dirname(fileURLToPath(import.meta.url));
 const queue=process.env.OPERATOR_TASK_QUEUE||path.join(ROOT,'runtime','tasks');
@@ -92,14 +93,16 @@ export async function processNextTask({queueDir=queue,resultDir=results,caps={},
       executionTask={...executionTask,capabilityInvocation:invocation.invocation,requestedCapabilities:Array.from(new Set([...(executionTask.requestedCapabilities||[]),prepared.task.capabilitySelection.invocation.adapter]))};
     }
     const result=await executeTaskImpl(executionTask,{capabilities:{...caps,github:caps.github,'platform.github':caps.github,[executionTask.capabilityArtifactInvocation?.adapter||prepared.task.capabilitySelection?.invocation?.adapter||'']:executionTask.capabilityArtifactInvocation?{authorized:true,reachable:true}:undefined},adapters,adapterInputs:task.adapterInputs||{},adapterEnv:{...process.env}});
-    const terminal=result.completion?.ok===true||result.state==='VERIFIED'?'VERIFIED':(result.state||'FAILED');
+    const outcome=evaluateExecutionOutcome(result);
+    const terminal=outcome.state;
+    const replan=buildReplanDecision(result,{retryable:terminal==='FAILED',nextTaskId:task.nextTaskId||null});
     const attempt=(run.attempt||0)+1;
     const failureClass=classifyFailure(result);
     const retry=terminal==='FAILED' ? retryDecision({attempt:Math.max(0,attempt-1),maxRetries:Number(task.maxRetries??2),errorClass:failureClass||'unknown'}) : {retry:false};
     const persistedState=retry.retry?'RETRYING':terminal;
-    const persistedResult={...result,runId:run.runId,failureClass,retry};
+    const persistedResult={...result,runId:run.runId,failureClass,retry,outcome:outcome.outcome,verification:{independentlyVerified:outcome.independentlyVerified,actionObserved:outcome.actionObserved},replan};
     await fs.writeFile(path.join(resultDir,name),JSON.stringify(persistedResult,null,2));
-    await updateRun(run.runId,{state:persistedState,attempt,resultState:result.state,completion:result.completion||null,evidence:result.evidence||[],failure:result.failure||null,failureClass,retry});
+    await updateRun(run.runId,{state:persistedState,attempt,resultState:result.state,completion:result.completion||null,evidence:result.evidence||[],failure:result.failure||null,failureClass,retry,outcome:outcome.outcome,verification:{independentlyVerified:outcome.independentlyVerified,actionObserved:outcome.actionObserved},replan});
     if(persistedState!=='RETRYING')await fs.unlink(p);
     if(retry.retry)await sleepImpl(retry.backoffMs);
     return {selected:name,taskId:task.taskId,runId:run.runId,state:persistedState,retry};
