@@ -8,6 +8,7 @@ on:
       - 'apps/easy-developer-platform/army-14-director.mjs'
       - 'apps/easy-developer-platform/soat-evidence-gate.mjs'
       - 'apps/easy-developer-platform/test-soat-evidence-gate.mjs'
+      - 'apps/easy-developer-platform/test-army-14-director.mjs'
       - '.github/workflows/army-14-elite-gate.yml'
   pull_request:
     paths:
@@ -62,5 +63,7 @@ jobs:
           [ "$verified" -eq 14 ] || failed=1
           if [ "$failed" -ne 0 ]; then echo 'ARMY-14 Elite gate FAILED'; exit 1; fi
       - name: Verify SOAT evidence gate consumed by Elite/ARMY-14 director
-        run: node --test apps/easy-developer-platform/test-soat-evidence-gate.mjs
+        run: |
+          node --test apps/easy-developer-platform/test-soat-evidence-gate.mjs
+          node --test apps/easy-developer-platform/test-army-14-director.mjs
           echo 'ARMY-14 Elite gate PASSED: all 14 canonical soldiers satisfy the Elite capability contract.'
