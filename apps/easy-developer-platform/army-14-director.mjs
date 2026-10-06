@@ -36,11 +36,11 @@ export function buildSoldierRun(task, baseline, assignmentOrIndex = 0) {
 export function closeSoldierRun(run, result) {
   const gate = validateTaskResult(result.contract ?? run.input?.contract, result);
   if (!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
-  if (result.soatEvidence !== undefined) requireSoatExecutionEvidence(result.soatEvidence);
+  const soatEvidence = result.soatEvidence !== undefined ? requireSoatExecutionEvidence(result.soatEvidence) : null;
   let current = run;
   if (current.state === 'executing') current = transitionSoldierRun(current,'verifying',{runId:current.runId,evidenceId:'verification',kind:'verification',ok:result.verification?.passed === true,summary:result.verification?.summary ?? null});
   if (result.status === 'VERIFIED') {
-    current = transitionSoldierRun(current,'completed',{runId:current.runId,evidenceId:'result',kind:'result',ok:true,status:result.status});
+    current = transitionSoldierRun(current,'completed',{runId:current.runId,evidenceId:'result',kind:'result',ok:true,status:result.status,soatEvidence});
     if (!verifySoldierSystem(current)) throw new Error('soldier_verification_incomplete');
     return current;
   }
