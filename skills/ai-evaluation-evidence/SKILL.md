@@ -103,3 +103,18 @@ Use only authorized systems and datasets. Do not bypass authentication, quotas, 
 ## Done
 
 An evaluation is complete only when the acceptance criteria are defined, the test evidence is reproducible, failures are recorded, and required regressions are retested.
+
+
+## Portable artifact and fixity evidence
+
+When an evaluation, smoke test, collection run, or agent execution produces evidence that must survive handoff or environment changes, prefer a portable artifact bundle with explicit integrity metadata when practical.
+
+- Keep raw inputs/outputs and derived artifacts separately addressable.
+- Record immutable revision identifiers and content hashes for important artifacts.
+- Preserve the index/manifest that maps evidence records to artifact members.
+- Prefer durable, tool-independent formats when they materially improve auditability or future replay.
+- Verify the artifact itself (existence, hash/fixity, expected members, and parseability) rather than treating an upload, archive creation, or path as proof.
+- Keep artifact packaging separate from the evaluation result: a valid bundle proves preservation/integrity, not that the underlying behavior passed.
+- Preserve provenance when an external project supplies an artifact packaging pattern; do not copy application code into the Skill.
+
+Source-derived reference pattern: ArchiveBox/archivebox-js uses portable WACZ packaging with WARC records, CDX indexes, metadata, and integrity hashes. This reference was inspected during the 2026-10-06 Collection sweep; it is a reusable evidence pattern, not runtime proof of our own implementation.
