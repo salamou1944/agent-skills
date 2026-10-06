@@ -3,6 +3,7 @@ import { createProductDNA, checkProductIntegrity, compileCreativeInstruction, va
 import { runCreativeJob } from './creative-orchestrator.mjs';
 import { openAICreativeProvider } from './openai-creative-provider.mjs';
 import { createCreativeTestAsset } from './creative-test-fixture.mjs';
+import { runLocalMedia } from './local-media.mjs';
 
 const port = Number(process.env.EASY_CREATIVE_PORT || 8793);
 const send = (res, status, data) => {
@@ -59,6 +60,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'GET' && u.pathname === '/api/creative/provider') return send(res, 200, providerStatus());
     if (req.method !== 'POST') return send(res, 404, { error: 'not_found' });
     const input = await body(req);
+    if (u.pathname === '/api/creative/local-media') return send(res, 200, await runLocalMedia(input));
     if (u.pathname === '/api/creative/product-dna') return send(res, 201, createProductDNA(input));
     if (u.pathname === '/api/creative/integrity') return send(res, 200, checkProductIntegrity(input.dna, input.candidate));
     if (u.pathname === '/api/creative/compile') return send(res, 200, compileCreativeInstruction(input.dna, input.request));
