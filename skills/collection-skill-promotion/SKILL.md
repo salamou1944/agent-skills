@@ -34,6 +34,9 @@ A negative Skill result must never discard a positive independent-project result
 - If an existing Skill already covers the material, extend it with verified new evidence rather than creating a second Skill.
 - Preserve provenance when multiple sources contribute to one Skill.
 - Do not create a new Collection rule when an existing canonical rule can be strengthened.
+- When multiple retained Skills are semantically overlapping, form a **merge cluster** before promotion: combine all unique contracts, constraints, verification rules, and provenance into one stronger canonical Skill; do not discard a source merely because its name or implementation overlaps.
+- After a merge cluster is validated, retire superseded duplicate Skill entries only after auditing repository references, self-tests, workflows, and discovery metadata; preserve their unique material and provenance inside the composite Skill.
+- Prefer **N inputs → 1 stronger canonical Skill** when the inputs share the same execution boundary or user outcome. Keep Skills separate only when their trigger, ownership, inputs/outputs, safety boundary, or verification contract is materially distinct.
 
 ### 5. Extract the Skill
 - Extract the smallest useful reusable procedure.
