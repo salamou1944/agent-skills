@@ -89,6 +89,17 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && url.pathname === '/creative') return send(res, 200, await publicFile('creative.html'), 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/operator') return send(res, 200, home, 'text/html; charset=utf-8');
   if (req.method === 'GET' && url.pathname === '/integration') return proxy(req, res, platform, '/');
+  if (url.pathname === '/api/creative/local-media' && req.method === 'POST') {
+    const authorization = req.headers.authorization || '';
+    if (!authorization) return send(res, 401, { error: 'authentication_required' });
+    try {
+      const auth = await fetch(`${customer}/api/customer/me`, { headers: { authorization } });
+      if (!auth.ok) return send(res, 401, { error: 'authentication_required' });
+    } catch {
+      return send(res, 503, { error: 'customer_auth_unavailable' });
+    }
+    return proxy(req, res, creative, url.pathname + url.search);
+  }
   if (url.pathname.startsWith('/api/revenue/')) return proxy(req, res, revenue, url.pathname + url.search);
   if (url.pathname.startsWith('/api/customer/')) return proxy(req, res, customer, url.pathname + url.search);
   if (url.pathname.startsWith('/api/creative-job/')) return proxy(req, res, creativeJob, url.pathname + url.search);
