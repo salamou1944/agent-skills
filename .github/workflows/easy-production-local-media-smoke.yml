@@ -1,8 +1,7 @@
 name: EASY production local media smoke
 
 on:
-  push:
-    branches: [main]
+  pull_request:
 
 jobs:
   production-local-media:
