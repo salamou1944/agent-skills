@@ -25,6 +25,10 @@ on:
         required: false
       EASY_SECONDARY_LLM_API_KEY:
         required: false
+      SOAT_API_KEY:
+        required: false
+      SOAT_TOKEN:
+        required: false
 
 jobs:
   supervise:
@@ -121,11 +125,17 @@ jobs:
           EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_ENDPOINT || '' }}
           EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_MODEL || '' }}
           EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_OPERATOR_SECONDARY_LLM_API_KEY || '' }}
+          SOAT_BASE_URL: ${{ vars.SOAT_BASE_URL || '' }}
+          SOAT_AI_PROVIDER_ID: ${{ vars.SOAT_AI_PROVIDER_ID || '' }}
+          SOAT_MODEL: ${{ vars.SOAT_MODEL || '' }}
+          SOAT_API_KEY: ${{ secrets.SOAT_API_KEY || secrets.SOAT_TOKEN || '' }}
           EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ''
           EASY_OPERATOR_GITHUB_MODELS_MODEL: ''
           GITHUB_TOKEN: ${{ github.token }}
           EASY_OPERATOR_WORKSPACE: ${{ github.workspace }}
           ARMY_AGENT_SOURCE: .elite-code-tools/.github/agents
+          # When configured, SOAT is the first provider in Elite's provider ladder.
+          # Empty SOAT variables preserve the existing provider/fallback behavior.
           EASY_OPERATOR_CODER_ATTEMPTS: '2'
           EASY_OPERATOR_PROVIDER_RETRIES: '2'
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: '15000'
