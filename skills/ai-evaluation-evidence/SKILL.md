@@ -37,6 +37,16 @@ Each evaluation should record:
 - retest result
 - limitations/confidence
 
+
+## Agent reliability signals
+For agent systems, include operational checks in the evidence loop:
+- verify agent/skill backup and restore behavior in an isolated test fixture;
+- verify status/observability output exposes the expected agent and skill state;
+- treat these as regression evidence, not as permission to mutate production state;
+- preserve the test fixture, observed result, and retest result alongside the evaluation record.
+
+These checks strengthen reliability evidence and should be merged into an existing evaluation Skill rather than creating a duplicate Skill when the capability is already covered by evaluation/observability workflows.
+
 ## Provider-neutral boundary
 
 The Skill does not require a particular model vendor, cloud, evaluator, or tracing product. Provider-specific evaluators may supply measurements, but the acceptance contract remains owned by the project.
