@@ -54,7 +54,7 @@ test('director requires valid SOAT execution evidence when supplied', () => {
   const closed=closeSoldierRun(run,result);
   const persisted=closed.evidence.at(-1);
   assert.equal(closed.state,'completed');
-  assert.deepEqual(persisted.soatEvidence,{schema:'soat-execution-evidence/v1',runId:'37361178767',commit:'3fd02f490369d7ca184e9a9420845e50252354bc',soatSha:'600721c1fa30de27c14f6da5e5917049a5339036',evidenceLevel:'runtime',scope:'SOAT + API Factory + local Ollama',productionStatus:'runtime-verified'});
+  assert.deepEqual(persisted.soatEvidence,{ok:true,schema:'soat-execution-evidence/v1',runId:'37361178767',commit:'3fd02f490369d7ca184e9a9420845e50252354bc',soatSha:'600721c1fa30de27c14f6da5e5917049a5339036',evidenceLevel:'runtime',scope:'SOAT + API Factory + local Ollama',productionStatus:'runtime-verified'});
 });
 
 test('director fails closed on invalid supplied SOAT evidence', () => {
