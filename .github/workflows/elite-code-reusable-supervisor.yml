@@ -8,6 +8,18 @@ on:
       goal:
         required: true
         type: string
+      soat_base_url:
+        required: false
+        default: ''
+        type: string
+      soat_ai_provider_id:
+        required: false
+        default: ''
+        type: string
+      soat_model:
+        required: false
+        default: ''
+        type: string
       role:
         required: false
         default: worker
@@ -125,9 +137,9 @@ jobs:
           EASY_OPERATOR_SECONDARY_LLM_ENDPOINT: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_ENDPOINT || '' }}
           EASY_OPERATOR_SECONDARY_LLM_MODEL: ${{ vars.EASY_OPERATOR_SECONDARY_LLM_MODEL || '' }}
           EASY_OPERATOR_SECONDARY_LLM_API_KEY: ${{ secrets.EASY_OPERATOR_SECONDARY_LLM_API_KEY || '' }}
-          SOAT_BASE_URL: ${{ vars.SOAT_BASE_URL || '' }}
-          SOAT_AI_PROVIDER_ID: ${{ vars.SOAT_AI_PROVIDER_ID || '' }}
-          SOAT_MODEL: ${{ vars.SOAT_MODEL || '' }}
+          SOAT_BASE_URL: ${{ inputs.soat_base_url }}
+          SOAT_AI_PROVIDER_ID: ${{ inputs.soat_ai_provider_id }}
+          SOAT_MODEL: ${{ inputs.soat_model }}
           SOAT_API_KEY: ${{ secrets.SOAT_API_KEY || secrets.SOAT_TOKEN || '' }}
           EASY_OPERATOR_GITHUB_MODELS_ENDPOINT: ''
           EASY_OPERATOR_GITHUB_MODELS_MODEL: ''
