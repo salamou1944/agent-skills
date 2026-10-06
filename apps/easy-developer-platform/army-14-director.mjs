@@ -1,3 +1,4 @@
+import { requireSoatExecutionEvidence } from './soat-evidence-gate.mjs';
 import { SOLDIER_SYSTEMS, createSoldierRun, transitionSoldierRun, verifySoldierSystem } from './soldier-systems/army-14-systems.mjs';
 import { createTaskContract, validateTaskResult } from './task-contract.mjs';
 
@@ -35,6 +36,7 @@ export function buildSoldierRun(task, baseline, assignmentOrIndex = 0) {
 export function closeSoldierRun(run, result) {
   const gate = validateTaskResult(result.contract ?? run.input?.contract, result);
   if (!gate.ok) throw new Error(`task_result_rejected:${gate.reason}`);
+  if (result.soatEvidence !== undefined) requireSoatExecutionEvidence(result.soatEvidence);
   let current = run;
   if (current.state === 'executing') current = transitionSoldierRun(current,'verifying',{runId:current.runId,evidenceId:'verification',kind:'verification',ok:result.verification?.passed === true,summary:result.verification?.summary ?? null});
   if (result.status === 'VERIFIED') {
