@@ -24,4 +24,5 @@ jobs:
       - run: npm ci
       - run: npm run test:army14:systems
       - run: node --test apps/easy-developer-platform/test-army-14-director.mjs
+      - run: node --test apps/easy-developer-platform/test-soat-evidence-gate.mjs
       - run: npm run test:elite:field-exercise
