@@ -62,12 +62,25 @@ export async function runLocalMedia({ operation = 'background_removal', dataUrl 
       }
     };
   } catch (error) {
+    const stderr = String(error?.stderr || '').slice(-1500);
+    const stdout = String(error?.stdout || '').slice(-500);
+    const exitCode = error?.code ?? null;
+    const signal = error?.signal ?? null;
     return {
       status: 'LOCAL_CAPABILITY_FAILED',
       code: 'LOCAL_CAPABILITY_FAILED',
       operation,
-      reason: String(error?.message || 'local_execution_failed').slice(0, 500),
-      evidence: { runner: REMBG, verifiedFile: false, startedAt, completedAt: new Date().toISOString() }
+      reason: [String(error?.message || 'local_execution_failed').slice(0, 500), stderr && 'stderr=' + stderr, stdout && 'stdout=' + stdout].filter(Boolean).join(' | '),
+      evidence: {
+        runner: REMBG,
+        verifiedFile: false,
+        startedAt,
+        completedAt: new Date().toISOString(),
+        exitCode,
+        signal,
+        stderr,
+        stdout
+      }
     };
   } finally {
     await fs.rm(workspace, { recursive: true, force: true }).catch(() => {});
