@@ -47,6 +47,7 @@ export function localCreativeProvider() {
         sourceByteLength: decoded.bytes.length,
         fixture: false,
         externalProvider: false,
+        campaign: instruction.output?.campaign || null,
       };
     },
     async validateOutput(dna, output = {}) {
