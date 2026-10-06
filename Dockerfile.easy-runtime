@@ -16,5 +16,6 @@ COPY . .
 
 ENV NODE_ENV=production
 ENV EASY_REMBG_PYTHON=/opt/rembg/bin/python
+ENV EASY_LOCAL_MEDIA_SELF_TEST=true
 
 CMD ["node", "apps/easy-developer-platform/runtime.mjs"]
