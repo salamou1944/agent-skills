@@ -1,23 +1,30 @@
 import { readFile } from 'node:fs/promises';
 
-const path = new URL('../skills/agent-operator/SKILL.md', import.meta.url);
+const path = new URL('../skills/agent-execution-governance/SKILL.md', import.meta.url);
 const text = await readFile(path, 'utf8');
 
 const required = [
-  'name: agent-operator',
+  'name: agent-execution-governance',
   'description:',
-  'Understand',
-  'Inspect',
-  'Plan',
-  'Implement',
-  'Validate',
-  'Recover',
-  'Evidence',
-  'Report',
-  'Never fabricate test results',
+  'DISCOVER',
+  'INSPECT',
+  'PLAN',
+  'CLASSIFY AUTHORITY',
+  'AUTHORIZE',
+  'EXECUTE',
+  'VERIFY',
+  'PERSIST EVIDENCE',
+  'RECOVER/REPLAN',
+  'least privilege',
+  'Require explicit approval',
+  'Independent verification',
   'Completion gate',
-  'verified',
-  'implemented but not fully verified',
+  'VERIFIED',
+  'IMPLEMENTED_NOT_FULLY_VERIFIED',
+  'merged_from:',
+  'agent-operator',
+  'execution-operating-layer',
+  'mcp-tool-safety',
 ];
 
 for (const marker of required) {
@@ -37,13 +44,13 @@ for (const marker of forbidden) {
   }
 }
 
-const frontmatter = text.match(/^---\n([\s\S]*?)\n---\n/);
+const frontmatter = text.match(/^---\n([\\s\\S]*?)\n---\n/);
 if (!frontmatter) throw new Error('missing YAML frontmatter');
-if (!/^name:\s*agent-operator\s*$/m.test(frontmatter[1])) {
+if (!/^name:\s*agent-execution-governance\s*$/m.test(frontmatter[1])) {
   throw new Error('invalid skill name');
 }
 if (!/^description:\s*.+$/m.test(frontmatter[1])) {
   throw new Error('missing skill description');
 }
 
-console.log('agent-operator self-test: PASS');
+console.log('agent-execution-governance self-test: PASS');
