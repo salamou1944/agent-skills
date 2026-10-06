@@ -1,0 +1,31 @@
+name: EASY Production Usage Evidence
+
+on:
+  push:
+    paths:
+      - ".github/workflows/easy-production-usage-evidence.yml"
+  workflow_dispatch:
+
+jobs:
+  production-usage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute real production customer flow
+        env:
+          BASE_URL: https://easy-runtime-current-production.up.railway.app
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          EMAIL="production-usage-${RUN_ID}@example.invalid"
+          PASSWORD="EASY-Usage-${RUN_ID}-2026!"
+          NAME="EASY Production Usage Probe"
+          curl --fail --silent --show-error "$BASE_URL/" >/dev/null
+          REGISTER=$(curl --fail --silent --show-error -H 'content-type: application/json' -X POST "$BASE_URL/api/customer/register" -d "{\"name\":\"$NAME\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
+          TOKEN=$(printf '%s' "$REGISTER" | python -c 'import json,sys; d=json.load(sys.stdin); print(d["accessToken"])')
+          test -n "$TOKEN"
+          ME=$(curl --fail --silent --show-error -H "authorization: Bearer $TOKEN" "$BASE_URL/api/customer/me")
+          printf '%s' "$ME" | python -c 'import json,sys; d=json.load(sys.stdin); assert d.get("authenticated") is True'
+          CREATIVE=$(curl --fail --silent --show-error -H 'content-type: application/json' -X POST "$BASE_URL/api/creative-job/run" -d '{"mode":"fixture","asset":{"assetId":"production-usage-probe","mimeType":"image/jpeg","fileName":"probe.jpg","width":640,"height":640,"bytes":10},"request":{"direction":"safe production usage evidence"}}')
+          printf '%s' "$CREATIVE" | python -c 'import json,sys; d=json.load(sys.stdin); assert d.get("status") == "SUCCEEDED"; assert d.get("decision") == "PASS"'
+          echo "PRODUCTION_USAGE_OBSERVED=true"
+          echo "CREATIVE_STATUS=SUCCEEDED"
