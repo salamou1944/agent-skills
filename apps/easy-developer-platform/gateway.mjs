@@ -35,7 +35,7 @@ async function proxy(req, res, base, path) {
   let raw = '';
   for await (const chunk of req) {
     raw += chunk;
-    if (raw.length > 2_000_000) return send(res, 413, { error: 'body_too_large' });
+    if (raw.length > 6_000_000) return send(res, 413, { error: 'body_too_large' });
   }
   const headers = {};
   if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
