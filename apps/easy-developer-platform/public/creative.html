@@ -24,6 +24,9 @@
 <label>تفاصيل التصميم</label><textarea id="design" placeholder="افصل التفاصيل بفواصل"></textarea>
 <label>وصف الاستخدام</label><textarea id="description"></textarea>
 <label>هدف العرض</label><textarea id="direction" placeholder="مثال: خلفية متجر راقية وإضاءة نظيفة"></textarea>
+<label>جودة الصورة</label><select id="imageQuality"><option value="balanced">Balanced — متوازنة</option><option value="high_detail">High detail — تفاصيل عالية</option><option value="clean_commercial">Clean commercial — تجارية نظيفة</option></select>
+<label>أسلوب الفيديو</label><select id="videoScriptId"><option value="benefit_first">الفائدة أولًا</option><option value="product_first">المنتج أولًا</option><option value="problem_solution">المشكلة ← الحل</option></select>
+<label>النص الدقيق للفيديو</label><textarea id="videoScriptText" maxlength="2000" placeholder="اكتب النص الذي تريد استخدامه حرفيًا في الفيديو."></textarea>
 <button id="run">تشغيل EASY Creative</button>
 <div id="status" class="muted"></div>
 </div>
@@ -33,6 +36,8 @@
 <script>
 const $=id=>document.getElementById(id);const token=()=>localStorage.getItem('easy_access_token')||'';
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+const scriptDefaults=()=>{const name=$('name').value.trim()||'هذا المنتج';const benefit=$('description').value.trim()||'اكتشف فائدة هذا المنتج';return {benefit_first:benefit,product_first:'تعرّف على '+name,problem_solution:'هل تبحث عن حل عملي؟ تعرّف على '+name}};
+$('videoScriptId').onchange=()=>{if(!$('videoScriptText').value.trim())$('videoScriptText').value=scriptDefaults()[$('videoScriptId').value]||''};
 async function api(path,opt={}){const h={'content-type':'application/json',...(opt.headers||{})};if(token())h.authorization='Bearer '+token();const r=await fetch(path,{...opt,headers:h});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||('HTTP '+r.status));return d}
 function split(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
 function stage(id,kind){$(id).className='stage '+(kind==='PASS'?'pass':kind==='BLOCK'?'block':'')}
@@ -57,7 +62,9 @@ $('run').onclick=async()=>{
   if(integrity.decision!=='PASS'){stage('s3','BLOCK');throw Error('Product Integrity BLOCK: '+integrity.reason)}
   stage('s3','PASS');
   await api('/api/creative/compile',{method:'POST',body:JSON.stringify({dna,request:{direction:$('direction').value.trim()}})});
-  const job=await api('/api/creative-job/run',{method:'POST',body:JSON.stringify({mode:'local',asset,assetId:asset.assetId,observations,request:{direction:$('direction').value.trim()}})});
+  if(!$('videoScriptText').value.trim()){alert('اكتب النص الدقيق للفيديو أو اختر أسلوبًا لتوليد نص أولي ثم راجعه.');return}
+  const campaign={imageQuality:$('imageQuality').value,videoScriptId:$('videoScriptId').value,videoScriptText:$('videoScriptText').value.trim()};
+  const job=await api('/api/creative-job/run',{method:'POST',body:JSON.stringify({mode:'local',asset,assetId:asset.assetId,observations,request:{direction:$('direction').value.trim(),campaign}})});
   if(job.status!=='SUCCEEDED'||job.decision!=='PASS'){stage('s4','BLOCK');throw Error('Creative blocked: '+(job.reason||'validation_failed'))}
   stage('s4','PASS');stage('s5','PASS');
   $('decision').className='ok';$('decision').textContent='PASS — النتيجة مرّت Product Integrity والتحقق من بصمة الصورة المصدر.';
