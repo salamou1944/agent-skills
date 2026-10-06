@@ -60,7 +60,16 @@ http.createServer(async (req, res) => {
     if (req.method === 'GET' && u.pathname === '/api/creative/provider') return send(res, 200, providerStatus());
     if (req.method !== 'POST') return send(res, 404, { error: 'not_found' });
     const input = await body(req);
-    if (u.pathname === '/api/creative/local-media') return send(res, 200, await runLocalMedia(input));
+    if (u.pathname === '/api/creative/local-media') {
+      const result = await runLocalMedia(input);
+      if (req.headers.accept?.includes('image/png') && result.status === 'LOCAL_CAPABILITY_EXECUTED' && result.dataUrl) {
+        const base64 = result.dataUrl.slice(result.dataUrl.indexOf(',') + 1);
+        const artifact = Buffer.from(base64, 'base64');
+        res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'x-easy-local-media': 'LOCAL_CAPABILITY_EXECUTED' });
+        return res.end(artifact);
+      }
+      return send(res, 200, result);
+    }
     if (u.pathname === '/api/creative/product-dna') return send(res, 201, createProductDNA(input));
     if (u.pathname === '/api/creative/integrity') return send(res, 200, checkProductIntegrity(input.dna, input.candidate));
     if (u.pathname === '/api/creative/compile') return send(res, 200, compileCreativeInstruction(input.dna, input.request));
