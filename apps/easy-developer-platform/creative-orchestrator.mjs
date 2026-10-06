@@ -72,6 +72,12 @@ export async function runCreativeJob(input = {}, provider = null) {
       verified: true,
     });
     mark('product-dna', 'PASS', { fingerprint: dna.fingerprint, extraction: analyzed.source || 'provider-analysis' });
+    const campaign = input.request?.campaign && typeof input.request.campaign === 'object' ? {
+      imageQuality: String(input.request.campaign.imageQuality || 'balanced'),
+      videoScriptId: String(input.request.campaign.videoScriptId || 'benefit_first'),
+      videoScriptText: String(input.request.campaign.videoScriptText || '').trim().slice(0, 2000)
+    } : null;
+    if (campaign && !campaign.videoScriptText) throw new CreativeProviderError('video_script_required', 'video_script_required');
     const compiled = compileCreativeInstruction(dna, input.request);
     const instruction = {
       ...compiled.instruction,
@@ -79,6 +85,7 @@ export async function runCreativeJob(input = {}, provider = null) {
         ...compiled.instruction.output,
         generationEnabled: true,
         provider: provider.name,
+        campaign,
       },
     };
     mark('compile', 'PASS', { fingerprint: compiled.fingerprint, generationEnabled: true, provider: provider.name });
@@ -127,6 +134,7 @@ export async function runCreativeJob(input = {}, provider = null) {
       dna,
       instruction,
       output,
+      campaign,
       validation: { ...coreValidation, core: coreValidation, provider: providerValidation },
       events,
     };
