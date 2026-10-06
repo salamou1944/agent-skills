@@ -23,3 +23,4 @@ jobs:
               if r.status != 200 or payload.get("status") != "LOCAL_CAPABILITY_EXECUTED":
                   raise SystemExit("production local media execution was not proven")
           PY
+# production probe ready
