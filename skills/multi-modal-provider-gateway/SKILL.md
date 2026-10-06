@@ -11,7 +11,7 @@ Provide a provider-neutral contract for chat, image, audio, video, OCR, translat
 
 ## Pattern
 
-task -> modality -> provider capability lookup -> policy/quality/cost check -> request -> usage evidence -> output validation -> fallback or BLOCKED
+task -> modality -> provider capability lookup -> policy/quality/cost check -> preflight -> request -> usage evidence -> output validation -> fallback or BLOCKED
 
 ## Requirements
 
@@ -23,6 +23,23 @@ task -> modality -> provider capability lookup -> policy/quality/cost check -> r
 - Support OpenAI-compatible chat contracts without coupling the system to OpenAI-specific semantics.
 - Prefer provider capability discovery over hard-coded model assumptions.
 - Do not store provider keys in source files or generated frontend code.
+
+## Reliability contract
+
+Before an expensive provider operation:
+
+1. **Preflight** — verify configuration, authorization state, capability compatibility, and reachability without consuming the expensive operation when the provider permits this.
+2. **Error taxonomy** — normalize authentication, network, schema/validation, quota, timeout, and provider-HTTP failures into stable caller-visible classes.
+3. **Bounded retry** — retry only transient failures with bounded backoff, jitter, and Retry-After support; never blindly retry validation, authentication, quota-exhaustion, or other non-transient failures.
+4. **Circuit breaker** — stop repeated calls after a defined failure threshold and use controlled recovery probes.
+5. **Idempotency** — attach a stable key to each logical operation and preserve it across retries where the upstream supports idempotency.
+6. **Provider/model registry** — keep one authoritative registry of provider/model capability metadata and verification confidence; route only to known-valid combinations by default.
+7. **Capability selection** — separate model/provider selection from execution so policy, capability, quality, and cost constraints can be evaluated before the request.
+8. **Structured output** — expose typed/schema-bound adapter results instead of leaking opaque provider payloads into business logic.
+9. **Adapter boundary** — keep provider-specific transport, authentication, request/response mapping, and error handling behind a stable provider-neutral interface.
+10. **Evidence smoke** — perform cheap configuration/reachability/contract checks before declaring an execution path ready. A reachable provider is not proof of task success.
+
+These controls are reliability mechanisms, not permission to bypass provider protections or quotas.
 
 ## Elite / ARMY-14 integration
 
