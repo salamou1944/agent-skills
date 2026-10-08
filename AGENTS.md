@@ -143,3 +143,27 @@ Before claiming a change is complete:
 3. Run syntax/tests or the strongest repository-native checks available.
 4. Confirm task-specific acceptance evidence.
 5. Report remaining limitations instead of converting infrastructure success into a completion claim.
+
+## GitHub-wide discovery policy
+
+The canonical discovery policy is `skills/github-wide-discovery/SKILL.md`.
+
+For capability discovery, Collection MUST NOT be treated as the search boundary. Apply the GitHub-wide discovery policy before concluding that a capability, alternative, stronger implementation, installable wrapper, provider adapter, validation asset, or cost-reduction path is unavailable.
+
+Use two-way discovery:
+
+- Collection → GitHub: derive gaps, blockers, weak/unverified capabilities, and alternatives to search globally.
+- GitHub → Collection: discover globally, preserve evidence, compare, dedupe, canonicalize, and return only validated value to the canonical inventory.
+
+Search by capability as well as project name, including exact, functional, technical, interface, alternative, implementation, integration, deployment, validation, and cost dimensions.
+
+Do not stop at the first good repository. Inspect high-value forks, upstreams, alternatives, complementary projects, dependencies, dependents, integrations, examples, Actions/workflows, packages, MCP/API/CLI/SDK/Docker surfaces, and small high-leverage assets when justified.
+
+Every discovery must be classified against the existing inventory and canonical capabilities. Different names or implementations do not justify duplicates. Prefer strengthening the canonical capability and shelf valuable alternatives.
+
+Production blockers are discovery drivers. Installation and activation are separate states from discovery; never claim Installed, Activated, Verified, Production-Ready, or Revenue/Outcome proven without corresponding evidence.
+
+The required operating principle is:
+
+**DISCOVER GLOBALLY → CANONICALIZE CENTRALLY → ACTIVATE SELECTIVELY → VERIFY BEFORE CLAIMING.**
+
