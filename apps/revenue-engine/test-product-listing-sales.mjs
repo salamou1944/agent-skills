@@ -45,7 +45,9 @@ assert.equal(calls[0].options.headers['x-api-key'], 'test-key');
 assert.equal(JSON.parse(calls[0].options.body).product_name, 'Verified Lamp');
 
 const handoff = sales.paymentHandoff(order);
-assert.equal(handoff.status, 'payment_ready');
+assert.equal(handoff.status, 'blocked_payment_provider');
+assert.equal(handoff.ok, false);
+assert.equal(handoff.reason, 'payment_provider_not_configured');
 assert.equal(handoff.amount, 79);
 assert.equal(handoff.paymentProvider, null);
 
