@@ -66,6 +66,7 @@ await withRevenueApi(async (base) => {
   const page = await fetch(`${base}/product-listing/sales-page`);
   assert.equal(page.status, 200);
   assert.match(await page.text(), /Get my sample/);
+  assert.match(await page.text(), /Paid checkout is not active yet/);
 
   const created = await fetch(`${base}/opportunity`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
