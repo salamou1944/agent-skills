@@ -26,9 +26,7 @@ form.addEventListener('submit', async (event) => {
     const order = await request('/product-listing/order', { product: qualification.input, plan: 'sample' });
     const generated = await request('/product-listing/generate', { order });
     const note = document.createElement('p');
-    note.textContent = generated.source === 'safe-fixture'
-      ? 'Demo sample: generated from a safe fixture, not from an AI provider.'
-      : 'Demo sample: generated from a safe fixture, not from an AI provider.';
+    note.textContent = 'Demo sample: generated from a safe fixture, not from an AI provider.';
     const pre = document.createElement('pre');
     pre.style.whiteSpace = 'pre-wrap';
     pre.style.overflowWrap = 'anywhere';
