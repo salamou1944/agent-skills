@@ -66,7 +66,16 @@ export async function activatePaymentHandoff(order, adapter = createPaymentBilli
   if (order.price === 0) return { ok: true, status: 'no_payment_required', orderId: order.id, paymentProvider: null, paymentUrl: null, amount: 0, currency: order.currency };
   const health = await adapter.healthCheck();
   if (!health.ok) {
-    return { ok: true, status: 'payment_ready', orderId: order.id, paymentProvider: null, paymentUrl: null, amount: order.price, currency: order.currency, reason: health.reason || 'provider_unavailable' };
+    return {
+      ok: false,
+      status: 'blocked_payment_provider',
+      orderId: order.id,
+      paymentProvider: null,
+      paymentUrl: null,
+      amount: order.price,
+      currency: order.currency,
+      reason: health.reason || 'provider_unavailable'
+    };
   }
   return adapter.createCheckout(order);
 }
