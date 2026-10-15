@@ -54,13 +54,11 @@ await withRevenueApi(async (base) => {
   assert.equal(order.status, 'ready_for_generation');
   assert.equal(order.price, 79);
 
-  const generatedResponse = await fetch(`${base}/product-listing/generate`, {
+  const paidGenerationResponse = await fetch(`${base}/product-listing/generate`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order })
   });
-  assert.equal(generatedResponse.status, 200);
-  const generated = await generatedResponse.json();
-  assert.equal(generated.source, 'safe-fixture');
-  assert.match(generated.deliverable, /# Demo Mug/);
+  assert.equal(paidGenerationResponse.status, 409);
+  assert.equal((await paidGenerationResponse.json()).error, 'paid_order_not_paid');
 
   const sampleOrderResponse = await fetch(`${base}/product-listing/order`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
@@ -92,7 +90,7 @@ await withRevenueApi(async (base) => {
   const handoffResponse = await fetch(`${base}/product-listing/payment-handoff`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order })
   });
-  assert.equal(handoffResponse.status, 200);
+  assert.equal(handoffResponse.status, 409);
   const handoff = await handoffResponse.json();
   assert.equal(handoff.status, 'blocked_payment_provider');
   assert.equal(handoff.ok, false);
