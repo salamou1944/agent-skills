@@ -34,6 +34,7 @@ jobs:
       - run: node --check apps/revenue-engine/market-strategy.mjs
       - run: node --check apps/revenue-engine/campaign-planner.mjs
       - run: node --check apps/revenue-engine/product-listing-sales.mjs
+      - run: node --check apps/revenue-engine/product-listing-sales-page.mjs
       - run: node --check apps/revenue-engine/payment-billing-adapter.mjs
       - run: node --check apps/revenue-engine/test-payment-billing-adapter.mjs
       - run: node --check apps/revenue-engine/service-market-intelligence.mjs
