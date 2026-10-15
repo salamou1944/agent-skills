@@ -44,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           curl --fail --silent --show-error --max-time 15 "$BASE/api/gateway/provenance" | tee provenance.json
-          node -e 'const x=require("./provenance.json"); if(!x || typeof x!=="object") process.exit(1); if(x.runtimeIdentity===undefined && x.deploymentId===undefined && x.commitSha===undefined) process.exit(1); console.log(JSON.stringify({provenanceVerified:true}))'
+          node -e 'const x=require("./provenance.json"); if(!x || x.ok!==true || typeof x.commitSha!=="string" || !/^[a-f0-9]{40}$/i.test(x.commitSha)) process.exit(1); console.log(JSON.stringify({provenanceVerified:true,commitSha:x.commitSha,deploymentId:x.deploymentId||null}))'
 
       - name: Create and execute safe operator task
         env:
