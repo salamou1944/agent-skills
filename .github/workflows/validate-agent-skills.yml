@@ -3,8 +3,10 @@ on:
   push:
     paths:
       - '.agents/skills/**'
+      - 'skills/**'
       - 'registry/**'
       - 'scripts/validate-skills.mjs'
+      - '.github/workflows/validate-agent-skills.yml'
   pull_request:
     paths:
       - '.agents/skills/**'
