@@ -51,11 +51,11 @@ await withRevenueApi(async (base) => {
   });
   assert.equal(orderResponse.status, 200);
   const order = await orderResponse.json();
-  assert.equal(order.status, 'ready_for_generation');
+  assert.equal(order.status, 'awaiting_payment');
   assert.equal(order.price, 79);
 
   const paidGenerationResponse = await fetch(`${base}/product-listing/generate`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order })
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order: { ...order, paymentStatus: 'paid' } })
   });
   assert.equal(paidGenerationResponse.status, 409);
   assert.equal((await paidGenerationResponse.json()).error, 'paid_order_not_paid');
