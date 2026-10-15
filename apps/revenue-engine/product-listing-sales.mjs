@@ -152,7 +152,7 @@ export function createProductListingSales({
       plan: selected.id,
       price: selected.price,
       currency: PRODUCT_LISTING_OFFER.currency,
-      status: 'ready_for_generation',
+      status: selected.price === 0 ? 'ready_for_generation' : 'awaiting_payment',
       input: normalized,
       createdAt: new Date().toISOString()
     };
@@ -160,7 +160,12 @@ export function createProductListingSales({
 
   async function generate(order) {
     if (!order?.id || !order.input || !Number.isFinite(order.price) || order.price < 0) throw new Error('valid_order_required');
-    if (order.plan !== 'sample' || order.price !== 0) throw new Error('paid_order_not_paid');
+    const selected = PRODUCT_LISTING_OFFER.plans.find((item) => item.id === order.plan);
+    if (!selected || selected.price !== order.price) throw new Error('valid_order_required');
+    if (order.plan === 'sample' && order.price === 0) {
+      return generatedResult(order, 'safe-fixture', fixtureContent(order.input));
+    }
+    if (order.paymentStatus !== 'paid') throw new Error('paid_order_not_paid');
     if (mode !== 'live') return generatedResult(order, 'safe-fixture', fixtureContent(order.input));
     if (!apiBaseUrl || !apiKey) throw new Error('product_content_api_not_configured');
     const response = await fetchImpl(`${apiBaseUrl.replace(/\/$/, '')}/v1/product-content`, {
