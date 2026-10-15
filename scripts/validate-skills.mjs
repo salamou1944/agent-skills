@@ -2,7 +2,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
-const root = '.agents/skills';
+const roots = ['.agents/skills', 'skills'];
 const findings = [];
 const textExtensions = new Set(['.md', '.txt', '.json', '.yaml', '.yml', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.sh', '.py', '.toml']);
 
@@ -60,6 +60,12 @@ async function walk(dir) {
   }
 }
 
-await walk(root);
+for (const root of roots) {
+  try {
+    if ((await stat(root)).isDirectory()) await walk(root);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
 if (findings.length) { console.error('Skill security validation FAILED. Review these findings:'); console.error(findings.join('\n')); process.exit(1); }
 console.log('Skill metadata and security baseline passed.');
