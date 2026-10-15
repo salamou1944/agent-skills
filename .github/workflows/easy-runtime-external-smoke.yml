@@ -4,6 +4,14 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '17 * * * *'
+  # Validate the source contract on this PR branch without hitting the live runtime.
+  push:
+    branches: [fix/easy-runtime-provenance-endpoint-2026-10-15]
+    paths:
+      - "apps/easy-developer-platform/gateway.mjs"
+      - "apps/easy-developer-platform/runtime-provenance.mjs"
+      - "apps/easy-developer-platform/test-runtime-provenance.mjs"
+      - ".github/workflows/easy-runtime-external-smoke.yml"
 
 # External availability is a deployment signal, not a code-change gate.
 # It therefore runs on a bounded health cadence instead of turning every source
@@ -13,6 +21,7 @@ permissions:
 
 jobs:
   external-smoke:
+    if: ${{ github.event_name != 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -59,3 +68,20 @@ jobs:
             -H 'content-type: application/json' \
             --data '{"project":"apps/easy-developer-platform"}' | tee run.json
           node -e 'const x=require("./run.json"); const s=x.result?.status||x.status; if(!["VERIFIED","BLOCKED","FAILED"].includes(s)) process.exit(1); console.log(JSON.stringify({operatorRunStatus:s}))'
+
+  # Branch pushes run only local contract checks; they never call the production URL.
+  provenance-contract:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check apps/easy-developer-platform/gateway.mjs
+      - run: node --check apps/easy-developer-platform/runtime-provenance.mjs
+      - run: node apps/easy-developer-platform/test-runtime-provenance.mjs
+      - run: git diff --check
