@@ -35,6 +35,16 @@ await withRevenueApi(async (base) => {
   const qualification = await qualify.json();
   assert.equal(qualification.qualified, true);
 
+  const formEncoded = await fetch(`${base}/product-listing/qualify`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ product_name: 'Form Mug', product_details: 'Ceramic mug submitted by HTML form', language: 'English' })
+  });
+  assert.equal(formEncoded.status, 200);
+  const formQualification = await formEncoded.json();
+  assert.equal(formQualification.qualified, true);
+  assert.equal(formQualification.input.product_name, 'Form Mug');
+
   const orderResponse = await fetch(`${base}/product-listing/order`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ product: qualification.input, plan: 'starter' })
@@ -65,8 +75,12 @@ await withRevenueApi(async (base) => {
 
   const page = await fetch(`${base}/product-listing/sales-page`);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /Get my sample/);
-  assert.match(await page.text(), /Paid checkout is not active yet/);
+  const pageHtml = await page.text();
+  assert.match(pageHtml, /Get my sample/);
+  assert.match(pageHtml, /Paid checkout is not active yet/);
+  assert.match(pageHtml, /\/product-listing\/order/);
+  assert.match(pageHtml, /\/product-listing\/generate/);
+  assert.match(pageHtml, /safe fixture, not from an AI provider/);
 
   const created = await fetch(`${base}/opportunity`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
