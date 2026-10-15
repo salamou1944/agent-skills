@@ -175,9 +175,21 @@ export function createProductListingSales({
 
   function paymentHandoff(order) {
     if (!order?.id || !Number.isFinite(order.price)) throw new Error('valid_order_required');
-    return {
+    if (order.price === 0) return {
       ok: true,
-      status: 'payment_ready',
+      status: 'no_payment_required',
+      orderId: order.id,
+      product: order.product,
+      plan: order.plan,
+      amount: 0,
+      currency: order.currency,
+      paymentProvider: null,
+      paymentUrl: null,
+      note: 'No payment required for the sample.'
+    };
+    return {
+      ok: false,
+      status: 'blocked_payment_provider',
       orderId: order.id,
       product: order.product,
       plan: order.plan,
@@ -185,7 +197,8 @@ export function createProductListingSales({
       currency: order.currency,
       paymentProvider: null,
       paymentUrl: null,
-      note: order.price === 0 ? 'No payment required for the sample.' : 'Payment provider not activated; handoff is ready for a configured billing adapter.'
+      reason: 'payment_provider_not_configured',
+      note: 'Paid checkout is blocked until a real payment provider is configured and verified.'
     };
   }
 
