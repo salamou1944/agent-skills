@@ -57,9 +57,11 @@ await withRevenueApi(async (base) => {
   });
   assert.equal(handoffResponse.status, 200);
   const handoff = await handoffResponse.json();
-  assert.equal(handoff.status, 'payment_ready');
+  assert.equal(handoff.status, 'blocked_payment_provider');
+  assert.equal(handoff.ok, false);
   assert.equal(handoff.amount, 79);
   assert.equal(handoff.paymentProvider, null);
+  assert.equal(handoff.reason, 'payment_provider_not_configured');
 
   const page = await fetch(`${base}/product-listing/sales-page`);
   assert.equal(page.status, 200);
