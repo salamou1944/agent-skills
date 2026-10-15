@@ -30,13 +30,18 @@ const order = sales.createOrder(qualification.input, 'starter');
 assert.equal(order.status, 'ready_for_generation');
 assert.equal(order.price, 79);
 
-const generated = await sales.generate(order);
+await assert.rejects(() => sales.generate(order), /paid_order_not_paid/);
+assert.equal(calls.length, 0, 'paid orders must not consume provider resources before payment');
+
+const sampleOrder = sales.createOrder(qualification.input, 'sample');
+assert.equal(sampleOrder.price, 0);
+const generated = await sales.generate(sampleOrder);
 assert.equal(generated.source, 'sal-31-api');
 assert.equal(generated.result.title, 'Verified Lamp');
 assert.match(generated.deliverable, /# Verified Lamp/);
 assert.deepEqual(generated.deliveryArtifact, {
   type: 'markdown',
-  filename: `${order.id}.md`,
+  filename: `${sampleOrder.id}.md`,
   contentType: 'text/markdown; charset=utf-8',
   content: generated.deliverable
 });
