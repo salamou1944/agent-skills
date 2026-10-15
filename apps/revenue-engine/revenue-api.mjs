@@ -18,7 +18,12 @@ async function body(req) {
     raw += chunk;
     if (raw.length > 1_000_000) throw new Error('request_too_large');
   }
-  return raw ? JSON.parse(raw) : {};
+  if (!raw) return {};
+  const contentType = String(req.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase();
+  if (contentType === 'application/x-www-form-urlencoded') {
+    return Object.fromEntries(new URLSearchParams(raw).entries());
+  }
+  return JSON.parse(raw);
 }
 
 export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), productListingSales = createProductListingSales(), salesPipeline = createSalesPipeline() } = {}) {
