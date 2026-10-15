@@ -180,8 +180,9 @@ export function createProductListingSales({
   }
 
   function paymentHandoff(order) {
-    if (!order?.id || !Number.isFinite(order.price)) throw new Error('valid_order_required');
-    if (order.price === 0) return {
+    const selected = PRODUCT_LISTING_OFFER.plans.find((item) => item.id === order?.plan);
+    if (!order?.id || !selected || !Number.isFinite(order.price) || selected.price !== order.price) throw new Error('valid_order_required');
+    if (order.plan === 'sample' && order.price === 0) return {
       ok: true,
       status: 'no_payment_required',
       orderId: order.id,
