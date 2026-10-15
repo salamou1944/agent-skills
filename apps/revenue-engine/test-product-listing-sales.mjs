@@ -27,27 +27,34 @@ const qualification = sales.qualify({ product_name: 'Verified Lamp', product_det
 assert.equal(qualification.qualified, true);
 
 const order = sales.createOrder(qualification.input, 'starter');
-assert.equal(order.status, 'ready_for_generation');
+assert.equal(order.status, 'awaiting_payment');
 assert.equal(order.price, 79);
 
 await assert.rejects(() => sales.generate(order), /paid_order_not_paid/);
-assert.equal(calls.length, 0, 'paid orders must not consume provider resources before payment');
+assert.equal(calls.length, 0, 'unpaid orders must not consume provider resources');
 
-const sampleOrder = sales.createOrder(qualification.input, 'sample');
-assert.equal(sampleOrder.price, 0);
-const generated = await sales.generate(sampleOrder);
+const verifiedPaidOrder = { ...order, paymentStatus: 'paid' };
+const generated = await sales.generate(verifiedPaidOrder);
 assert.equal(generated.source, 'sal-31-api');
 assert.equal(generated.result.title, 'Verified Lamp');
 assert.match(generated.deliverable, /# Verified Lamp/);
 assert.deepEqual(generated.deliveryArtifact, {
   type: 'markdown',
-  filename: `${sampleOrder.id}.md`,
+  filename: `${verifiedPaidOrder.id}.md`,
   contentType: 'text/markdown; charset=utf-8',
   content: generated.deliverable
 });
 assert.equal(calls.length, 1);
 assert.equal(calls[0].options.headers['x-api-key'], 'test-key');
 assert.equal(JSON.parse(calls[0].options.body).product_name, 'Verified Lamp');
+
+const sampleOrder = sales.createOrder(qualification.input, 'sample');
+assert.equal(sampleOrder.status, 'ready_for_generation');
+assert.equal(sampleOrder.price, 0);
+const sampleGenerated = await sales.generate(sampleOrder);
+assert.equal(sampleGenerated.source, 'safe-fixture');
+assert.match(sampleGenerated.deliverable, /# Verified Lamp/);
+assert.equal(calls.length, 1, 'free samples must not call the external provider');
 
 const handoff = sales.paymentHandoff(order);
 assert.equal(handoff.status, 'blocked_payment_provider');
