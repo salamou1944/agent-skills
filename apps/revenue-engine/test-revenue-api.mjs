@@ -62,6 +62,33 @@ await withRevenueApi(async (base) => {
   assert.equal(generated.source, 'safe-fixture');
   assert.match(generated.deliverable, /# Demo Mug/);
 
+  const sampleOrderResponse = await fetch(`${base}/product-listing/order`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ product: qualification.input, plan: 'sample' })
+  });
+  assert.equal(sampleOrderResponse.status, 200);
+  const sampleOrder = await sampleOrderResponse.json();
+  assert.equal(sampleOrder.plan, 'sample');
+  assert.equal(sampleOrder.price, 0);
+
+  const sampleHandoffResponse = await fetch(`${base}/product-listing/payment-handoff`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order: sampleOrder })
+  });
+  assert.equal(sampleHandoffResponse.status, 200);
+  const sampleHandoff = await sampleHandoffResponse.json();
+  assert.equal(sampleHandoff.status, 'no_payment_required');
+  assert.equal(sampleHandoff.ok, true);
+  assert.equal(sampleHandoff.amount, 0);
+
+  const sampleGeneratedResponse = await fetch(`${base}/product-listing/generate`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order: sampleOrder })
+  });
+  assert.equal(sampleGeneratedResponse.status, 200);
+  const sampleGenerated = await sampleGeneratedResponse.json();
+  assert.equal(sampleGenerated.status, 'generated');
+  assert.equal(sampleGenerated.source, 'safe-fixture');
+  assert.match(sampleGenerated.deliverable, /# Demo Mug/);
+
   const handoffResponse = await fetch(`${base}/product-listing/payment-handoff`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order })
   });
