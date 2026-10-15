@@ -62,6 +62,7 @@ assert.equal(handoff.ok, false);
 assert.equal(handoff.reason, 'payment_provider_not_configured');
 assert.equal(handoff.amount, 79);
 assert.equal(handoff.paymentProvider, null);
+assert.throws(() => sales.paymentHandoff({ ...order, price: 0 }), /valid_order_required/);
 
 const fixture = createProductListingSales({ apiBaseUrl: 'https://api.example.test', apiKey: 'test-key', mode: 'dry-run', fetchImpl: fakeFetch });
 const fixtureOrder = fixture.createOrder({ product_name: 'Demo Mug' });
