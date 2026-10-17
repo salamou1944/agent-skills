@@ -2,13 +2,13 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
-const root = '.agents/skills';
+const roots = ['.agents/skills', 'skills'];
 const findings = [];
 const textExtensions = new Set(['.md', '.txt', '.json', '.yaml', '.yml', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.sh', '.py', '.toml']);
 
 function add(path, message) { findings.push(`${path}: ${message}`); }
 
-function inspectText(path, text) {
+function inspectText(path, text, { strictSecurity = true } = {}) {
   const normalized = text.replace(/\r\n/g, '\n');
   const lower = normalized.toLowerCase();
   if (/-----begin (rsa |ec |openssh )?private key-----/i.test(normalized)) add(path, 'private key material detected');
@@ -27,20 +27,22 @@ function inspectText(path, text) {
   ];
   const lines = normalized.split('\n');
   const negatedInstruction = /\b(?:never|do not|don't|must not|must never)\b/i;
-  for (const [pattern, message] of dangerous) {
-    const match = lines.find((line) => pattern.test(line));
-    if (!match) continue;
-    if ((message.includes('weaken security controls') || message.includes('credential disclosure/exfiltration instruction')) && negatedInstruction.test(match)) continue;
-    add(path, message);
+  if (strictSecurity) {
+    for (const [pattern, message] of dangerous) {
+      const match = lines.find((line) => pattern.test(line));
+      if (!match) continue;
+      if ((message.includes('weaken security controls') || message.includes('credential disclosure/exfiltration instruction')) && negatedInstruction.test(match)) continue;
+      add(path, message);
+    }
   }
   if (normalized.length > 50000) add(path, 'skill file is unusually large; review for hidden/irrelevant instructions');
   if (/\b(?:data|credential|secret|token)\b.{0,80}\b(?:paste|upload|send|post)\b/i.test(lower)) add(path, 'possible sensitive-data transfer instruction detected');
 }
 
-async function walk(dir) {
+async function walk(dir, { strictSecurity = true } = {}) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) { await walk(path); continue; }
+    if (entry.isDirectory()) { await walk(path, { strictSecurity }); continue; }
     const rel = relative('.', path);
     if (entry.name === 'SKILL.md') {
       const text = await readFile(path, 'utf8');
@@ -49,17 +51,23 @@ async function walk(dir) {
       const front = end >= 0 ? text.slice(4, end) : '';
       if (!/^name:\s*[a-z0-9-]+$/m.test(front)) add(rel, 'invalid/missing name');
       if (!/^description:\s*.+$/m.test(front)) add(rel, 'missing description');
-      inspectText(rel, text);
+      inspectText(rel, text, { strictSecurity });
     } else {
       const extension = entry.name.includes('.') ? `.${entry.name.split('.').pop()}` : '';
       if (textExtensions.has(extension)) {
         const info = await stat(path);
-        if (info.size <= 200000) inspectText(rel, await readFile(path, 'utf8'));
+        if (info.size <= 200000) inspectText(rel, await readFile(path, 'utf8'), { strictSecurity });
       }
     }
   }
 }
 
-await walk(root);
+for (const root of roots) {
+  try {
+    if ((await stat(root)).isDirectory()) await walk(root, { strictSecurity: root === '.agents/skills' });
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
 if (findings.length) { console.error('Skill security validation FAILED. Review these findings:'); console.error(findings.join('\n')); process.exit(1); }
 console.log('Skill metadata and security baseline passed.');
