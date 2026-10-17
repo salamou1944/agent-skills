@@ -43,6 +43,8 @@ test('Autonomous coder has a verified no-op, protected paths, optional provider 
   assert.match(coder, /x-ratelimit-reset/);
   assert.match(coder, /AbortController/);
   assert.match(coder, /relevance\(b,goal\)/);
+  assert.match(coder, /const MAX_CONTEXT_BYTES_DEFAULT=100000;/, 'default prompt context must stay bounded');
+  assert.match(coder, /files:files\.slice\(0,400\)/, 'repository inventory must stay bounded');
   assert.match(coder, /ctx \|\|= await context\(root,goal(?:,c\.contextMaxBytes)?\)/);
   assert.match(coder, /paths\.has/);
   assert.match(coder, /copilotPlan/);
