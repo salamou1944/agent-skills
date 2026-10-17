@@ -18,7 +18,12 @@ async function body(req) {
     raw += chunk;
     if (raw.length > 1_000_000) throw new Error('request_too_large');
   }
-  return raw ? JSON.parse(raw) : {};
+  if (!raw) return {};
+  const contentType = String(req.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase();
+  if (contentType === 'application/x-www-form-urlencoded') {
+    return Object.fromEntries(new URLSearchParams(raw).entries());
+  }
+  return JSON.parse(raw);
 }
 
 export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), productListingSales = createProductListingSales(), salesPipeline = createSalesPipeline() } = {}) {
@@ -50,8 +55,14 @@ export function createRevenueApi({ engine = createEngine({ mode: 'dry-run' }), p
       if (req.url === '/fanout') return json(res, 200, engine.fanOut(input.opportunity, input.plan));
       if (req.url === '/product-listing/qualify') return json(res, 200, productListingSales.qualify(input));
       if (req.url === '/product-listing/order') return json(res, 200, productListingSales.createOrder(input.product, input.plan));
-      if (req.url === '/product-listing/generate') return json(res, 200, await productListingSales.generate(input.order));
-      if (req.url === '/product-listing/payment-handoff') return json(res, 200, productListingSales.paymentHandoff(input.order));
+      if (req.url === '/product-listing/generate') {
+        if (input.order?.plan !== 'sample' || input.order?.price !== 0) return json(res, 409, { ok: false, error: 'paid_order_not_paid' });
+        return json(res, 200, await productListingSales.generate(input.order));
+      }
+      if (req.url === '/product-listing/payment-handoff') {
+        const result = productListingSales.paymentHandoff(input.order);
+        return json(res, result.ok ? 200 : 409, result);
+      }
       if (req.url === '/sales-pipeline/create') return json(res, 201, salesPipeline.create(input));
       if (req.url === '/sales-pipeline/advance') return json(res, 200, salesPipeline.advance(input.id, input.stage, input.evidence));
       if (req.url === '/sales-pipeline/list') return json(res, 200, salesPipeline.list(input.stage));

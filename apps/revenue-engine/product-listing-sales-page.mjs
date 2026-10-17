@@ -7,5 +7,36 @@ function esc(value) {
 export function renderProductListingSalesPage({ action = '/product-listing/qualify' } = {}) {
   const starter = PRODUCT_LISTING_OFFER.plans.find((p) => p.id === 'starter');
   const scale = PRODUCT_LISTING_OFFER.plans.find((p) => p.id === 'scale');
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(PRODUCT_LISTING_OFFER.name)}</title><meta name="description" content="Turn product details into ready-to-publish ecommerce copy."><style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 18px;line-height:1.5}main{border:1px solid #ddd;border-radius:16px;padding:28px}h1{margin-top:0}input,textarea,select,button{width:100%;box-sizing:border-box;margin:7px 0 14px;padding:12px;border:1px solid #bbb;border-radius:8px}button{cursor:pointer;font-weight:700}.plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}.plan{border:1px solid #ddd;border-radius:10px;padding:14px}.free{margin-bottom:18px}</style></head><body><main><h1>${esc(PRODUCT_LISTING_OFFER.name)}</h1><p>Give us your product details. Get structured listing copy for your store and ads.</p><div class="free"><strong>Free sample:</strong> 1 product. No payment required.</div><div class="plans"><div class="plan"><strong>${starter.label}</strong><br>$${starter.price}</div><div class="plan"><strong>${scale.label}</strong><br>$${scale.price}</div></div><form method="post" action="${esc(action)}"><label>Product name<input name="product_name" required maxlength="200"></label><label>Product details<textarea name="product_details" required maxlength="8000" rows="7"></textarea></label><label>Language<select name="language"><option>English</option><option>French</option><option>Arabic</option><option>Spanish</option></select></label><label>Image URL (optional)<input name="image_url" type="url"></label><button type="submit">Get my sample</button></form><p><small>Output should be reviewed for product facts before publishing.</small></p></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(PRODUCT_LISTING_OFFER.name)}</title><meta name="description" content="Turn product details into ready-to-publish ecommerce copy."><style>body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 18px;line-height:1.5}main{border:1px solid #ddd;border-radius:16px;padding:28px}h1{margin-top:0}input,textarea,select,button{width:100%;box-sizing:border-box;margin:7px 0 14px;padding:12px;border:1px solid #bbb;border-radius:8px}button{cursor:pointer;font-weight:700}.plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}.plan{border:1px solid #ddd;border-radius:10px;padding:14px}.free{margin-bottom:18px}</style></head><body><main><h1>${esc(PRODUCT_LISTING_OFFER.name)}</h1><p>Give us your product details. Get structured listing copy for your store and ads.</p><div class="free"><strong>Free sample:</strong> 1 product. No payment required.</div><div class="plans"><div class="plan"><strong>${starter.label}</strong><br>$${starter.price}</div><div class="plan"><strong>${scale.label}</strong><br>$${scale.price}</div></div><p class="payment-notice"><strong>Paid checkout is not active yet.</strong> Paid orders cannot be placed online. Start with the free sample while payment processing is being configured.</p><form id="product-form" method="post" action="${esc(action)}"><label>Product name<input name="product_name" required maxlength="200"></label><label>Product details<textarea name="product_details" required maxlength="8000" rows="7"></textarea></label><label>Language<select name="language"><option>English</option><option>French</option><option>Arabic</option><option>Spanish</option></select></label><label>Image URL (optional)<input name="image_url" type="url"></label><button type="submit">Get my sample</button></form><section id="sample-output" aria-live="polite"></section><p><small>Review product facts before publishing. The free sample uses a clearly labeled fixture and does not call an external AI provider.</small></p><script>
+const form = document.getElementById('product-form');
+const output = document.getElementById('sample-output');
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  output.textContent = 'Preparing your sample…';
+  const request = async (path, payload) => {
+    const response = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'request_failed');
+    return data;
+  };
+  try {
+    const qualification = await request(form.action, Object.fromEntries(new FormData(form).entries()));
+    const order = await request('/product-listing/order', { product: qualification.input, plan: 'sample' });
+    const generated = await request('/product-listing/generate', { order });
+    const note = document.createElement('p');
+    note.textContent = 'Demo sample: generated from a safe fixture, not from an AI provider.';
+    const pre = document.createElement('pre');
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.overflowWrap = 'anywhere';
+    pre.textContent = generated.deliverable;
+    output.replaceChildren(note, pre);
+  } catch (error) {
+    output.textContent = 'Could not prepare the sample: ' + error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+</script></main></body></html>`;
 }

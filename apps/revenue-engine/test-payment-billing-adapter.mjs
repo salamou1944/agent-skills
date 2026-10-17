@@ -4,10 +4,12 @@ import { activatePaymentHandoff, createPaymentBillingAdapter } from './payment-b
 
 const order={id:'plg_fixture_123',product:'ai-product-listing-generator',plan:'starter',price:79,currency:'USD'};
 
-test('disabled billing remains payment-ready without inventing a provider',async()=>{
+test('disabled billing blocks paid checkout without inventing a provider',async()=>{
   const adapter=createPaymentBillingAdapter({provider:'disabled',enabled:false});
   const result=await activatePaymentHandoff(order,adapter);
-  assert.equal(result.status,'payment_ready');
+  assert.equal(result.status,'blocked_payment_provider');
+  assert.equal(result.ok,false);
+  assert.equal(result.reason,'payment_provider_not_configured');
   assert.equal(result.paymentProvider,null);
   assert.equal(result.paymentUrl,null);
 });
@@ -33,7 +35,9 @@ test('enabled non-fixture providers fail closed until a live adapter exists',asy
   const adapter=createPaymentBillingAdapter({provider:'live-provider',enabled:true});
   assert.equal((await adapter.healthCheck()).state,'failed');
   const result=await activatePaymentHandoff(order,adapter);
-  assert.equal(result.status,'payment_ready');
+  assert.equal(result.status,'blocked_payment_provider');
+  assert.equal(result.ok,false);
+  assert.equal(result.reason,'live_payment_provider_adapter_not_implemented');
   assert.equal(result.paymentUrl,null);
   assert.equal(result.paymentProvider,null);
 });

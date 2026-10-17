@@ -35,35 +35,77 @@ await withRevenueApi(async (base) => {
   const qualification = await qualify.json();
   assert.equal(qualification.qualified, true);
 
+  const formEncoded = await fetch(`${base}/product-listing/qualify`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ product_name: 'Form Mug', product_details: 'Ceramic mug submitted by HTML form', language: 'English' })
+  });
+  assert.equal(formEncoded.status, 200);
+  const formQualification = await formEncoded.json();
+  assert.equal(formQualification.qualified, true);
+  assert.equal(formQualification.input.product_name, 'Form Mug');
+
   const orderResponse = await fetch(`${base}/product-listing/order`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ product: qualification.input, plan: 'starter' })
   });
   assert.equal(orderResponse.status, 200);
   const order = await orderResponse.json();
-  assert.equal(order.status, 'ready_for_generation');
+  assert.equal(order.status, 'awaiting_payment');
   assert.equal(order.price, 79);
 
-  const generatedResponse = await fetch(`${base}/product-listing/generate`, {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order })
+  const paidGenerationResponse = await fetch(`${base}/product-listing/generate`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order: { ...order, paymentStatus: 'paid' } })
   });
-  assert.equal(generatedResponse.status, 200);
-  const generated = await generatedResponse.json();
-  assert.equal(generated.source, 'safe-fixture');
-  assert.match(generated.deliverable, /# Demo Mug/);
+  assert.equal(paidGenerationResponse.status, 409);
+  assert.equal((await paidGenerationResponse.json()).error, 'paid_order_not_paid');
+
+  const sampleOrderResponse = await fetch(`${base}/product-listing/order`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ product: qualification.input, plan: 'sample' })
+  });
+  assert.equal(sampleOrderResponse.status, 200);
+  const sampleOrder = await sampleOrderResponse.json();
+  assert.equal(sampleOrder.plan, 'sample');
+  assert.equal(sampleOrder.price, 0);
+
+  const sampleHandoffResponse = await fetch(`${base}/product-listing/payment-handoff`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order: sampleOrder })
+  });
+  assert.equal(sampleHandoffResponse.status, 200);
+  const sampleHandoff = await sampleHandoffResponse.json();
+  assert.equal(sampleHandoff.status, 'no_payment_required');
+  assert.equal(sampleHandoff.ok, true);
+  assert.equal(sampleHandoff.amount, 0);
+
+  const sampleGeneratedResponse = await fetch(`${base}/product-listing/generate`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order: sampleOrder })
+  });
+  assert.equal(sampleGeneratedResponse.status, 200);
+  const sampleGenerated = await sampleGeneratedResponse.json();
+  assert.equal(sampleGenerated.status, 'generated');
+  assert.equal(sampleGenerated.source, 'safe-fixture');
+  assert.match(sampleGenerated.deliverable, /# Demo Mug/);
 
   const handoffResponse = await fetch(`${base}/product-listing/payment-handoff`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order })
   });
-  assert.equal(handoffResponse.status, 200);
+  assert.equal(handoffResponse.status, 409);
   const handoff = await handoffResponse.json();
-  assert.equal(handoff.status, 'payment_ready');
+  assert.equal(handoff.status, 'blocked_payment_provider');
+  assert.equal(handoff.ok, false);
   assert.equal(handoff.amount, 79);
   assert.equal(handoff.paymentProvider, null);
+  assert.equal(handoff.reason, 'payment_provider_not_configured');
 
   const page = await fetch(`${base}/product-listing/sales-page`);
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /Get my sample/);
+  const pageHtml = await page.text();
+  assert.match(pageHtml, /Get my sample/);
+  assert.match(pageHtml, /Paid checkout is not active yet/);
+  assert.match(pageHtml, /\/product-listing\/order/);
+  assert.match(pageHtml, /\/product-listing\/generate/);
+  assert.match(pageHtml, /safe fixture, not from an AI provider/);
 
   const created = await fetch(`${base}/opportunity`, {
     method: 'POST', headers: { 'content-type': 'application/json' },

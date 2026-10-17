@@ -152,14 +152,20 @@ export function createProductListingSales({
       plan: selected.id,
       price: selected.price,
       currency: PRODUCT_LISTING_OFFER.currency,
-      status: 'ready_for_generation',
+      status: selected.price === 0 ? 'ready_for_generation' : 'awaiting_payment',
       input: normalized,
       createdAt: new Date().toISOString()
     };
   }
 
   async function generate(order) {
-    if (!order?.id || !order.input) throw new Error('valid_order_required');
+    if (!order?.id || !order.input || !Number.isFinite(order.price) || order.price < 0) throw new Error('valid_order_required');
+    const selected = PRODUCT_LISTING_OFFER.plans.find((item) => item.id === order.plan);
+    if (!selected || selected.price !== order.price) throw new Error('valid_order_required');
+    if (order.plan === 'sample' && order.price === 0) {
+      return generatedResult(order, 'safe-fixture', fixtureContent(order.input));
+    }
+    if (order.paymentStatus !== 'paid') throw new Error('paid_order_not_paid');
     if (mode !== 'live') return generatedResult(order, 'safe-fixture', fixtureContent(order.input));
     if (!apiBaseUrl || !apiKey) throw new Error('product_content_api_not_configured');
     const response = await fetchImpl(`${apiBaseUrl.replace(/\/$/, '')}/v1/product-content`, {
@@ -174,10 +180,23 @@ export function createProductListingSales({
   }
 
   function paymentHandoff(order) {
-    if (!order?.id || !Number.isFinite(order.price)) throw new Error('valid_order_required');
-    return {
+    const selected = PRODUCT_LISTING_OFFER.plans.find((item) => item.id === order?.plan);
+    if (!order?.id || !selected || !Number.isFinite(order.price) || selected.price !== order.price) throw new Error('valid_order_required');
+    if (order.plan === 'sample' && order.price === 0) return {
       ok: true,
-      status: 'payment_ready',
+      status: 'no_payment_required',
+      orderId: order.id,
+      product: order.product,
+      plan: order.plan,
+      amount: 0,
+      currency: order.currency,
+      paymentProvider: null,
+      paymentUrl: null,
+      note: 'No payment required for the sample.'
+    };
+    return {
+      ok: false,
+      status: 'blocked_payment_provider',
       orderId: order.id,
       product: order.product,
       plan: order.plan,
@@ -185,7 +204,8 @@ export function createProductListingSales({
       currency: order.currency,
       paymentProvider: null,
       paymentUrl: null,
-      note: order.price === 0 ? 'No payment required for the sample.' : 'Payment provider not activated; handoff is ready for a configured billing adapter.'
+      reason: 'payment_provider_not_configured',
+      note: 'Paid checkout is blocked until a real payment provider is configured and verified.'
     };
   }
 
