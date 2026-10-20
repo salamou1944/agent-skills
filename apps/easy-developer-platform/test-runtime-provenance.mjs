@@ -18,6 +18,10 @@ assert.equal(verified.deploymentId, 'deployment-123');
 assert.equal(verified.runtimeIdentity, 'service-123');
 assert.equal(verified.source, 'railway-runtime-environment');
 
+const uppercase = buildRuntimeProvenance({ RAILWAY_GIT_COMMIT_SHA: validSha.toUpperCase() });
+assert.equal(uppercase.ok, true);
+assert.equal(uppercase.commitSha, validSha, 'valid uppercase SHA should normalize to lowercase');
+
 const malformed = buildRuntimeProvenance({ RAILWAY_GIT_COMMIT_SHA: 'main' });
 assert.equal(malformed.ok, false);
 assert.equal(malformed.commitSha, null);
