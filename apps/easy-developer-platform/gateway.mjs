@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRuntimeProvenance } from './runtime-provenance.mjs';
 
 const port = Number(process.env.GATEWAY_PORT || 8080);
 const platform = String(process.env.EASY_PLATFORM_URL || 'http://127.0.0.1:8790').replace(/\/$/, '');
@@ -82,6 +83,10 @@ const serviceStatus = async () => ({
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (req.method === 'GET' && url.pathname === '/api/gateway/provenance') {
+    const provenance = buildRuntimeProvenance();
+    return send(res, provenance.ok ? 200 : 503, provenance);
+  }
   if (req.method === 'GET' && (url.pathname === '/health' || url.pathname === '/api/gateway/status')) {
     const body = await serviceStatus();
     const healthy = Object.entries(body).filter(([key]) => key.endsWith('Online')).every(([, value]) => value === true);
