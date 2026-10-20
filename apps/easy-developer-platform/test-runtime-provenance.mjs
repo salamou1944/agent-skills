@@ -22,8 +22,18 @@ const uppercase = buildRuntimeProvenance({ RAILWAY_GIT_COMMIT_SHA: validSha.toUp
 assert.equal(uppercase.ok, true);
 assert.equal(uppercase.commitSha, validSha, 'valid uppercase SHA should normalize to lowercase');
 
-const malformed = buildRuntimeProvenance({ RAILWAY_GIT_COMMIT_SHA: 'main' });
-assert.equal(malformed.ok, false);
-assert.equal(malformed.commitSha, null);
+const padded = buildRuntimeProvenance({ RAILWAY_GIT_COMMIT_SHA: `  ${validSha.toUpperCase()}  ` });
+assert.equal(padded.ok, true, 'surrounding whitespace should be trimmed');
+assert.equal(padded.commitSha, validSha);
+
+for (const invalidSha of ['main', 'a'.repeat(39), 'a'.repeat(41), 'g'.repeat(40), '']) {
+  const malformed = buildRuntimeProvenance({ RAILWAY_GIT_COMMIT_SHA: invalidSha });
+  assert.equal(malformed.ok, false, `invalid SHA must fail closed: ${JSON.stringify(invalidSha)}`);
+  assert.equal(malformed.commitSha, null);
+}
+
+const defaults = buildRuntimeProvenance({ RAILWAY_GIT_COMMIT_SHA: validSha });
+assert.equal(defaults.runtimeIdentity, 'easy-platform-gateway');
+assert.equal(defaults.deploymentId, null);
 
 console.log('runtime provenance contract: PASS');
