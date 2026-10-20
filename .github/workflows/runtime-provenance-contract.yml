@@ -8,7 +8,8 @@ on:
       - "apps/easy-developer-platform/test-runtime-provenance.mjs"
       - ".github/workflows/runtime-provenance-contract.yml"
   push:
-    branches: [main]
+    branches:
+      - "fix/easy-runtime-provenance-endpoint-2026-10-15"
     paths:
       - "apps/easy-developer-platform/gateway.mjs"
       - "apps/easy-developer-platform/runtime-provenance.mjs"
