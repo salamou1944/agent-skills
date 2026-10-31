@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { REQUIRED_ROLES, roleSlug, validateManifest, validateRoleSet, validateWorkerResult } from './scripts/army-14-manifest.mjs';
+import { REQUIRED_ROLES, manifestPath, roleSlug, validateManifest, validateRoleSet, validateWorkerResult } from './scripts/army-14-manifest.mjs';
 
 const runId = '123456789';
 const commit = 'a'.repeat(40);
@@ -27,6 +28,31 @@ test('role slugs are normalized and all 14 role branches are unique', () => {
   assert.equal(new Set(slugs).size, 14);
   assert.equal(roleSlug('UI-UX'), 'ui-ux');
   assert.equal(roleSlug('Backend/API'), 'backend-api');
+});
+
+test('producer and consumer resolve the same manifest path for every required role', async () => {
+  const producer = await readFile('.github/workflows/elite-code-reusable-supervisor.yml', 'utf8');
+  const consumer = await readFile('../Easy-/.github/workflows/army-14-practical-easy-gate.yml', 'utf8').catch(() => '');
+  assert.match(producer, /manifest-path --run-id/);
+  assert.match(producer, /--output "\$MANIFEST_PATH"/);
+  if (consumer) assert.match(consumer, /manifest-path --run-id/);
+  for (const role of REQUIRED_ROLES) {
+    const expected = `.army-14/manifests/${runId}/${roleSlug(role)}.json`;
+    const produced = execFileSync(process.execPath, ['./scripts/army-14-manifest.mjs', 'manifest-path', '--run-id', runId, '--role', role], { encoding: 'utf8' });
+    const consumed = execFileSync(process.execPath, ['./scripts/army-14-manifest.mjs', 'manifest-path', '--run-id', runId, '--role', role], { encoding: 'utf8' });
+    assert.equal(manifestPath(runId, role), expected);
+    assert.equal(produced, expected);
+    assert.equal(consumed, expected);
+  }
+});
+
+test('role path normalization is case-insensitive but manifest role validation stays exact', () => {
+  const canonical = manifest('Architect');
+  assert.equal(manifestPath(runId, 'ARCHITECT'), manifestPath(runId, 'Architect'));
+  assert.equal(validateManifest(canonical, { runId, role: 'Architect', branch: `army/${runId}/architect`, commit }).ok, true);
+  assert.equal(validateManifest({ ...canonical, role: 'architect' }, { runId, role: 'Architect', branch: `army/${runId}/architect`, commit }).ok, false);
+  assert.equal(validateManifest({ ...canonical, role: 'ARCHITECT' }, { runId, role: 'Architect', branch: `army/${runId}/architect`, commit }).ok, false);
+  assert.equal(validateManifest(canonical, { runId, role: 'architect', branch: `army/${runId}/architect`, commit }).ok, false);
 });
 
 test('accepts one complete, current VERIFIED manifest per required role', () => {
