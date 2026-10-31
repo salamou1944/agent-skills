@@ -11,13 +11,22 @@ export function roleSlug(role) {
   return String(role).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export function validateWorkerResult(result) {
+function independentProofErrors(proof, { runId, role, commit } = {}) {
+  const errors = [];
+  if (!proof || proof.schema !== 'army-14-independent-task-evidence/v1' || proof.status !== 'PASS') errors.push('independent_task_evidence_missing');
+  if (proof && (proof.runId !== String(runId) || proof.role !== role || proof.commit !== commit)) errors.push('independent_task_evidence_provenance_mismatch');
+  if (!Array.isArray(proof?.checks) || proof.checks.length === 0 || proof.checks.some(check => check?.taskSpecific !== true || check?.passed !== true || typeof check.command !== 'string' || !check.command.trim() || !/^[a-f0-9]{64}$/i.test(String(check.outputSha256)))) errors.push('independent_task_checks_invalid');
+  return errors;
+}
+
+export function validateWorkerResult(result, proof, { runId, role, commit } = {}) {
   const errors = [];
   if (!result || result.status !== 'VERIFIED') errors.push('task_status_not_verified');
   if (result?.taskVerified !== true || result?.pipelineVerified !== true || result?.verified === false) errors.push('task_completion_not_verified');
   if (!Array.isArray(result?.changedFiles) || result.changedFiles.length === 0) errors.push('task_changes_missing');
   const telemetry = Array.isArray(result?.providerTelemetry) ? result.providerTelemetry : [];
   if (telemetry.some(event => event?.event === 'provider_fallback' || /quota/i.test(String(event?.reason ?? event?.status ?? '')))) errors.push('fallback_or_quota_observed');
+  errors.push(...independentProofErrors(proof, { runId, role, commit }));
   return { ok: errors.length === 0, errors };
 }
 
@@ -36,6 +45,7 @@ export function validateManifest(manifest, { runId, role, branch, commit } = {})
   if (!/^[a-f0-9]{40}$/i.test(String(manifest.commit)) || (commit && manifest.commit !== commit)) errors.push('commit_invalid_or_stale');
   if (!Array.isArray(manifest.changedFiles) || manifest.changedFiles.length === 0 || manifest.changedFiles.some(x => typeof x !== 'string' || !x.trim())) errors.push('task_evidence_missing');
   if (!Array.isArray(manifest.tests) || manifest.tests.length === 0 || manifest.tests.some(t => !t || t.passed !== true || typeof t.command !== 'string' || !t.command.trim())) errors.push('test_evidence_missing');
+  errors.push(...independentProofErrors(manifest.independentEvidence, { runId, role, commit: manifest.commit }));
   if (!manifest.createdAt || Number.isNaN(Date.parse(manifest.createdAt))) errors.push('timestamp_invalid');
   return { ok: errors.length === 0, errors };
 }
@@ -75,15 +85,17 @@ async function main(args) {
   const commit = value(rest, 'commit');
   const result = JSON.parse(await readFile(value(rest, 'result'), 'utf8'));
   const tests = JSON.parse(await readFile(value(rest, 'tests'), 'utf8'));
+  const proof = JSON.parse(await readFile(value(rest, 'proof'), 'utf8'));
   if (!/^[a-f0-9]{40}$/i.test(commit)) throw new Error('commit_invalid');
   if (!REQUIRED_ROLES.includes(role)) throw new Error('role_invalid');
-  const resultCheck = validateWorkerResult(result);
+  const resultCheck = validateWorkerResult(result, proof, { runId, role, commit });
   if (!resultCheck.ok) throw new Error(resultCheck.errors.join(','));
   const manifest = {
     schema: 'army-14-worker-manifest/v1', status: 'VERIFIED', runId, role,
     branch, commit, taskVerified: true, pipelineVerified: true,
     fallbackUsed: false, blocked: false, incomplete: false, quotaExhausted: false,
     changedFiles: result.changedFiles,
+    independentEvidence: proof,
     tests,
     summary: result.summary,
     createdAt: new Date().toISOString(),
