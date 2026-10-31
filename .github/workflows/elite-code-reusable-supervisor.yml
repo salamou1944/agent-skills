@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     concurrency:
-      group: elite-supervisor-${{ github.repository }}
+      group: elite-supervisor-${{ github.repository }}-${{ github.run_id }}-${{ inputs.role }}
       cancel-in-progress: false
     steps:
       - name: Checkout target repository
@@ -58,10 +58,15 @@ jobs:
       - name: Prepare isolated worker branch
         if: inputs.persist_to_isolated_branch
         env:
-          PERSIST_BRANCH: elite-worker/${{ github.run_id }}
+          PERSIST_BRANCH: army/${{ github.run_id }}/${{ inputs.role }}
         run: |
+          set -euo pipefail
+          ROLE_SLUG="$(printf '%s' "$ROLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-|-$//g')"
+          PERSIST_BRANCH="army/${{ github.run_id }}/${ROLE_SLUG}"
           git switch -c "$PERSIST_BRANCH"
           echo "PERSIST_BRANCH=$PERSIST_BRANCH" >> "$GITHUB_ENV"
+        env:
+          ROLE: ${{ inputs.role }}
 
       - name: Checkout Elite Code tools outside target history
         uses: actions/checkout@v6
@@ -153,7 +158,9 @@ jobs:
           EASY_OPERATOR_RATE_LIMIT_MAX_WAIT_MS: '15000'
           EASY_OPERATOR_PROVIDER_TIMEOUT_MS: '45000'
         run: |
-          node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$(cat /tmp/elite-goal.txt)"
+          set -euo pipefail
+          node .elite-code-tools/apps/easy-developer-platform/autonomous-coder.mjs "$(cat /tmp/elite-goal.txt)" | tee /tmp/elite-result.json
+          node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync("/tmp/elite-result.json","utf8"));if(!["VERIFIED","VERIFIED_NOOP"].includes(r.status)||r.taskVerified!==true||r.verified===false||r.pipelineVerified!==true)throw new Error("task_completion_not_verified");if(!Array.isArray(r.changedFiles)||(!r.changedFiles.length&&r.status!=="VERIFIED_NOOP"))throw new Error("task_changes_missing");'
 
       - name: Verify Elite worker result
         if: steps.elite.outcome == 'success'
@@ -206,11 +213,19 @@ jobs:
 
       - name: Run repository-native verification
         run: |
+          set -euo pipefail
           git diff --check
+          printf '%s\n' '[{"command":"git diff --check","passed":true}]' > /tmp/army-14-tests.json
           if [ -f package.json ]; then
             node -e "const p=require('./package.json'); console.log('scripts:', Object.keys(p.scripts||{}).sort().join(', '))"
-            if node -e "const p=require('./package.json'); process.exit(p.scripts?.test ? 0 : 1)"; then npm test --if-present; fi
-            npm run test:elite:provider-resilience --if-present
+            if node -e "const p=require('./package.json'); process.exit(p.scripts?.test ? 0 : 1)"; then
+              npm test
+              node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/army-14-tests.json","utf8"));x.push({command:"npm test",passed:true});fs.writeFileSync("/tmp/army-14-tests.json",JSON.stringify(x));'
+            fi
+            if node -e "const p=require('./package.json'); process.exit(p.scripts?.['test:elite:provider-resilience'] ? 0 : 1)"; then
+              npm run test:elite:provider-resilience
+              node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/army-14-tests.json","utf8"));x.push({command:"npm run test:elite:provider-resilience",passed:true});fs.writeFileSync("/tmp/army-14-tests.json",JSON.stringify(x));'
+            fi
           fi
 
       - name: Persist verified changes
@@ -223,6 +238,14 @@ jobs:
             git diff --cached --check
             git commit -m 'chore(supervisor): persist verified engineering result'
             if [ -n "${PERSIST_BRANCH:-}" ]; then
+              node .elite-code-tools/scripts/army-14-manifest.mjs create \
+                --run-id '${{ github.run_id }}' --role '${{ inputs.role }}' \
+                --branch "$PERSIST_BRANCH" --commit "$(git rev-parse HEAD)" \
+                --result /tmp/elite-result.json --tests /tmp/army-14-tests.json \
+                --output .army-14-manifest.json
+              git add .army-14-manifest.json
+              git diff --cached --check
+              git commit -m 'chore(army-14): record verified worker manifest'
               git push origin "HEAD:$PERSIST_BRANCH"
               echo "Persisted verified worker result to isolated branch $PERSIST_BRANCH"
             else
@@ -239,3 +262,10 @@ jobs:
           echo "- Elite worker: ${{ steps.elite.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- ARMY-14 pipeline fallback: ${{ steps.fallback.outcome }}" >> "$GITHUB_STEP_SUMMARY"
           if [ -f /tmp/army-14-result.json ]; then cat /tmp/army-14-result.json >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: Reject incomplete worker result
+        if: inputs.persist_to_isolated_branch && (steps.elite.outcome != 'success' || steps.elite.conclusion != 'success')
+        run: |
+          echo 'No VERIFIED manifest is permitted for failed, fallback, quota-exhausted, blocked, or incomplete work.' >&2
+          exit 1
+
