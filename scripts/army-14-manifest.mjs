@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 export const REQUIRED_ROLES = [
   'Architect', 'Builder', 'UI-UX', 'Backend-API', 'Database', 'Security',
@@ -9,6 +11,11 @@ export const REQUIRED_ROLES = [
 
 export function roleSlug(role) {
   return String(role).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+export function manifestPath(runId, role) {
+  if (!String(runId).trim() || !roleSlug(role)) throw new Error('manifest_path_input_invalid');
+  return `.army-14/manifests/${runId}/${roleSlug(role)}.json`;
 }
 
 function independentProofErrors(proof, { runId, role, commit } = {}) {
@@ -72,6 +79,14 @@ function value(args, key) {
 
 async function main(args) {
   const [command, ...rest] = args;
+  if (command === 'role-slug') {
+    process.stdout.write(roleSlug(value(rest, 'role')));
+    return;
+  }
+  if (command === 'manifest-path') {
+    process.stdout.write(manifestPath(value(rest, 'run-id'), value(rest, 'role')));
+    return;
+  }
   if (command === 'validate-set') {
     const records = JSON.parse(await readFile(value(rest, 'records'), 'utf8'));
     const result = validateRoleSet(records, { runId: value(rest, 'run-id') });
@@ -86,6 +101,7 @@ async function main(args) {
   const result = JSON.parse(await readFile(value(rest, 'result'), 'utf8'));
   const tests = JSON.parse(await readFile(value(rest, 'tests'), 'utf8'));
   const proof = JSON.parse(await readFile(value(rest, 'proof'), 'utf8'));
+  const output = value(rest, 'output');
   if (!/^[a-f0-9]{40}$/i.test(commit)) throw new Error('commit_invalid');
   if (!REQUIRED_ROLES.includes(role)) throw new Error('role_invalid');
   const resultCheck = validateWorkerResult(result, proof, { runId, role, commit });
@@ -100,10 +116,11 @@ async function main(args) {
     summary: result.summary,
     createdAt: new Date().toISOString(),
   };
+  if (output !== manifestPath(runId, role)) throw new Error('manifest_output_path_mismatch');
   const check = validateManifest(manifest, { runId, role, branch, commit });
   if (!check.ok) throw new Error(`manifest_invalid:${check.errors.join(',')}`);
-  await writeFile(value(rest, 'output'), `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(output, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main(process.argv.slice(2)).catch(error => { console.error(error.message); process.exitCode = 1; });
+if (import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main(process.argv.slice(2)).catch(error => { console.error(error.message); process.exitCode = 1; });
 
