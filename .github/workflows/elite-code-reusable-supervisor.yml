@@ -230,10 +230,8 @@ jobs:
         if: inputs.persist_to_isolated_branch && steps.elite.outcome == 'success'
         run: |
           set -euo pipefail
-          if [ ! -s /tmp/army-14-independent-proof.json ]; then
-            echo 'BLOCKED: autonomous-coder exposes taskVerified after syntax/diff checks only; no independent task-specific proof was produced.' >&2
-            exit 1
-          fi
+          echo 'BLOCKED: no trusted independent task-evidence producer is configured; a worker-created proof file is not sufficient.' >&2
+          exit 1
 
       - name: Persist verified changes
         if: steps.elite.outcome == 'success'
@@ -249,7 +247,7 @@ jobs:
               MANIFEST_PATH="$(node .elite-code-tools/scripts/army-14-manifest.mjs manifest-path --run-id '${{ github.run_id }}' --role '${{ inputs.role }}')"
               test "$MANIFEST_PATH" = ".army-14/manifests/${{ github.run_id }}/${ROLE_SLUG}.json"
               node .elite-code-tools/scripts/army-14-manifest.mjs create \
-                --run-id '${{ github.run_id }}' --role '${{ inputs.role }}' \
+                --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}' --role '${{ inputs.role }}' \
                 --branch "$PERSIST_BRANCH" --commit "$(git rev-parse HEAD)" \
                 --result /tmp/elite-result.json --tests /tmp/army-14-tests.json \
                 --proof /tmp/army-14-independent-proof.json \
