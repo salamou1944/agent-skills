@@ -11,6 +11,16 @@ export function roleSlug(role) {
   return String(role).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+export function validateWorkerResult(result) {
+  const errors = [];
+  if (!result || result.status !== 'VERIFIED') errors.push('task_status_not_verified');
+  if (result?.taskVerified !== true || result?.pipelineVerified !== true || result?.verified === false) errors.push('task_completion_not_verified');
+  if (!Array.isArray(result?.changedFiles) || result.changedFiles.length === 0) errors.push('task_changes_missing');
+  const telemetry = Array.isArray(result?.providerTelemetry) ? result.providerTelemetry : [];
+  if (telemetry.some(event => event?.event === 'provider_fallback' || /quota/i.test(String(event?.reason ?? event?.status ?? '')))) errors.push('fallback_or_quota_observed');
+  return { ok: errors.length === 0, errors };
+}
+
 export function validateManifest(manifest, { runId, role, branch, commit } = {}) {
   const errors = [];
   const expectedBranch = `army/${runId}/${roleSlug(role)}`;
@@ -67,8 +77,8 @@ async function main(args) {
   const tests = JSON.parse(await readFile(value(rest, 'tests'), 'utf8'));
   if (!/^[a-f0-9]{40}$/i.test(commit)) throw new Error('commit_invalid');
   if (!REQUIRED_ROLES.includes(role)) throw new Error('role_invalid');
-  if (!['VERIFIED'].includes(result.status) || result.taskVerified !== true || result.pipelineVerified !== true || result.verified === false) throw new Error('task_completion_not_verified');
-  if (!Array.isArray(result.changedFiles) || result.changedFiles.length === 0) throw new Error('task_changes_missing');
+  const resultCheck = validateWorkerResult(result);
+  if (!resultCheck.ok) throw new Error(resultCheck.errors.join(','));
   const manifest = {
     schema: 'army-14-worker-manifest/v1', status: 'VERIFIED', runId, role,
     branch, commit, taskVerified: true, pipelineVerified: true,
