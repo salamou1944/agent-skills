@@ -226,6 +226,15 @@ jobs:
             fi
           fi
 
+      - name: Require independent task-specific evidence before VERIFIED persistence
+        if: inputs.persist_to_isolated_branch && steps.elite.outcome == 'success'
+        run: |
+          set -euo pipefail
+          if [ ! -s /tmp/army-14-independent-proof.json ]; then
+            echo 'BLOCKED: autonomous-coder exposes taskVerified after syntax/diff checks only; no independent task-specific proof was produced.' >&2
+            exit 1
+          fi
+
       - name: Persist verified changes
         if: steps.elite.outcome == 'success'
         run: |
@@ -240,6 +249,7 @@ jobs:
                 --run-id '${{ github.run_id }}' --role '${{ inputs.role }}' \
                 --branch "$PERSIST_BRANCH" --commit "$(git rev-parse HEAD)" \
                 --result /tmp/elite-result.json --tests /tmp/army-14-tests.json \
+                --proof /tmp/army-14-independent-proof.json \
                 --output ".army-14/manifests/${{ github.run_id }}/${{ inputs.role }}.json"
               git add ".army-14/manifests/${{ github.run_id }}/${{ inputs.role }}.json"
               git diff --cached --check
