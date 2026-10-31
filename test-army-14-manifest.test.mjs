@@ -44,6 +44,7 @@ test('rejects fallback, quota exhaustion, blocked, incomplete, and taskVerified=
   for (const overrides of [
     { fallbackUsed: true }, { quotaExhausted: true }, { blocked: true },
     { incomplete: true }, { taskVerified: false }, { status: 'PIPELINE_VERIFIED' },
+    { status: 'FAILED' }, { status: 'CANCELLED' },
   ]) {
     assert.equal(validateManifest(manifest('Architect', overrides), {
       runId, role: 'Architect', branch: `army/${runId}/architect`, commit,
