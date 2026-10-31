@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { REQUIRED_ROLES, roleSlug, validateManifest, validateRoleSet } from './scripts/army-14-manifest.mjs';
+import { REQUIRED_ROLES, roleSlug, validateManifest, validateRoleSet, validateWorkerResult } from './scripts/army-14-manifest.mjs';
 
 const runId = '123456789';
 const commit = 'a'.repeat(40);
@@ -30,6 +30,17 @@ test('role slugs are normalized and all 14 role branches are unique', () => {
 test('accepts one complete, current VERIFIED manifest per required role', () => {
   const result = validateRoleSet(records(), { runId });
   assert.deepEqual(result, { ok: true, errors: [] });
+});
+
+test('accepts genuine task success and rejects provider fallback or quota even after recovery', () => {
+  const valid = { status: 'VERIFIED', taskVerified: true, pipelineVerified: true, changedFiles: ['src/fix.mjs'], providerTelemetry: [{ ok: true, status: 200 }] };
+  assert.equal(validateWorkerResult(valid).ok, true);
+  for (const event of [
+    { event: 'provider_fallback', reason: 'provider_quota_exhausted' },
+    { event: 'provider_fallback', reason: 'provider_http_500' },
+    { status: 429, reason: 'insufficient_quota' },
+  ]) assert.equal(validateWorkerResult({ ...valid, providerTelemetry: [event] }).ok, false);
+  assert.equal(validateWorkerResult({ ...valid, status: 'VERIFIED_NOOP', changedFiles: [] }).ok, false);
 });
 
 test('rejects missing, duplicate, unexpected, and wrong-run records', () => {
