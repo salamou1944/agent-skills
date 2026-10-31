@@ -55,17 +55,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prepare isolated worker branch
-        if: inputs.persist_to_isolated_branch
-        run: |
-          set -euo pipefail
-          ROLE_SLUG="$(printf '%s' "$ROLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-|-$//g')"
-          PERSIST_BRANCH="army/${{ github.run_id }}/${ROLE_SLUG}"
-          git switch -c "$PERSIST_BRANCH"
-          echo "PERSIST_BRANCH=$PERSIST_BRANCH" >> "$GITHUB_ENV"
-        env:
-          ROLE: ${{ inputs.role }}
-
       - name: Checkout Elite Code tools outside target history
         uses: actions/checkout@v6
         with:
@@ -73,6 +62,17 @@ jobs:
           ref: main
           path: .elite-code-tools
           fetch-depth: 1
+
+      - name: Prepare isolated worker branch
+        if: inputs.persist_to_isolated_branch
+        env:
+          ROLE: ${{ inputs.role }}
+        run: |
+          set -euo pipefail
+          ROLE_SLUG="$(node .elite-code-tools/scripts/army-14-manifest.mjs role-slug --role "$ROLE")"
+          PERSIST_BRANCH="army/${{ github.run_id }}/${ROLE_SLUG}"
+          git switch -c "$PERSIST_BRANCH"
+          echo "PERSIST_BRANCH=$PERSIST_BRANCH" >> "$GITHUB_ENV"
 
       - name: Inspect target rules and state
         env:
@@ -245,13 +245,16 @@ jobs:
             git diff --cached --check
             git commit -m 'chore(supervisor): persist verified engineering result'
             if [ -n "${PERSIST_BRANCH:-}" ]; then
+              ROLE_SLUG="$(node .elite-code-tools/scripts/army-14-manifest.mjs role-slug --role '${{ inputs.role }}')"
+              MANIFEST_PATH="$(node .elite-code-tools/scripts/army-14-manifest.mjs manifest-path --run-id '${{ github.run_id }}' --role '${{ inputs.role }}')"
+              test "$MANIFEST_PATH" = ".army-14/manifests/${{ github.run_id }}/${ROLE_SLUG}.json"
               node .elite-code-tools/scripts/army-14-manifest.mjs create \
                 --run-id '${{ github.run_id }}' --role '${{ inputs.role }}' \
                 --branch "$PERSIST_BRANCH" --commit "$(git rev-parse HEAD)" \
                 --result /tmp/elite-result.json --tests /tmp/army-14-tests.json \
                 --proof /tmp/army-14-independent-proof.json \
-                --output ".army-14/manifests/${{ github.run_id }}/${{ inputs.role }}.json"
-              git add ".army-14/manifests/${{ github.run_id }}/${{ inputs.role }}.json"
+                --output "$MANIFEST_PATH"
+              git add "$MANIFEST_PATH"
               git diff --cached --check
               git commit -m 'chore(army-14): record verified worker manifest'
               git push origin "HEAD:$PERSIST_BRANCH"
