@@ -57,8 +57,6 @@ jobs:
 
       - name: Prepare isolated worker branch
         if: inputs.persist_to_isolated_branch
-        env:
-          PERSIST_BRANCH: army/${{ github.run_id }}/${{ inputs.role }}
         run: |
           set -euo pipefail
           ROLE_SLUG="$(printf '%s' "$ROLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-|-$//g')"
@@ -242,8 +240,8 @@ jobs:
                 --run-id '${{ github.run_id }}' --role '${{ inputs.role }}' \
                 --branch "$PERSIST_BRANCH" --commit "$(git rev-parse HEAD)" \
                 --result /tmp/elite-result.json --tests /tmp/army-14-tests.json \
-                --output .army-14-manifest.json
-              git add .army-14-manifest.json
+                --output ".army-14/manifests/${{ github.run_id }}/${{ inputs.role }}.json"
+              git add ".army-14/manifests/${{ github.run_id }}/${{ inputs.role }}.json"
               git diff --cached --check
               git commit -m 'chore(army-14): record verified worker manifest'
               git push origin "HEAD:$PERSIST_BRANCH"
