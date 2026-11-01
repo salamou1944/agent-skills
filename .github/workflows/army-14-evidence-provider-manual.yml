@@ -1,13 +1,15 @@
 name: Army-14 Evidence Provider (manual, fail-closed)
 
 on:
+  pull_request:
+    paths:
+      - 'scripts/army-14-evidence-provider.mjs'
+      - 'test-army-14-evidence-provider.test.mjs'
+      - '.github/workflows/army-14-evidence-provider-manual.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-  actions: read
-  id-token: write
-  attestations: write
 
 concurrency:
   group: army-14-evidence-provider-${{ github.repository }}-${{ github.run_id }}
@@ -18,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout exact triggering commit
+      - name: Checkout exact PR or dispatch commit
         uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
