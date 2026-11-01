@@ -1,0 +1,42 @@
+name: Army-14 Evidence Provider (manual, fail-closed)
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/army-14-evidence-provider.mjs'
+      - 'test-army-14-evidence-provider.test.mjs'
+      - '.github/workflows/army-14-evidence-provider-manual.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: army-14-evidence-provider-${{ github.repository }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  harness-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact PR or dispatch commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run isolated unit tests only
+        run: node --test test-army-14-evidence-provider.test.mjs
+      - name: Check syntax and whitespace
+        run: |
+          node --check scripts/army-14-evidence-provider.mjs
+          git diff --check
+
+  evidence-bundle-demo:
+    if: false # Intentionally disabled until trusted task envelope, real acceptance checks, and attestation verification are implemented.
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "BLOCKED: no VERIFIED evidence can be issued by this harness."
